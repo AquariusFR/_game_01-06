@@ -13,8 +13,8 @@ export class AppComponent implements AfterContentInit {
 
 
   constructor(private elementRef: ElementRef) {
-    let tileA:GameTile = new GameTile('toto A');
-    let tileB:GameTile = new GameTile('toto B');
+    let tileA:GameTile = new GameTile('toto A', 'assets/bigtile.png');
+    let tileB:GameTile = new GameTile('toto B', 'assets/city.png');
     let tiles:Array<GameTile> = [tileA, tileB];
     this.map = new GameMap(tiles);
    }
@@ -22,7 +22,6 @@ export class AppComponent implements AfterContentInit {
   ngAfterContentInit() {
     let mapCanvas: CanvasRenderingContext2D = getCtx(this.elementRef);
     this.map.setCanvas(mapCanvas);
-
     this.map.draw();
   }
 }

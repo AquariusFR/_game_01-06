@@ -1,202 +1,150 @@
-export default class LoaderImage{
-    
+import * as _ from 'lodash';
+import ImageToLoad from 'app/loader/image-to-load';
 
-    loadImages(imagesUrl: Array<String>){
-        
-    }
-}
+const baseUrl: String = './';
 
+export default class LoaderImage {
+	loadImages(imagesToLoad: Array<ImageToLoad>):void {
+		function onProgress(img:string, imageEl:HTMLElement, index:number, id:string) {
+			// fires every time an image is done or errors.
+			// imageEl will be falsy if error
+			console.log('just ' + (!imageEl ? 'failed: ' : 'loaded: ') + img);
 
-	function load() {
+			/*			var percent = Math.floor((100 / this.queue.length) * this.completed.length);
+			
+						// update the progress element
+						legend.innerHTML = '<span>' + index + ' / ' + this.queue.length + ' (' + percent + '%)</span>';
+						progress.value = index;
+						// can access any propery of this
+						console.log(this.completed.length + this.errors.length + ' / ' + this.queue.length + ' done');
+						loadedImages[id] = {};
+						loadedImages[id].image = imageEl;
+			*/
+		}
+		function onComplete(loaded:Array<string>, errors:Array<string>):void {
 
-		var preloaderClass = new preloaderBuilder();
-		new preloaderClass.getPreloader(imagesArray, {
-			onProgress : function(img, imageEl, index, id) {
-				// fires every time an image is done or errors.
-				// imageEl will be falsy if error
-				console.log('just ' + (!imageEl ? 'failed: ' : 'loaded: ') + img);
-
-				var percent = Math.floor((100 / this.queue.length) * this.completed.length);
-
-				// update the progress element
-				legend.innerHTML = '<span>' + index + ' / ' + this.queue.length + ' (' + percent + '%)</span>';
-				progress.value = index;
-				// can access any propery of this
-				console.log(this.completed.length + this.errors.length + ' / ' + this.queue.length + ' done');
-				loadedImages[id] = {};
-				loadedImages[id].image = imageEl;
-			},
-			onComplete : function(loaded, errors) {
-				// fires when whole list is done. cache is primed.
-				console.log('done', loaded);
-				// imageContainer.style.display = 'block';
-				progress.style.display = 'none';
-				legend.style.display = 'none';
-				notify();
-
-				if (errors) {
-					console.log('the following failed', errors);
-				}
-			}
-		});
+			// fires when whole list is done. cache is primed.
+			console.log('done', loaded);
+			// imageContainer.style.display = 'block';
+			/*			progress.style.display = 'none';
+						legend.style.display = 'none';
+						notify();
+			
+						if (errors) {
+							console.log('the following failed', errors);
+						}*/
+		}
+		let preloader = new Preloader(imagesToLoad, onProgress, onComplete);
+	}
 }
 
 interface Options {
-  pipeline:    boolean;
-  auto:     boolean;
-  onComplete: Function;
+	pipeline: boolean;
+	auto: boolean;
 }
+
 
 class Preloader {
-    options: Options;
-    queue:Array<String>;
+	options: Options;
+	queue: Array<ImageToLoad>;
+	completed: Array<String>;
+	errors: Array<String>;
 
-    preload(images, options):void{
-        this.options = {
-				pipeline : false,
-				auto : true,
-				/* onProgress: function(){}, */
-				/* onError: function(){}, */
-				onComplete : function() {
-				}
-			};
-			options && typeof options == 'object' && this.setOptions(options);
+	onProgress: (src:string, image:HTMLElement, index:number, id:string) => void;
+	onComplete: (loaded:Array<string>, errors:Array<string>) => void;
 
-			this.addQueue(images);
-			this.queue.length && this.options.auto && this.processQueue();
-    }
-
-    addQueue(images):void{
-        // stores a local array, dereferenced from original
-        this.queue = images.slice();
-    }
-}
-
-
-	function preloaderBuilder() {
-		'use strict';
-
-		var preLoader = function(images, options) {
-			this.options = {
-				pipeline : false,
-				auto : true,
-				/* onProgress: function(){}, */
-				/* onError: function(){}, */
-				onComplete : function() {
-				}
-			};
-
-			options && typeof options == 'object' && this.setOptions(options);
-
-			this.addQueue(images);
-			this.queue.length && this.options.auto && this.processQueue();
+	constructor(images:Array<ImageToLoad>, onProgress:  (src:string, image:HTMLElement, index:number, id:string) => void, onComplete:  (loaded:Array<string>, errors:Array<string>) => void, option?: Options) {
+		this.options = {
+			pipeline: false,
+			auto: true
 		};
 
-		preLoader.prototype.setOptions = function(options) {
-			// shallow copy
-			var o = this.options, key = {};
+		this.onProgress = onProgress;
+		this.onComplete = onComplete;
 
-			for (key in options) {
-				options.hasOwnProperty(key) && (o[key] = options[key]);
-			}
-
-			return this;
-		};
-
-		preLoader.prototype.addQueue = function(images) {
-			// stores a local array, dereferenced from original
-			this.queue = images.slice();
-
-			return this;
-		};
-
-		preLoader.prototype.reset = function() {
-			// reset the arrays
-			this.completed = [];
-			this.errors = [];
-
-			return this;
-		};
-
-		preLoader.prototype.load = function(imageObject, index) {
-			var src = imageObject.src;
-			var image = new Image(), self = this, o = this.options;
-
-			// set some event handlers
-			image.onerror = image.onabort = function() {
-				this.onerror = this.onabort = this.onload = null;
-
-				self.errors.push(src);
-				o.onError && o.onError.call(self, src);
-				checkProgress.call(self, src, imageObject.id);
-				o.pipeline && self.loadNext(index);
-			};
-
-			image.onload = function() {
-				this.onerror = this.onabort = this.onload = null;
-
-				// store progress. this === image
-				self.completed.push(src); // this.src may differ
-				checkProgress.call(self, src, this, imageObject.id);
-				o.pipeline && self.loadNext(index);
-			};
-
-			// actually load
-			image.src = src;
-
-			return this;
-		};
-
-		preLoader.prototype.loadNext = function(index) {
-			// when pipeline loading is enabled, calls next item
-			index++;
-			this.queue[index] && this.load(this.queue[index], index);
-
-			return this;
-		};
-
-		preLoader.prototype.processQueue = function() {
-			// runs through all queued items.
-			var i = 0, queue = this.queue, len = queue.length;
-
-			// process all queue items
-			this.reset();
-
-			if (!this.options.pipeline)
-				for (; i < len; ++i)
-					this.load(queue[i], i);
-			else
-				this.load(queue[0], 0);
-
-			return this;
-		};
-
-		function checkProgress(src, image, id) {
-			// intermediate checker for queue remaining. not exported.
-			// called on preLoader instance as scope
-			var args = [], o = this.options;
-
-			// call onProgress
-			o.onProgress && src && o.onProgress.call(this, src, image, this.completed.length, id);
-
-			if (this.completed.length + this.errors.length === this.queue.length) {
-				args.push(this.completed);
-				this.errors.length && args.push(this.errors);
-				o.onComplete.apply(this, args);
-			}
-
-			return this;
+		this.addQueue(images);
+		if (this.queue.length) {
+			this.processQueue();
 		}
+	}
 
-		if (typeof define === 'function' && define.amd) {
-			// we have an AMD loader.
-			define(function() {
-				return preLoader;
+	addQueue(images:Array<ImageToLoad>): void {
+		// stores a local array, dereferenced from original
+		this.queue = images.slice();
+	}
+
+	reset(): void {
+		// reset the arrays
+		this.completed = [];
+		this.errors = [];
+	}
+
+
+	processQueue(): void {
+
+		let self = this;
+
+		// process all queue items
+		this.reset();
+
+		if (!this.options.pipeline) {
+
+			_(this.queue).forEach(function(value: String, index: number){
+				self.load(self.queue[index], index);
 			});
-		} else {
-			this.preLoader = preLoader;
 		}
-		return {
-			getPreloader : preLoader
+		else {
+			this.load(this.queue[0], 0);
 		}
+	}
+
+
+	load(imageObject:ImageToLoad, index) {
+		var src = imageObject.url;
+		var image = new Image(), self = this, o = this.options;
+
+		// set some event handlers
+		image.onerror = image.onabort = function () {
+			this.onerror = this.onabort = this.onload = null;
+
+			self.errors.push(src);
+		
+			o.pipeline && self.loadNext(index);
+		};
+
+		image.onload = function () {
+			this.onerror = this.onabort = this.onload = null;
+
+			// store progress. this === image
+			self.completed.push(src); // this.src may differ
+			self.checkProgress.call(self, src, this, imageObject.name);
+			o.pipeline && self.loadNext(index);
+		};
+
+		// actually load
+		image.src = src;
+
+		return this;
 	};
+
+	loadNext(index):void {
+		// when pipeline loading is enabled, calls next item
+		index++;
+		this.queue[index] && this.load(this.queue[index], index);
+	}
+
+	checkProgress(src:string, image:HTMLElement, id:string):void {
+		// intermediate checker for queue remaining. not exported.
+		// called on preLoader instance as scope
+		var args = [];
+
+		// call onProgress
+		this.onProgress.call(this, src, image, this.completed.length, id);
+
+		if (this.completed.length + this.errors.length === this.queue.length) {
+			args.push(this.completed);
+			this.errors.length && args.push(this.errors);
+			this.onComplete.apply(this, args);
+		}
+	}
+};
