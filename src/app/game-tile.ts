@@ -10,8 +10,13 @@ class GameTile {
         this.id = id;
         this.imageToLoad = {
             name:id,
-            url: src
+            url: src,
+            result: null
         };
+    }
+
+    getSource() :string{
+        return this.imageToLoad.url;
     }
 
     setImage(image:HTMLImageElement){

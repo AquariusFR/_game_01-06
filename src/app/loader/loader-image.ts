@@ -6,12 +6,12 @@ const baseUrl: String = './';
 export default class LoaderImage {
 	imagesToLoad: Array<ImageToLoad>;
 
-	public callback: (loaded: Array<HTMLImageElement>) => void;
+	public callback: (loaded: Array<ImageToLoad>) => void;
 
-	loadImages(imagesToLoad: Array<ImageToLoad>): Promise<Array<HTMLImageElement>> {
+	loadImages(imagesToLoad: Array<ImageToLoad>): Promise<Array<ImageToLoad>> {
 		this.imagesToLoad = imagesToLoad;
 
-		return new Promise<Array<HTMLImageElement>>(execute);
+		return new Promise<Array<ImageToLoad>>(execute);
 		function execute(resolve) {
 
 
@@ -19,19 +19,8 @@ export default class LoaderImage {
 				// fires every time an image is done or errors.
 				// imageEl will be falsy if error
 				console.log('just ' + (!imageEl ? 'failed: ' : 'loaded: ') + img);
-
-				/*			var percent = Math.floor((100 / this.queue.length) * this.completed.length);
-				
-							// update the progress element
-							legend.innerHTML = '<span>' + index + ' / ' + this.queue.length + ' (' + percent + '%)</span>';
-							progress.value = index;
-							// can access any propery of this
-							console.log(this.completed.length + this.errors.length + ' / ' + this.queue.length + ' done');
-							loadedImages[id] = {};
-							loadedImages[id].image = imageEl;
-				*/
 			}
-			function onComplete(loaded: Array<HTMLImageElement>, errors: Array<string>): void {
+			function onComplete(loaded: Array<ImageToLoad>, errors: Array<string>): void {
 
 				// fires when whole list is done. cache is primed.
 				console.log('done', loaded);
@@ -52,13 +41,13 @@ interface Options {
 class Preloader {
 	options: Options;
 	queue: Array<ImageToLoad>;
-	completed: Array<HTMLImageElement>;
+	completed: Array<ImageToLoad>;
 	errors: Array<String>;
 
 	onProgress: (src: string, image: HTMLElement, index: number, id: string) => void;
-	onComplete: (loaded: Array<HTMLImageElement>, errors: Array<string>) => void;
+	onComplete: (loaded: Array<ImageToLoad>, errors: Array<string>) => void;
 
-	constructor(images: Array<ImageToLoad>, onProgress: (src: string, image: HTMLElement, index: number, id: string) => void, onComplete: (loaded: Array<HTMLImageElement>, errors: Array<string>) => void, option?: Options) {
+	constructor(imagesToLoad: Array<ImageToLoad>, onProgress: (src: string, image: HTMLElement, index: number, id: string) => void, onComplete: (loaded: Array<ImageToLoad>, errors: Array<string>) => void, option?: Options) {
 		this.options = {
 			pipeline: false,
 			auto: true
@@ -67,7 +56,7 @@ class Preloader {
 		this.onProgress = onProgress;
 		this.onComplete = onComplete;
 
-		this.addQueue(images);
+		this.addQueue(imagesToLoad);
 		if (this.queue.length) {
 			this.processQueue();
 		}
@@ -122,7 +111,8 @@ class Preloader {
 			this.onerror = this.onabort = this.onload = null;
 
 			// store progress. this === image
-			self.completed.push(image); // this.src may differ
+			imageObject.result = image;
+			self.completed.push(imageObject); // this.src may differ
 			self.checkProgress.call(self, src, this, imageObject.name);
 			o.pipeline && self.loadNext(index);
 		};

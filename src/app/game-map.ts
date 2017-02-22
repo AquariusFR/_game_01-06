@@ -7,8 +7,9 @@ export default class GameMap {
     context: CanvasRenderingContext2D;
     loaderImage: LoaderImage = new LoaderImage();
     imageToLoad:Array<ImageToLoad>;
+    tiles: Array<GameTile>;
 
-    constructor(private tiles: Array<GameTile>, ctx: CanvasRenderingContext2D) {
+    constructor(tiles: Array<GameTile>, ctx: CanvasRenderingContext2D) {
         
         let self = this;
 
@@ -18,12 +19,24 @@ export default class GameMap {
 
         this.loaderImage.loadImages(this.imageToLoad).then(fullfilled);
         
-        function fullfilled(loadedImages:Array<HTMLImageElement>){
-            //en mode cassos
-            tiles[0].setImage(loadedImages[0]);
-            tiles[1].setImage(loadedImages[1]);
+        function fullfilled(loadedImages:Array<ImageToLoad>){
+            
+            
+            tiles.forEach(setTileImage);
+
             setContext(ctx);
             self.draw();
+
+            function setTileImage(tile:GameTile){
+                let foundedImage:ImageToLoad = loadedImages.find(byUrl);
+
+                console.log(foundedImage.result);
+
+                //tile.setImage(foundedImage);
+                function byUrl(imageToLoad:ImageToLoad, ):boolean{
+                    return imageToLoad.url === tile.getSource();
+                }
+            }
         }
         function setContext(ctx: CanvasRenderingContext2D) {
             self.context = ctx;
