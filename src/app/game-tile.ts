@@ -1,25 +1,25 @@
 import ImageToLoad from 'app/loader/image-to-load';
+import GameCamera from 'app/game-camera';
 
 class GameTile {
-    private id:String;
-    private imageToLoad:ImageToLoad;
+    private id: string;
+    private imageToLoad: ImageToLoad;
     private context: CanvasRenderingContext2D;
-    private image:HTMLImageElement;
+    private image: HTMLImageElement;
 
-    constructor(id:String, src:string){
+    constructor(id: string, src: string) {
         this.id = id;
         this.imageToLoad = {
-            name:id,
-            url: src,
-            result: null
+            name: id,
+            url: src
         };
     }
 
-    getSource() :string{
+    getSource(): string {
         return this.imageToLoad.url;
     }
 
-    setImage(image:HTMLImageElement){
+    setImage(image: HTMLImageElement) {
         this.image = image;
     }
 
@@ -27,15 +27,16 @@ class GameTile {
         this.context = mapCanvas;
     }
 
-    draw():void{
-        this.context.drawImage(this.image, 0, 0);
-		/*drawTile: function(_tile, _lineNumber, _column) {
-			_.contextBackground.drawImage(_tile.img, 500 * _column + 5, 500 * _lineNumber + 5, 250 * 2, 250 * 2);
-			console.debug('drawing image : ' + _tile.img.src + ", pos=" + 500 * _column + 1 + ":" + 500 * _lineNumber + 1);
-		},*/
+    draw(camera: GameCamera): void {
+        // on part sur une resolution 1280 x 720
+        let aspectWidth:number = 1280*camera.zoom;
+        let aspectHeight:number = 720*camera.zoom;
+
+        this.context.clearRect(0, 0, 1280, 720);
+        this.context.drawImage(this.imageToLoad.image, 0, 0, aspectWidth, aspectHeight, 0, 0, 1280, 720);
     }
 
-    getId() :String{
+    getId(): String {
         return this.id;
     }
 }

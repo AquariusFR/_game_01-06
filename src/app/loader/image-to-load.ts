@@ -1,6 +1,6 @@
 interface ImageToLoad {
-	name: String,
-	url: string,
-	result: HTMLImageElement
+	image?: HTMLImageElement;
+	name?: string;
+	url?: string;
 }
 export default ImageToLoad;

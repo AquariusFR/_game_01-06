@@ -111,7 +111,7 @@ class Preloader {
 			this.onerror = this.onabort = this.onload = null;
 
 			// store progress. this === image
-			imageObject.result = image;
+			imageObject.image = image;
 			self.completed.push(imageObject); // this.src may differ
 			self.checkProgress.call(self, src, this, imageObject.name);
 			o.pipeline && self.loadNext(index);
