@@ -12,6 +12,21 @@ export class AppComponent implements AfterContentInit {
   camera: GameCamera;
   map: GameMap;
 
+  moveRight(): void {
+    this.camera.moveBy(32*4, 0, () => this.refresh());
+  }
+
+  moveLeft(): void {
+    this.camera.moveBy(-32*4, 0, () => this.refresh());
+  }
+  moveUp(): void {
+    this.camera.moveBy(0, -32*4, () => this.refresh());
+  }
+  moveDown(): void {
+    this.camera.moveBy(0, 800, () => this.refresh());
+  }
+
+
   zoomOut(): void {
     this.camera.zoomIn();
     this.refresh();
@@ -25,7 +40,7 @@ export class AppComponent implements AfterContentInit {
     this.refresh();
   }
 
-  private refresh():void{
+  private refresh(): void {
     this.map.draw();
   }
 
@@ -48,7 +63,8 @@ export class AppComponent implements AfterContentInit {
     canvas.className = 'game__canvas';
     canvas.width = 1280;
     canvas.height = 720;
-    ctx.mozImageSmoothingEnabled = true; // future
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
     return ctx;
   }
 
