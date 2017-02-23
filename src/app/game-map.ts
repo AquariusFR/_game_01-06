@@ -25,6 +25,8 @@ export default class GameMap {
 
 
     processLoadedImages(loadedImages: Array<ImageToLoad>) {
+        
+        _(this.tiles).each(tile => tile.prerender());
         this.draw();
     }
     setContext(ctx: CanvasRenderingContext2D) {
