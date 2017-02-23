@@ -28,16 +28,13 @@ export class AppComponent implements AfterContentInit {
 
 
   zoomOut(): void {
-    this.camera.zoomIn();
-    this.refresh();
+    this.camera.zoomIn(() => this.refresh());
   }
   zoomReset(): void {
-    this.camera.zoomReset();
-    this.refresh();
+    this.camera.zoomReset(() => this.refresh());
   }
   zoomIn(): void {
-    this.camera.zoomOut();
-    this.refresh();
+    this.camera.zoomOut( () => this.refresh());
   }
 
   private refresh(): void {
