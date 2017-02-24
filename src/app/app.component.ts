@@ -13,31 +13,28 @@ export class AppComponent implements AfterContentInit {
   map: GameMap;
 
   moveRight(): void {
-    this.camera.moveBy(32*4, 0, () => this.refresh());
+    this.camera.moveBy(32 * 4, 0, () => this.refresh());
   }
 
   moveLeft(): void {
-    this.camera.moveBy(-32*4, 0, () => this.refresh());
+    this.camera.moveBy(-32 * 4, 0, () => this.refresh());
   }
   moveUp(): void {
-    this.camera.moveBy(0, -32*4, () => this.refresh());
+    this.camera.moveBy(0, -32 * 4, () => this.refresh());
   }
   moveDown(): void {
     this.camera.moveBy(0, 800, () => this.refresh());
   }
 
 
-  zoomOut(): void {
-    this.camera.zoomIn();
-    this.refresh();
+  zoomIn(): void {
+    this.camera.zoomIn(() => this.refresh());
   }
   zoomReset(): void {
-    this.camera.zoomReset();
-    this.refresh();
+    this.camera.zoomReset(() => this.refresh());
   }
-  zoomIn(): void {
-    this.camera.zoomOut();
-    this.refresh();
+  zoomOut(): void {
+    this.camera.zoomOut(() => this.refresh());
   }
 
   private refresh(): void {
@@ -48,7 +45,7 @@ export class AppComponent implements AfterContentInit {
   }
 
   public ngAfterContentInit() {
-    let mapCanvas: CanvasRenderingContext2D = this.getCtx(this.elementRef);
+    let mapCanvas: HTMLCanvasElement = this.getCanvas();
     let tileA: GameTile = new GameTile('toto A', 'assets/bigtile.png');
     let tiles: Array<GameTile> = [tileA];
     this.camera = new GameCamera();
@@ -56,17 +53,22 @@ export class AppComponent implements AfterContentInit {
   }
 
 
-  private getCtx(elementRef: ElementRef): CanvasRenderingContext2D {
-
-    var canvas: HTMLCanvasElement = elementRef.nativeElement.querySelector('canvas'),
-      ctx: CanvasRenderingContext2D = canvas.getContext('2d');
+  private getCanvas(): HTMLCanvasElement {
+    var canvas: HTMLCanvasElement = this.elementRef.nativeElement.querySelector('canvas');
     canvas.className = 'game__canvas';
     canvas.width = 1280;
     canvas.height = 720;
+    return canvas;
+  }
+
+
+  private getMapCtx(mapCanvas: HTMLCanvasElement): CanvasRenderingContext2D {
+    var ctx: CanvasRenderingContext2D = mapCanvas.getContext('2d');
     ctx.webkitImageSmoothingEnabled = false;
     ctx.mozImageSmoothingEnabled = false;
     return ctx;
   }
+
 
   private fullscreen() {
     var el = document.getElementById('canvas');

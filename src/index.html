@@ -1,16 +1,63 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Game</title>
-  <base href="/">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+<head>
+    <meta charset="utf-8">
+    <title>Game</title>
+    <base href="/">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
-<body style="
-    margin: 0;
-    overflow: hidden;">
-  <app-root>Loading...</app-root>
+
+<body style="margin: 0; overflow: hidden;">
+    <app-root>Loading...</app-root>
 </body>
+
+<script id="2d-vertex-shader" type="x-shader/x-vertex">
+    attribute vec2 a_position;
+
+    uniform vec2 u_resolution;
+    uniform vec2 u_translation;
+    uniform vec2 u_scale;
+
+    attribute vec2 a_texCoord;
+    varying vec2 v_texCoord;
+    
+
+    void main() {
+        // convert the rectangle from pixels to 0.0 to 1.0
+        
+        vec2 scaledPosition = a_position * u_scale;
+        vec2 position = scaledPosition + u_translation;
+        
+        vec2 zeroToOne = position / u_resolution;
+
+        // convert from 0->1 to 0->2
+        vec2 zeroToTwo = zeroToOne * 2.0;
+
+        // convert from 0->2 to -1->+1 (clipspace)
+        vec2 clipSpace = zeroToTwo - 1.0;
+
+        gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+        // pass the texCoord to the fragment shader
+        // The GPU will interpolate this value between points
+        v_texCoord = a_texCoord;
+    }
+</script>
+<script id="2d-fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+    // uniform vec4 u_color;
+    // our texture
+    uniform sampler2D u_image;
+    // the texCoords passed in from the vertex shader.
+    varying vec2 v_texCoord;
+
+    void main() {
+        //gl_FragColor = u_color;
+        gl_FragColor = texture2D(u_image, v_texCoord);
+    }
+</script>
+
 </html>
