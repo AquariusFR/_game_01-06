@@ -1,10 +1,11 @@
 const pixelPanPerSecond: number = 512;
 const zoomPerscond: number = 1;
+
 export default class GameCamera {
 
   public zoom: number = 1;
   public targetZoom: number;
-  public isZoomOut: boolean;
+  public isZoomingIn: boolean;
   public x: number = 0;
   public y: number = 0;
   private targetX: number;
@@ -18,7 +19,8 @@ export default class GameCamera {
 
   public zoomOut(refresh: () => void): void {
     console.log('zoomOut');
-    this.targetZoom = this.zoom / 1.25;
+    this.targetZoom = 0.75;
+    this.isZoomingIn = false;
     this.showZoom(refresh);
   }
   public zoomReset(refresh: () => void): void {
@@ -29,8 +31,9 @@ export default class GameCamera {
     this.showZoom(refresh);
   }
   public zoomIn(refresh: () => void): void {
+    this.targetZoom = 1.25;
     console.log('zoomIn');
-    this.targetZoom = this.zoom * 1.25;
+    this.isZoomingIn = true;
     this.showZoom(refresh);
   }
 
@@ -38,7 +41,7 @@ export default class GameCamera {
     console.log('zoom level', this.zoom);
     this.lastUpdate = Date.now();
 
-    this.isZoomOut = this.targetZoom < this.zoom;
+    //this.isZoomingIn = this.targetZoom < this.zoom;
 
     window.requestAnimationFrame(c => this.zooming(refresh));
   }
@@ -49,13 +52,16 @@ export default class GameCamera {
     this.lastUpdate = Date.now();
     let zoomingFactor = zoomPerscond * durationSinceLastUpdate / 1000;
 
-    this.zoom = this.isZoomOut ? this.zoom + zoomingFactor : this.zoom - zoomingFactor;
+    this.zoom = this.isZoomingIn ? this.zoom + zoomingFactor : this.zoom - zoomingFactor;
 
-    let zoomArrived = (this.isZoomOut && this.zoom <= this.targetZoom);
+    let zoomArrived = (this.isZoomingIn && this.zoom >= this.targetZoom) || (!this.isZoomingIn && this.zoom <= this.targetZoom);
 
     if(zoomArrived){
       this.zoom=this.targetZoom;
     }
+
+
+    console.log('zooming', 'time', durationSinceLastUpdate+'ms', 'factor', zoomingFactor, 'zoom level', this.zoom);
 
     refresh();
 
