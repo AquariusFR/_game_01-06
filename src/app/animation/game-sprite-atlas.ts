@@ -16,8 +16,10 @@ export class GameSpriteAtlas {
         this.textures_ = [];
         this.currentTextureUnit_ = 0;
     }
-    addSpriteSheet(name, params): void {
-        this.spriteSheets_.push(new GameSpriteSheet(this, name, params));
+    addSpriteSheet(name, params:SpriteSheetParams): GameSpriteSheet {
+        let spriteSheet = new GameSpriteSheet(this, name, params);
+        this.spriteSheets_.push(spriteSheet);
+        return spriteSheet;
     }
     startLoading() :void{
         var len = this.spriteSheets_.length;
@@ -42,7 +44,7 @@ export class GameSpriteAtlas {
         }
     }
 
-    spriteSheetLoaded_(sheet: GameSpriteSheet, image: HTMLImageElement, params: SpriteSheetParams) {
+    spriteSheetLoaded_(sheet: GameSpriteSheet, params: SpriteSheetParams) {
         // Upload the sprite sheet into a texture. This is where we would
         // coalesce different sprites' animations into a single texture to
         // reduce the number of texture fetches we need to do in the
@@ -55,9 +57,9 @@ export class GameSpriteAtlas {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         //  this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
         //  this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, params.image);
 
-        sheet.initialize(this.currentTextureUnit_, image.width, image.height);
+        sheet.initialize(this.currentTextureUnit_, params.image.width, params.image.height);
         this.textures_[this.currentTextureUnit_] = texture;
         ++this.currentTextureUnit_;
 

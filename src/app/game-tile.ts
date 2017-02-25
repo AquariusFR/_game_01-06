@@ -41,8 +41,6 @@ class GameTile {
 
         // look up where the vertex data needs to go.
         let positionLocation = this.canvasContextGl.getAttribLocation(program, "a_position");
-
-
         // set the resolution
         let resolutionLocation:WebGLUniformLocation = this.canvasContextGl.getUniformLocation(program, "u_resolution");
 

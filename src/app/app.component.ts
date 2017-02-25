@@ -39,10 +39,6 @@ export class AppComponent implements AfterContentInit {
     this.camera.zoomOut();
   }
 
-  public playAnimation():void{
-    this.sprites.playAnimation();
-  }
-
   public ngAfterContentInit() {
     let mapBackgroundCanvas: HTMLCanvasElement = this.getBackgroundCanvas();
     let mapSpritesCanvas: HTMLCanvasElement = this.getSpritesCanvas();

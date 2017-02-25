@@ -8,10 +8,10 @@ export class GameSpriteSheet {
     textureHeight_: number;
     perSpriteFrameOffset_: number;
 
-    constructor(private atlas_: GameSpriteAtlas, private name_, private params_: SpriteSheetParams, private image_?: HTMLImageElement) {
+    constructor(private atlas_: GameSpriteAtlas, private name_, private params_: SpriteSheetParams) {
         this.textureUnit_ = 0;
         this.perSpriteFrameOffset_ = 0;
-        if (image_) {
+        if (!params_.image) {
             this.onload_();
         }
     }
@@ -20,14 +20,14 @@ export class GameSpriteSheet {
     startLoading() {
         let image = new Image();
 
-        this.image_ = image;
+        this.params_.image = image;
         image.onload = () => {
             this.onload_();
         };
         image.src = this.params_.url;
     }
     onload_() {
-        this.atlas_.spriteSheetLoaded_(this, this.image_, this.params_);
+        this.atlas_.spriteSheetLoaded_(this, this.params_);
     };
     initialize(textureUnit, width, height) {
         this.textureUnit_ = textureUnit;
@@ -61,7 +61,8 @@ export class GameSpriteSheet {
 
 
 export interface SpriteSheetParams {
-    url: string,
+    url?: string,
+    image?: HTMLImageElement,
     frames: number,
     spritesPerRow: number,
     framepos: Array<Array<number>>,
