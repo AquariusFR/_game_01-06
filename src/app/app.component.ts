@@ -1,6 +1,7 @@
 import { AfterContentInit, Component, ElementRef } from '@angular/core';
 import GameMap from 'app/game-map';
 import GameSprites from 'app/game-sprites';
+import { GameSprite } from 'app/game-sprite';
 import GameTile from 'app/game-tile';
 import GameCamera from 'app/game-camera';
 
@@ -37,6 +38,39 @@ export class AppComponent implements AfterContentInit {
   }
   public zoomOut(): void {
     this.camera.zoomOut();
+  }
+
+  public runLeft(): void {
+
+    let player1: GameSprite = this.sprites.getSprite('player1');
+
+    player1.updateSpriteParam({
+      centerX: 10,
+      centerY: 50,
+      rotation: 0,
+      velocityX: -50,
+      velocityY: 0
+    });
+  }
+  public runRight(): void {
+
+    let player1: GameSprite = this.sprites.getSprite('player1');
+
+    player1.updateSpriteParam({
+      centerX: 10,
+      centerY: 50,
+      rotation: 0,
+      velocityX: 50,
+      velocityY: 0
+    });
+
+
+  }
+  public runUp(): void {
+
+  }
+  public runDown(): void {
+
   }
 
   public ngAfterContentInit() {
