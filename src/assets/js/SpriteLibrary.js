@@ -54,7 +54,7 @@ function getScriptText(id) {
 function loadShader(shaderSource, shaderType) {
   // Create the shader object
   var shader = gl.createShader(shaderType);
-  if (shader == null) {
+  if (shader === null) {
     throw "Error: unable to create shader";
   }
 
@@ -208,7 +208,7 @@ SpriteAtlas.prototype.spriteSheetLoaded_ = function (sheet, image, params) {
   this.textures_[this.currentTextureUnit_] = texture;
   ++this.currentTextureUnit_;
 
-  if (--this.numOutstandingRequests_ == 0) {
+  if (--this.numOutstandingRequests_ === 0) {
     if (this.onload) {
       this.onload();
     }
@@ -314,14 +314,14 @@ SpriteSystem.prototype.resizeCapacity_ = function (capacity, preserveOldContents
     this.constantData_.set(oldConstantData);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positionData_);
     gl.bufferSubData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * this.positionData_.length, this.constantData_);
-
-    for (var ii = 0; ii < oldStartPositionData.length; ++ii) {
+    var ii;
+    for (ii = 0; ii < oldStartPositionData.length; ++ii) {
       this.startPositionData_[ii] = oldStartPositionData[ii];
     }
-    for (var ii = 0; ii < oldVelocityData.length; ++ii) {
+    for (ii = 0; ii < oldVelocityData.length; ++ii) {
       this.velocityData_[ii] = oldVelocityData[ii];
     }
-    for (var ii = 0; ii < oldSpriteSizeData.length; ++ii) {
+    for (ii = 0; ii < oldSpriteSizeData.length; ++ii) {
       this.spriteSizeData_[ii] = oldSpriteSizeData[ii];
     }
   }

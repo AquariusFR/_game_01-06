@@ -1,12 +1,9 @@
 import ImageToLoad from 'app/loader/image-to-load';
 import GameCamera from 'app/game-camera';
 import GameWebglUtils from 'app/game-webgl-utils';
-
-declare var SpriteSheet: any;
-declare var SpriteAtlas: any;
-declare var SpriteSystem: any;
-declare var setupSpriteWebGL: any;
-
+import { GameSpriteSystem } from 'app/animation/game-sprite-system';
+import { GameSpriteLibrary } from 'app/animation/game-sprite-library';
+import { GameSpriteAtlas } from 'app/animation/game-sprite-atlas';
 
 //choper ça dans https://www.spriters-resource.com/pc_computer/diablo2diablo2lordofdestruction/
 export default class GameSprite {
@@ -21,8 +18,8 @@ export default class GameSprite {
     private animation = [
     ];
     private step: number = 0;
-    private atlas: any;
-    private spriteSystem: any;
+    private atlas: GameSpriteAtlas;
+    private spriteSystem: GameSpriteSystem;
 
     constructor(private imageToLoad: ImageToLoad) {
     }
@@ -37,11 +34,12 @@ export default class GameSprite {
 
     }
     private prerenderGLNew() {
-        this.atlas = new SpriteAtlas();
+        this.atlas = new GameSpriteAtlas(this.canvasContextGl);
 
-        setupSpriteWebGL(this.canvasContextGl);
+        var spriteLibrary: GameSpriteLibrary = new GameSpriteLibrary(this.canvasContextGl);
+        //setupSpriteWebGL(this.canvasContextGl);
 
-        this.spriteSystem = new SpriteSystem({});
+        this.spriteSystem = new GameSpriteSystem(spriteLibrary);
         this.spriteSystem.setScreenSize(1280, 720);
         this.atlas.onload = start;
         this.atlas.addSpriteSheet('marco', {
@@ -93,7 +91,7 @@ export default class GameSprite {
             spriteSystem = this.spriteSystem;
         var spriteSheet = atlas.getSpriteSheet(index);
         //spriteSheet.createRandomSprite(spriteSystem);
-        spriteSheet.createSprite(spriteSystem, 10,32,0,128, 0);
+        spriteSheet.createSprite(spriteSystem, 10, 32, 0, 128, 0);
     }
 
     private lastTime = new Date().getTime() * 0.001;
