@@ -16,8 +16,8 @@ export class GameSpriteAtlas {
         this.textures_ = [];
         this.currentTextureUnit_ = 0;
     }
-    addSpriteSheet(name, params:SpriteSheetParams): GameSpriteSheet {
-        let spriteSheet = new GameSpriteSheet(this, name, params);
+    addSpriteSheet(params:SpriteSheetParams): GameSpriteSheet {
+        let spriteSheet = new GameSpriteSheet(this, params);
         this.spriteSheets_.push(spriteSheet);
         return spriteSheet;
     }

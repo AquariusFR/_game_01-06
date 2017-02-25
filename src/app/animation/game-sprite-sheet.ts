@@ -8,7 +8,7 @@ export class GameSpriteSheet {
     textureHeight_: number;
     perSpriteFrameOffset_: number;
 
-    constructor(private atlas_: GameSpriteAtlas, private name_, private params_: SpriteSheetParams) {
+    constructor(private atlas_: GameSpriteAtlas, private params_: SpriteSheetParams) {
         this.textureUnit_ = 0;
         this.perSpriteFrameOffset_ = 0;
         if (!params_.image) {
@@ -61,6 +61,7 @@ export class GameSpriteSheet {
 
 
 export interface SpriteSheetParams {
+    name: string,
     url?: string,
     image?: HTMLImageElement,
     frames: number,
