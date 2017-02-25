@@ -19,7 +19,7 @@ export default class GameSprite {
     private positionLocation: number;
     private textureSizeLocation: WebGLUniformLocation;
     private animation = [
-        [9, 15, 40, 40, 0, 0], [54, 15, 40, 40, 0, 0], [99, 15, 40, 40, 0, 0], [144, 15, 40, 40, 0, 0], [188, 15, 40, 40, 0, 0], [232, 15, 40, 40, 0, 0]];
+    ];
     private step: number = 0;
     private atlas: any;
     private spriteSystem: any;
@@ -42,11 +42,36 @@ export default class GameSprite {
         setupSpriteWebGL(this.canvasContextGl);
 
         this.spriteSystem = new SpriteSystem({});
-        this.atlas.onload = this.start;
+        this.spriteSystem.setScreenSize(1280, 720);
+        this.atlas.onload = start;
+        this.atlas.addSpriteSheet('marco', {
+            url: this.imageToLoad.url,
+            frames: 6,
+            spritesPerRow: 6,
+            framepos: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]],
+            width: 55, height: 55
+        });
+        this.atlas.addSpriteSheet('powerup', {
+            url: 'assets/sprites/powerup.png', frames: 40,
+            spritesPerRow: 8,
+            framepos: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0],
+            [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1],
+            [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2],
+            [0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [7, 3],
+            [0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4]],
+            width: 64, height: 64
+        });
+        let self = this;
+        function start() {
+            self.start();
+        }
+
+        this.atlas.startLoading();
 
     }
     private start(): void {
-        this.generateSprites(2000);
+        //this.generateSprites(3);
+        this.createSprite(0);
         this.render();
     }
 
@@ -58,19 +83,23 @@ export default class GameSprite {
         spriteSystem.clearAllSprites();
         var spriteSheetIndex = 0;
         for (var ii = 0; ii < numSprites; ++ii) {
-            if (spriteSheetIndex >= atlas.numSpriteSheets()) {
-                spriteSheetIndex = 0;
-            }
-            var spriteSheet = atlas.getSpriteSheet(spriteSheetIndex);
+            this.createSprite(ii);
             ++spriteSheetIndex;
-            spriteSheet.createSprite(spriteSystem);
         }
     }
 
-    private lastTime;
+    private createSprite(index) {
+        let atlas = this.atlas,
+            spriteSystem = this.spriteSystem;
+        var spriteSheet = atlas.getSpriteSheet(index);
+        //spriteSheet.createRandomSprite(spriteSystem);
+        spriteSheet.createSprite(spriteSystem, 10,32,0,128, 0);
+    }
+
+    private lastTime = new Date().getTime() * 0.001;
 
     private render() {
-        window.requestAnimationFrame(this.render);
+        window.requestAnimationFrame(c => this.render());
         let spriteSystem = this.spriteSystem,
             atlas = this.atlas
         var now = new Date().getTime() * 0.001;
