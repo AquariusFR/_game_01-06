@@ -19,8 +19,6 @@ class GameTile {
             name: id,
             url: src
         };
-        //this.shadowCanvas = <HTMLCanvasElement>document.createElement('canvas');
-        //this.shadowCanvasGL = <HTMLCanvasElement>document.createElement('canvas');
     }
 
     getSource(): string {
@@ -28,49 +26,32 @@ class GameTile {
     }
 
     prerender() {
-        //this.prerender2D();
         this.prerenderGL();
-    }
-
-    private prerender2D() {
-        /*this.shadowCanvas.width = this.imageToLoad.image.naturalWidth;
-        this.shadowCanvas.height = this.imageToLoad.image.naturalHeight;
-        let currentCtx: CanvasRenderingContext2D = this.shadowCanvas.getContext('2d');
-        currentCtx.webkitImageSmoothingEnabled = false;
-        currentCtx.mozImageSmoothingEnabled = false;
-        //currentCtx.imageSmoothingEnabled = false;
-        currentCtx.drawImage(this.imageToLoad.image, 0, 0, 1280, 720, 0, 0, 1280, 720);
-        this.imageData = currentCtx.getImageData(0, 0, 1280, 720);*/
     }
 
     private prerenderGL() {
         // setup a GLSL program
-        //let this.canvasContextGl: WebGLRenderingContext  = this.shadowCanvasGL.getContext('webgl');
-        var vertexShader = GameWebglUtils.createShaderFromScript(this.canvasContextGl, "2d-vertex-shader");
-        var fragmentShader = GameWebglUtils.createShaderFromScript(this.canvasContextGl, "2d-fragment-shader");
-        var program = GameWebglUtils.createProgram(this.canvasContextGl, [vertexShader, fragmentShader]);
+        let vertexShader = GameWebglUtils.createShaderFromScript(this.canvasContextGl, "2d-vertex-shader");
+        let fragmentShader = GameWebglUtils.createShaderFromScript(this.canvasContextGl, "2d-fragment-shader");
+        let program = GameWebglUtils.createProgram(this.canvasContextGl, [vertexShader, fragmentShader]);
         let width = this.imageToLoad.image.naturalWidth;
         let height = this.imageToLoad.image.naturalHeight;
+
         this.canvasContextGl.useProgram(program);
 
         // look up where the vertex data needs to go.
-        var positionLocation = this.canvasContextGl.getAttribLocation(program, "a_position");
+        let positionLocation = this.canvasContextGl.getAttribLocation(program, "a_position");
 
 
         // set the resolution
         let resolutionLocation:WebGLUniformLocation = this.canvasContextGl.getUniformLocation(program, "u_resolution");
+
         this.translationLocation = this.canvasContextGl.getUniformLocation(program, "u_translation");
         this.scaleLocation = this.canvasContextGl.getUniformLocation(program, "u_scale");
 
-
         this.canvasContextGl.uniform2f(resolutionLocation, 1280, 720);
-
-        //this.canvasContextGl.uniform4f(colorLocation, colorR, colorG, colorB, 1);
-
-        //console.log('%c It\' ok drawing a rectangle like this', 'font-size: 26px; font-weight: bold ;background: rgb(' + Math.floor(colorR * 256) + ',' + Math.floor(colorG * 256) + ',' + Math.floor(colorB * 256) + '); color: #bada55');
-
         // Create a buffer and put a single clipspace rectangle in it (2 triangles)
-        var buffer = this.canvasContextGl.createBuffer();
+        let buffer = this.canvasContextGl.createBuffer();
 
         this.canvasContextGl.bindBuffer(this.canvasContextGl.ARRAY_BUFFER, buffer);
 
@@ -78,8 +59,9 @@ class GameTile {
         this.canvasContextGl.enableVertexAttribArray(positionLocation);
         this.canvasContextGl.vertexAttribPointer(positionLocation, 2, this.canvasContextGl.FLOAT, false, 0, 0);
         //texture
-        var texCoordLocation = this.canvasContextGl.getAttribLocation(program, "a_texCoord");
-        var texCoordBuffer = this.canvasContextGl.createBuffer();
+        let texCoordLocation = this.canvasContextGl.getAttribLocation(program, "a_texCoord");
+        let texCoordBuffer = this.canvasContextGl.createBuffer();
+
         this.canvasContextGl.bindBuffer(this.canvasContextGl.ARRAY_BUFFER, texCoordBuffer);
         this.canvasContextGl.bufferData(this.canvasContextGl.ARRAY_BUFFER, new Float32Array([
             0.0, 0.0,
@@ -91,7 +73,7 @@ class GameTile {
         this.canvasContextGl.enableVertexAttribArray(texCoordLocation);
         this.canvasContextGl.vertexAttribPointer(texCoordLocation, 2, this.canvasContextGl.FLOAT, false, 0, 0);
         // Create a texture.
-        var texture = this.canvasContextGl.createTexture();
+        let texture = this.canvasContextGl.createTexture();
         this.canvasContextGl.bindTexture(this.canvasContextGl.TEXTURE_2D, texture);
 
         // Set the parameters so we can render any size image.

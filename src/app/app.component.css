@@ -1,3 +1,13 @@
-.game__canvas{
-
+.game__canvas__background{
+    position: relative;
+}
+.game__canvas__sprites{
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.game__canvas__background,
+.game__canvas__sprites{
+     -webkit-transform: translateZ(0);
+     transform: translateZ(0);
 }

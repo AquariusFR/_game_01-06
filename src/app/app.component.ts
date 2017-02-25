@@ -1,5 +1,6 @@
 import { AfterContentInit, Component, ElementRef } from '@angular/core';
 import GameMap from 'app/game-map';
+import GameSprites from 'app/game-sprites';
 import GameTile from 'app/game-tile';
 import GameCamera from 'app/game-camera';
 
@@ -9,73 +10,73 @@ import GameCamera from 'app/game-camera';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements AfterContentInit {
-  camera: GameCamera;
-  map: GameMap;
+  private camera: GameCamera;
+  private map: GameMap;
+  private sprites: GameSprites;
 
-  moveRight(): void {
-    this.camera.moveBy(32 * 4, 0, () => this.refresh());
-  }
+  public constructor(private elementRef: ElementRef) { }
 
-  moveLeft(): void {
-    this.camera.moveBy(-32 * 4, 0, () => this.refresh());
-  }
-  moveUp(): void {
-    this.camera.moveBy(0, -32 * 4, () => this.refresh());
-  }
-  moveDown(): void {
-    this.camera.moveBy(0, 800, () => this.refresh());
+  public moveRight(): void {
+    this.camera.panRight();
   }
 
+  public moveLeft(): void {
+    this.camera.panLeft();
+  }
+  public moveUp(): void {
+    this.camera.panUp();
+  }
+  public moveDown(): void {
+    this.camera.panDown();
+  }
+  public zoomIn(): void {
+    this.camera.zoomIn();
+  }
+  public zoomReset(): void {
+    this.camera.zoomReset();
+  }
+  public zoomOut(): void {
+    this.camera.zoomOut();
+  }
 
-  zoomIn(): void {
-    this.camera.zoomIn(() => this.refresh());
+  public playAnimation():void{
+    this.sprites.playAnimation();
   }
-  zoomReset(): void {
-    this.camera.zoomReset(() => this.refresh());
-  }
-  zoomOut(): void {
-    this.camera.zoomOut(() => this.refresh());
+
+  public ngAfterContentInit() {
+    let mapBackgroundCanvas: HTMLCanvasElement = this.getBackgroundCanvas();
+    let mapSpritesCanvas: HTMLCanvasElement = this.getSpritesCanvas();
+    this.camera = new GameCamera(() => this.refresh());
+    this.map = new GameMap(mapBackgroundCanvas, this.camera);
+    this.sprites = new GameSprites(mapSpritesCanvas, this.camera);
   }
 
   private refresh(): void {
     this.map.draw();
   }
 
-  constructor(private elementRef: ElementRef) {
+  private getBackgroundCanvas(): HTMLCanvasElement {
+    var canvasBackground: HTMLCanvasElement = this.elementRef.nativeElement.querySelector('.game__canvas__background');
+
+    canvasBackground.width = 1280;
+    canvasBackground.height = 720;
+
+    return canvasBackground;
   }
+  private getSpritesCanvas(): HTMLCanvasElement {
+    var canvasSprites: HTMLCanvasElement = this.elementRef.nativeElement.querySelector('.game__canvas__sprites');
 
-  public ngAfterContentInit() {
-    let mapCanvas: HTMLCanvasElement = this.getCanvas();
-    let tileA: GameTile = new GameTile('toto A', 'assets/bigtile.png');
-    let tiles: Array<GameTile> = [tileA];
-    this.camera = new GameCamera();
-    this.map = new GameMap(tiles, mapCanvas, this.camera);
+    canvasSprites.width = 1280;
+    canvasSprites.height = 720;
+
+    return canvasSprites;
   }
-
-
-  private getCanvas(): HTMLCanvasElement {
-    var canvas: HTMLCanvasElement = this.elementRef.nativeElement.querySelector('canvas');
-    canvas.className = 'game__canvas';
-    canvas.width = 1280;
-    canvas.height = 720;
-    return canvas;
-  }
-
 
   private getMapCtx(mapCanvas: HTMLCanvasElement): CanvasRenderingContext2D {
     var ctx: CanvasRenderingContext2D = mapCanvas.getContext('2d');
     ctx.webkitImageSmoothingEnabled = false;
     ctx.mozImageSmoothingEnabled = false;
     return ctx;
-  }
-
-
-  private fullscreen() {
-    var el = document.getElementById('canvas');
-
-    if (el.webkitRequestFullScreen) {
-      el.webkitRequestFullScreen();
-    }
   }
 }
 

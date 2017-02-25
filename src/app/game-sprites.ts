@@ -1,30 +1,24 @@
 import * as _ from 'lodash';
-import GameTile from 'app/game-tile';
+import GameSprite from 'app/game-sprite';
 import LoaderImage from 'app/loader/loader-image';
 import ImageToLoad from 'app/loader/image-to-load';
 import GameCamera from 'app/game-camera';
 
-export default class GameMap {
-    private context: CanvasRenderingContext2D;
+
+export default class GameSprites {
     private loaderImage: LoaderImage = new LoaderImage();
     private imageToLoad: Array<ImageToLoad>;
-    private tiles: Array<GameTile>;
+    private sprites: Array<GameSprite>;
     private mapCanvasContextGl: WebGLRenderingContext;
 
 
     constructor(private mapCanvas: HTMLCanvasElement, private camera: GameCamera) {
-
-        let tileA: GameTile = new GameTile('toto A', 'assets/bigtile.png');
-        let tiles: Array<GameTile> = [tileA];
-
+        this.sprites = <Array<GameSprite>>[new GameSprite({ name: 'marco', url: 'assets/sprites/marco.png' })];
+        this.imageToLoad = <Array<ImageToLoad>>_(this.sprites).map('imageToLoad').value();
         this.mapCanvasContextGl = this.getMapCtxGl();
-        let self = this;
-        this.tiles = tiles;
-        this.imageToLoad = <Array<ImageToLoad>>_(tiles).map('imageToLoad').value();
         this.setContext();
         this.loaderImage.loadImages(this.imageToLoad).then(() => this.processLoadedImages());
     }
-
     private getMapCtxGl(): WebGLRenderingContext {
         var ctxGl: WebGLRenderingContext = this.mapCanvas.getContext('webgl');
 
@@ -36,23 +30,23 @@ export default class GameMap {
         return ctxGl;
     }
 
+    playAnimation(){
+        _(this.sprites).each(sprite => sprite.playAnimation(this.camera));
+        //this.draw();
+    }
     processLoadedImages() {
-        _(this.tiles).each(tile => tile.prerender());
-        this.draw();
+        _(this.sprites).each(sprite => sprite.prerender());
+        //this.draw();
     }
     setContext() {
-        this.tiles.forEach(tile => this.setTileContext(tile));
+        this.sprites.forEach(tile => this.setTileContext(tile));
     }
-    setTileContext(tile: GameTile) {
-        tile.setContext(this.mapCanvasContextGl);
+    setTileContext(sprite: GameSprite) {
+        sprite.setContext(this.mapCanvasContextGl);
     }
 
     draw() {
         let cameraClosure = this.camera;
-        _(this.tiles).each((t) => this.drawTile(t));
-
-    }
-    drawTile(tile: GameTile) {
-        tile.draw(this.camera);
+        _(this.sprites).each((t) => t.draw(this.camera));
     }
 }

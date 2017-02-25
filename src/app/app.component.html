@@ -1,12 +1,18 @@
-<canvas style=" -webkit-transform: translateZ(0); transform: translateZ(0);"></canvas>
-<div>
-    <button (click)="zoomOut()">-</button>
-    <button (click)="zoomReset()">=</button>
-    <button (click)="zoomIn()">+</button>
-</div>
-<div>
-    <button (click)="moveLeft()">⇦</button>
-    <button (click)="moveRight()">⇨</button>
-    <button (click)="moveUp()">⇧</button>
-    <button (click)="moveDown()">⇩</button>
+<div style="position: relative">
+    <canvas class="game__canvas__background"></canvas>
+    <canvas id="sprites" class="game__canvas__sprites"></canvas>
+    <div>
+        <button (click)="zoomOut()">-</button>
+        <button (click)="zoomReset()">=</button>
+        <button (click)="zoomIn()">+</button>
+    </div>
+    <div>
+        <button (click)="moveLeft()">⇦</button>
+        <button (click)="moveRight()">⇨</button>
+        <button (click)="moveUp()">⇧</button>
+        <button (click)="moveDown()">⇩</button>
+    </div>
+    <div>
+        <button (click)="playAnimation()">++</button>
+    </div>
 </div>
