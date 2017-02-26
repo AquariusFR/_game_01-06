@@ -40,36 +40,30 @@ export class AppComponent implements AfterContentInit {
     this.camera.zoomOut();
   }
 
+  public moveTo(): void {
+  }
+
   public runLeft(): void {
 
     let player1: GameSprite = this.sprites.getSprite('player1');
 
-    player1.updateSpriteParam({
-      centerX: 10,
-      centerY: 50,
-      rotation: 0,
-      velocityX: -50,
-      velocityY: 0
-    });
+    player1.moveBy(-100, 0);
   }
   public runRight(): void {
 
     let player1: GameSprite = this.sprites.getSprite('player1');
 
-    player1.updateSpriteParam({
-      centerX: 10,
-      centerY: 50,
-      rotation: 0,
-      velocityX: 50,
-      velocityY: 0
-    });
-
-
+    player1.moveBy(100, 0);
   }
   public runUp(): void {
+    let player1: GameSprite = this.sprites.getSprite('player1');
 
+    player1.moveBy(0, -100);
   }
   public runDown(): void {
+    let player1: GameSprite = this.sprites.getSprite('player1');
+
+    player1.moveBy(0, 100);
 
   }
 

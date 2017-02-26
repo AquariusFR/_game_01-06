@@ -1,6 +1,12 @@
 import { GameSpriteLibrary, shaderTypeEnum } from 'app/animation/game-sprite-library';
 
-
+export interface SpriteParam {
+    centerX?: number,
+    centerY?: number,
+    rotation?: number,
+    velocityX?: number,
+    velocityY?: number
+}
 interface systemInfo {
     size: number, offset: number
 }
@@ -239,9 +245,7 @@ export class GameSpriteSystem {
     }
 
     //todo créer une interface spriteInfo ...
-    addSprite(centerX, centerY,
-        rotation,
-        velocityX, velocityY,
+    addSprite(param: SpriteParam,
         perSpriteFrameOffset,
         spriteSize,
         spriteTextureSizeX, spriteTextureSizeY,
@@ -254,9 +258,7 @@ export class GameSpriteSystem {
 
         for (var ii = 0; ii < offsets.length; ++ii) {
             spriteVertexIndexes[ii] = this.addVertex_(
-                centerX, centerY,
-                rotation,
-                velocityX, velocityY,
+                param,
                 perSpriteFrameOffset,
                 spriteSize,
                 offsets[ii][0], offsets[ii][1],
@@ -268,9 +270,7 @@ export class GameSpriteSystem {
         return spriteVertexIndexes;
     }
     addVertex_(
-        centerX, centerY,
-        rotation,
-        velocityX, velocityY,
+        param: SpriteParam,
         perSpriteFrameOffset,
         spriteSize,
         cornerOffsetX, cornerOffsetY,
@@ -285,14 +285,12 @@ export class GameSpriteSystem {
         let vertexIndex = this.numVertices_;
         ++this.numVertices_;
 
-        this.updateVertexInfo(vertexIndex, centerX, centerY,
-            rotation,
-            velocityX, velocityY);
+        this.updateVertexInfo(vertexIndex, param);
 
         // Base index into the constant data
         let baseIndex = GameSpriteSystem.constantAttributeStride_ * vertexIndex;
 
-        this.constantData_[baseIndex + this.offsetForIndex(ROTATION_INDEX)] = rotation;
+        this.constantData_[baseIndex + this.offsetForIndex(ROTATION_INDEX)] = param.rotation;
         this.constantData_[baseIndex + this.offsetForIndex(PER_SPRITE_FRAME_OFFSET_INDEX)] = perSpriteFrameOffset;
         this.constantData_[baseIndex + this.offsetForIndex(SPRITE_SIZE_INDEX)] = spriteSize;
         this.constantData_[baseIndex + this.offsetForIndex(CORNER_OFFSET_INDEX)] = cornerOffsetX;
@@ -312,26 +310,46 @@ export class GameSpriteSystem {
         this.gl.bufferSubData(this.gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + baseIndex), this.constantData_.subarray(baseIndex, baseIndex + GameSpriteSystem.constantAttributeStride_));
         return vertexIndex;
     }
-    updateSpriteInfo(vertexes: Array<number>, centerX, centerY,
-        rotation,
-        velocityX, velocityY): void {
 
-        vertexes.forEach(v => this.updateVertexInfo(v, centerX, centerY,
-            rotation,
-            velocityX, velocityY));
+    /**
+     * getVertexPosition
+     */
+    public getVertexPosition(vertexIndex: number): SpriteParam {
+        
+        let baseIndex = GameSpriteSystem.constantAttributeStride_ * vertexIndex;
+        return {
+            centerX: this.positionData_[2 * vertexIndex],
+            centerY: this.positionData_[2 * vertexIndex + 1],
+            rotation: this.constantData_[baseIndex + this.offsetForIndex(ROTATION_INDEX)],
+            velocityX: this.velocityData_[2 * vertexIndex],
+            velocityY: this.velocityData_[2 * vertexIndex + 1]
+        };
     }
-    updateVertexInfo(vertexIndex, centerX, centerY,
-        rotation,
-        velocityX, velocityY): void {
 
-        this.positionData_[2 * vertexIndex] = centerX;
-        this.positionData_[2 * vertexIndex + 1] = centerY;
-        this.startPositionData_[2 * vertexIndex] = centerX;
-        this.startPositionData_[2 * vertexIndex + 1] = centerY;
-        this.velocityData_[2 * vertexIndex] = velocityX;
-        this.velocityData_[2 * vertexIndex + 1] = velocityY;
+    public updateSpriteInfo(vertexes: Array<number>, param: SpriteParam): void {
 
+        vertexes.forEach(v => this.updateVertexInfo(v, param));
     }
+    private updateVertexInfo(vertexIndex: number, param: SpriteParam): void {
+
+        GameSpriteSystem.updateInfo(this.positionData_, 2 * vertexIndex, param.centerX);
+        GameSpriteSystem.updateInfo(this.positionData_, 2 * vertexIndex + 1, param.centerY);
+
+        GameSpriteSystem.updateInfo(this.startPositionData_, 2 * vertexIndex, param.centerX);
+        GameSpriteSystem.updateInfo(this.startPositionData_, 2 * vertexIndex + 1, param.centerY);
+
+        GameSpriteSystem.updateInfo(this.velocityData_, 2 * vertexIndex, param.velocityX);
+        GameSpriteSystem.updateInfo(this.velocityData_, 2 * vertexIndex + 1, param.velocityY);
+    }
+
+    private static updateInfo(array, index, value) {
+        if (value == null) {
+            return;
+        }
+
+        array[index] = value;
+    }
+
     setupConstantLoc_(location, index): void {
         if (location == -1)
             return; // Debugging

@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
-import {GameSprite, SpriteParam} from 'app/game-sprite';
+import { SpriteParam } from 'app/animation/game-sprite-system'
+import { GameSprite } from 'app/game-sprite';
 import LoaderImage from 'app/loader/loader-image';
 import ImageToLoad from 'app/loader/image-to-load';
 import GameCamera from 'app/game-camera';
@@ -15,10 +16,11 @@ export default class GameSprites {
     private spriteContextGl: WebGLRenderingContext;
     private atlas: GameSpriteAtlas;
     private spriteSystem: GameSpriteSystem;
-    private spriteMap: Map<string,GameSprite>;
+    private spriteMap: Map<string, GameSprite>;
     private imageToLoad: Array<ImageToLoad>;
     private spritesheetsParams: Array<SpriteSheetParams>;
-    private spriteSheetMap:Map<string, GameSpriteSheet>
+    private spriteSheetMap: Map<string, GameSpriteSheet>
+    private lastTime = new Date().getTime() * 0.001;
 
     constructor(private mapCanvas: HTMLCanvasElement, private camera: GameCamera) {
 
@@ -44,7 +46,7 @@ export default class GameSprites {
             [0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4]],
             width: 64, height: 64
         }, {
-            name:'ship_fbmark',
+            name: 'ship_fbmark',
             url: 'assets/sprites/ship_fbmark.png', frames: 2,
             spritesPerRow: 2,
             framepos: [[0, 0], [1, 0]],
@@ -60,20 +62,21 @@ export default class GameSprites {
         }
     }
 
-    public getSprite(key): GameSprite{
+    public getSprite(key): GameSprite {
         return this.spriteMap.get(key);
     }
 
-    private mapGameSpriteSheet(){
+    private mapGameSpriteSheet() {
         this.spriteSheetMap = new Map<string, GameSpriteSheet>();
 
         this.spritesheetsParams.forEach((s, i) => {
-        s.image = this.imageToLoad[i].image;
-        this.spriteSheetMap.set(s.name,  this.atlas.addSpriteSheet(s));
+            s.image = this.imageToLoad[i].image;
+            this.spriteSheetMap.set(s.name, this.atlas.addSpriteSheet(s));
         });
     }
 
     private processLoadedImages(): void {
+        let spriteLibrary: GameSpriteLibrary = new GameSpriteLibrary(this.spriteContextGl);
         // once spritesheets are loaded
         // create GameSpriteSheet
         this.mapGameSpriteSheet();
@@ -82,26 +85,20 @@ export default class GameSprites {
         this.spriteSheetMap.get('marco');
 
 
-        var spriteLibrary: GameSpriteLibrary = new GameSpriteLibrary(this.spriteContextGl);
-
         this.spriteSystem = new GameSpriteSystem(spriteLibrary);
         this.spriteSystem.setScreenSize(1280, 720);
-        this.spriteMap  = new Map<string, GameSprite>()
+        this.spriteMap = new Map<string, GameSprite>()
 
-        this.spriteMap.set('player1', new GameSprite(this.spriteSystem, this.spriteSheetMap.get('marco'),  {centerX:10, centerY: 32,rotation: 0, velocityX:0, velocityY:0}));
-        this.spriteMap.set('star1', new GameSprite(this.spriteSystem, this.spriteSheetMap.get('powerup'),  {centerX:900, centerY: 50,rotation: 10, velocityX:128, velocityY:0}));
-        this.spriteMap.set('star2', new GameSprite(this.spriteSystem, this.spriteSheetMap.get('powerup'),  {centerX:700, centerY: 150,rotation: .5, velocityX:28, velocityY:0}));
-        this.spriteMap.set('star3', new GameSprite(this.spriteSystem, this.spriteSheetMap.get('powerup'),  {centerX:200, centerY: 250,rotation: 0, velocityX:528, velocityY:-1}));
-        this.spriteMap.set('star3', new GameSprite(this.spriteSystem, this.spriteSheetMap.get('ship_fbmark'),  {centerX:20, centerY: 250,rotation: .8, velocityX:58, velocityY:-60}));
-
-
+        this.spriteMap.set('player1', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('marco'), { centerX: 200, centerY: 200, rotation: 0, velocityX: 0, velocityY: 0 }));
+        this.spriteMap.set('star1', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 900, centerY: 50, rotation: 10, velocityX: 128, velocityY: 0 }));
+        this.spriteMap.set('star2', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 700, centerY: 150, rotation: .5, velocityX: 28, velocityY: 0 }));
+        this.spriteMap.set('star3', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 200, centerY: 250, rotation: 0, velocityX: 528, velocityY: -1 }));
+        this.spriteMap.set('star3', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('ship_fbmark'), { centerX: 20, centerY: 250, rotation: .8, velocityX: 58, velocityY: -60 }));
 
         this.atlas.onload = start;
         let self = this;
         function start() {
             self.spriteSystem.clearAllSprites();
-
-
             self.spriteMap.forEach((s) => self.createSprite(s));
             self.render();
         }
@@ -113,7 +110,6 @@ export default class GameSprites {
         sprite.createSprite();
     }
 
-    private lastTime = new Date().getTime() * 0.001;
 
     private render() {
         window.requestAnimationFrame(c => this.render());
@@ -126,9 +122,14 @@ export default class GameSprites {
         this.spriteContextGl.clearColor(0.0, 0.0, 0.0, 0.0);
         this.spriteContextGl.clear(this.spriteContextGl.COLOR_BUFFER_BIT | this.spriteContextGl.DEPTH_BUFFER_BIT);
 
+        this.checkPositions();
+
         spriteSystem.draw(atlas, deltaT);
 
         this.lastTime = now;
+    }
+    private checkPositions(){
+        this.spriteMap.forEach(sprite=> sprite.checkSpritePosition());
     }
     private getMapCtxGl(): WebGLRenderingContext {
         var ctxGl: WebGLRenderingContext = this.mapCanvas.getContext('webgl');

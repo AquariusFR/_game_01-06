@@ -1,6 +1,6 @@
 import { GameSpriteSystem } from 'app/animation/game-sprite-system';
 import { GameSpriteAtlas } from 'app/animation/game-sprite-atlas';
-
+import { SpriteParam } from 'app/animation/game-sprite-system'
 
 export class GameSpriteSheet {
 
@@ -36,7 +36,7 @@ export class GameSpriteSheet {
         this.textureHeight_ = height;
     }
 
-    createSprite(spriteSystem: GameSpriteSystem, centerX: number, centerY: number, rotation: number, velocityX: number, velocityY: number) : Array<number>{
+    createSprite(spriteSystem: GameSpriteSystem, param:SpriteParam) : Array<number>{
         var perSpriteFrameOffset = this.perSpriteFrameOffset_++;
         if (this.perSpriteFrameOffset_ >= this.params_.frames) {
             this.perSpriteFrameOffset_ = 0;
@@ -49,9 +49,7 @@ export class GameSpriteSheet {
         var numFrames: number = this.params_.frames;
         var textureWeights: Array<number> = [0.0, 0.0, 0.0, 0.0];
         textureWeights[this.textureUnit_] = 1.0;
-        return spriteSystem.addSprite(centerX, centerY,
-            rotation,
-            velocityX, velocityY,
+        return spriteSystem.addSprite(param,
             perSpriteFrameOffset,
             spriteSize,
             spriteTextureSizeX, spriteTextureSizeY,
