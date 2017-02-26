@@ -84,7 +84,6 @@ export class GameSprite {
         }
         if (!this.isKeepMoving()) {
             this.resetMovement();
-            this.updateSpriteParam(this.spriteParam);
         }
     }
 
@@ -107,20 +106,25 @@ export class GameSprite {
         let targetY = this.movement.targetY;
         let velocityX = spritePosition.velocityX;
         let velocityY = spritePosition.velocityY;
-        let keepMovingFlag: boolean = true;
+        let keepMovingFlagX: boolean = true,
+            keepMovingFlagY: boolean = true;
 
         if (!this.checkPosition(actualX, targetX, velocityX)) {
             this.spriteParam.velocityX = 0;
             this.spriteParam.centerX = targetX;
-            keepMovingFlag = false;
+            keepMovingFlagX = false;
         }
         if (!this.checkPosition(actualY, targetY, velocityY)) {
             this.spriteParam.velocityY = 0;
             this.spriteParam.centerY = targetY;
-            keepMovingFlag = false;
+            keepMovingFlagY = false;
         }
 
-        return keepMovingFlag;
+        if(!keepMovingFlagX || !keepMovingFlagY){
+            this.updateSpriteParam(this.spriteParam);
+        }
+
+        return keepMovingFlagX || keepMovingFlagY;
     }
 
     /**

@@ -66,6 +66,12 @@ export class AppComponent implements AfterContentInit {
     player1.moveBy(0, 100);
 
   }
+  public moveToCenter(): void {
+    let player1: GameSprite = this.sprites.getSprite('player1');
+
+    player1.moveTo(10, 10);
+
+  }
 
   public ngAfterContentInit() {
     let mapBackgroundCanvas: HTMLCanvasElement = this.getBackgroundCanvas();
