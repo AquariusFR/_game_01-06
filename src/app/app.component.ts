@@ -4,6 +4,7 @@ import GameSprites from 'app/game-sprites';
 import { GameSprite } from 'app/game-sprite';
 import GameTile from 'app/game-tile';
 import GameCamera from 'app/game-camera';
+import { Game } from 'app/phaser/game';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +15,7 @@ export class AppComponent implements AfterContentInit {
   private camera: GameCamera;
   private map: GameMap;
   private sprites: GameSprites;
-  private game:Phaser.Game;
+  private game: Game;
 
   public constructor(private elementRef: ElementRef) { }
 
@@ -74,22 +75,13 @@ export class AppComponent implements AfterContentInit {
   }
 
   public ngAfterContentInit() {
-    let mapBackgroundCanvas: HTMLCanvasElement = this.getBackgroundCanvas();
+    /*let mapBackgroundCanvas: HTMLCanvasElement = this.getBackgroundCanvas();
     let mapSpritesCanvas: HTMLCanvasElement = this.getSpritesCanvas();
     this.camera = new GameCamera(() => this.refresh());
     this.map = new GameMap(mapBackgroundCanvas, this.camera);
-    this.sprites = new GameSprites(mapSpritesCanvas, this.camera);
-    this.game = this.game = new Phaser.Game(800, 600, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
+    this.sprites = new GameSprites(mapSpritesCanvas, this.camera);*/
+    this.game = new Game();
   }
-
-    preload() {
-        this.game.load.image('logo', 'assets/bigtile.png');
-    }
-
-    create() {
-        var logo = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
-        logo.anchor.setTo(0.5, 0.5);
-    }
 
   private refresh(): void {
     this.map.draw();
