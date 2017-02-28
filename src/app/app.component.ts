@@ -14,6 +14,7 @@ export class AppComponent implements AfterContentInit {
   private camera: GameCamera;
   private map: GameMap;
   private sprites: GameSprites;
+  private game:Phaser.Game;
 
   public constructor(private elementRef: ElementRef) { }
 
@@ -44,7 +45,6 @@ export class AppComponent implements AfterContentInit {
   }
 
   public runLeft(): void {
-
     let player1: GameSprite = this.sprites.getSprite('player1');
 
     player1.moveBy(-100, 0);
@@ -79,7 +79,17 @@ export class AppComponent implements AfterContentInit {
     this.camera = new GameCamera(() => this.refresh());
     this.map = new GameMap(mapBackgroundCanvas, this.camera);
     this.sprites = new GameSprites(mapSpritesCanvas, this.camera);
+    this.game = this.game = new Phaser.Game(800, 600, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
   }
+
+    preload() {
+        this.game.load.image('logo', 'assets/bigtile.png');
+    }
+
+    create() {
+        var logo = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
+        logo.anchor.setTo(0.5, 0.5);
+    }
 
   private refresh(): void {
     this.map.draw();
