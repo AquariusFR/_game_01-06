@@ -71,7 +71,10 @@ export class AppComponent implements AfterContentInit {
     let player1: GameSprite = this.sprites.getSprite('player1');
 
     player1.moveTo(10, 10);
+  }
 
+  public shake(): void{
+    this.game.shake();
   }
 
   public ngAfterContentInit() {
