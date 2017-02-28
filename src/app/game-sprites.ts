@@ -30,11 +30,11 @@ export default class GameSprites {
         // load all spritesheetes images
         this.spritesheetsParams = [{
             name: 'marco',
-            url: 'assets/sprites/marco.png',
+            url: 'assets/sprites/marco_bis.png',
             frames: 6,
             spritesPerRow: 6,
             framepos: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]],
-            width: 55, height: 55
+            width: 40, height: 40
         }, {
             name: 'powerup',
             url: 'assets/sprites/powerup.png', frames: 40,

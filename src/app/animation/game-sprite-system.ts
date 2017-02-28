@@ -124,12 +124,17 @@ export class GameSpriteSystem {
         GameSpriteSystem.initialized_ = true;
     }
 
+    private preprocessedStride:number;
+
     dumpOffsets(): void {
         let constantAttributeInfo = constantAttributeInfo_;
         for (let ii = 0; ii < constantAttributeInfo.length; ++ii) {
             console.log("Attribute at index " + ii + ": size = " + constantAttributeInfo[ii].size + ", offset = " + constantAttributeInfo[ii].offset);
         }
         console.log("Constant attribute stride = " + GameSpriteSystem.constantAttributeStride_);
+
+
+        this.preprocessedStride = GameSpriteSystem.constantAttributeStride_ * Float32Array.BYTES_PER_ELEMENT;
     }
 
     clearAllSprites(): void {
@@ -248,7 +253,8 @@ export class GameSpriteSystem {
     addSprite(param: SpriteParam,
         perSpriteFrameOffset,
         spriteSize,
-        spriteTextureSizeX, spriteTextureSizeY,
+        spriteTextureSizeX,
+        spriteTextureSizeY,
         spritesPerRow,
         numFrames,
         textureWeights): Array<number> {
@@ -261,8 +267,10 @@ export class GameSpriteSystem {
                 param,
                 perSpriteFrameOffset,
                 spriteSize,
-                offsets[ii][0], offsets[ii][1],
-                spriteTextureSizeX, spriteTextureSizeY,
+                offsets[ii][0],
+                offsets[ii][1],
+                spriteTextureSizeX,
+                spriteTextureSizeY,
                 spritesPerRow,
                 numFrames,
                 textureWeights);
@@ -273,8 +281,10 @@ export class GameSpriteSystem {
         param: SpriteParam,
         perSpriteFrameOffset,
         spriteSize,
-        cornerOffsetX, cornerOffsetY,
-        spriteTextureSizeX, spriteTextureSizeY,
+        cornerOffsetX,
+        cornerOffsetY,
+        spriteTextureSizeX,
+        spriteTextureSizeY,
         spritesPerRow,
         numFrames,
         textureWeights): number {
@@ -357,9 +367,12 @@ export class GameSpriteSystem {
         var constantStride = GameSpriteSystem.constantAttributeStride_;
         var constantAttributeInfo = constantAttributeInfo_;
         this.gl.enableVertexAttribArray(location);
-        this.gl.vertexAttribPointer(location,
-            constantAttributeInfo[index].size, this.gl.FLOAT, false,
-            constantStride * Float32Array.BYTES_PER_ELEMENT,
+        this.gl.vertexAttribPointer(
+            location,
+            constantAttributeInfo[index].size,
+            this.gl.FLOAT,
+            false,
+            this.preprocessedStride,
             baseOffset + Float32Array.BYTES_PER_ELEMENT * constantAttributeInfo[index].offset);
     }
 
@@ -422,7 +435,10 @@ export class GameSpriteSystem {
         this.setupConstantLoc_(this.textureWeightsLoc_, TEXTURE_WEIGHTS_INDEX);
 
         // Set up uniforms.
+        //c'est ici qu'on doit voir la frame a afficher.
+        
         this.gl.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
+        
         this.gl.uniform4f(this.screenDimsLoc_,
             2.0 / this.screenWidth_,
             -2.0 / this.screenHeight_,

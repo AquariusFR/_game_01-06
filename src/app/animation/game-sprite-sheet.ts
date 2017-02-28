@@ -36,7 +36,7 @@ export class GameSpriteSheet {
         this.textureHeight_ = height;
     }
 
-    createSprite(spriteSystem: GameSpriteSystem, param:SpriteParam) : Array<number>{
+    createSprite(spriteSystem: GameSpriteSystem, spriteParam:SpriteParam) : Array<number>{
         var perSpriteFrameOffset = this.perSpriteFrameOffset_++;
         if (this.perSpriteFrameOffset_ >= this.params_.frames) {
             this.perSpriteFrameOffset_ = 0;
@@ -49,10 +49,11 @@ export class GameSpriteSheet {
         var numFrames: number = this.params_.frames;
         var textureWeights: Array<number> = [0.0, 0.0, 0.0, 0.0];
         textureWeights[this.textureUnit_] = 1.0;
-        return spriteSystem.addSprite(param,
+        return spriteSystem.addSprite(spriteParam,
             perSpriteFrameOffset,
             spriteSize,
-            spriteTextureSizeX, spriteTextureSizeY,
+            spriteTextureSizeX,
+            spriteTextureSizeY,
             spritesPerRow,
             numFrames,
             textureWeights);
