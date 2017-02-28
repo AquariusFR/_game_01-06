@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import { GetShaderService } from 'app/get-shader.service';
 import { SpriteParam } from 'app/animation/game-sprite-system'
 import { GameSprite } from 'app/game-sprite';
 import LoaderImage from 'app/loader/loader-image';
@@ -22,7 +23,7 @@ export default class GameSprites {
     private spriteSheetMap: Map<string, GameSpriteSheet>
     private lastTime = new Date().getTime() * 0.001;
 
-    constructor(private mapCanvas: HTMLCanvasElement, private camera: GameCamera) {
+    constructor(private mapCanvas: HTMLCanvasElement, private camera: GameCamera, private shaderService: GetShaderService) {
 
         this.spriteContextGl = this.getMapCtxGl();
         this.atlas = new GameSpriteAtlas(this.spriteContextGl);
@@ -48,6 +49,18 @@ export default class GameSprites {
         }, {
             name: 'ship_fbmark',
             url: 'assets/sprites/ship_fbmark.png', frames: 2,
+            spritesPerRow: 2,
+            framepos: [[0, 0], [1, 0]],
+            width: 128, height: 128
+        }, {
+            name: 'federer',
+            url: 'assets/sprites/federer.jpg', frames: 2,
+            spritesPerRow: 2,
+            framepos: [[0, 0], [1, 0]],
+            width: 128, height: 128
+        }, {
+            name: 'explosion',
+            url: 'assets/sprites/explosion.png', frames: 2,
             spritesPerRow: 2,
             framepos: [[0, 0], [1, 0]],
             width: 128, height: 128
@@ -85,15 +98,15 @@ export default class GameSprites {
         this.spriteSheetMap.get('marco');
 
 
-        this.spriteSystem = new GameSpriteSystem(spriteLibrary);
+        this.spriteSystem = new GameSpriteSystem(spriteLibrary, this.shaderService);
         this.spriteSystem.setScreenSize(1280, 720);
-        this.spriteMap = new Map<string, GameSprite>()
+        this.spriteMap = new Map<string, GameSprite>();
 
         this.spriteMap.set('player1', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('marco'), { centerX: 200, centerY: 200, rotation: 0, velocityX: 0, velocityY: 0 }));
-        this.spriteMap.set('star1', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 900, centerY: 50, rotation: 10, velocityX: 128, velocityY: 0 }));
-        this.spriteMap.set('star2', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 700, centerY: 150, rotation: .5, velocityX: 28, velocityY: 0 }));
-        this.spriteMap.set('star3', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 200, centerY: 250, rotation: 0, velocityX: 528, velocityY: -1 }));
-        this.spriteMap.set('star3', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('ship_fbmark'), { centerX: 20, centerY: 250, rotation: .8, velocityX: 58, velocityY: -60 }));
+        this.spriteMap.set('star1', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('powerup'), { centerX: 900, centerY: 50, rotation: 10, velocityX: 28, velocityY: 0 }));
+        this.spriteMap.set('federer', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('federer'), { centerX: 700, centerY: 150, rotation: .5, velocityX: 28, velocityY: 0 }));
+        this.spriteMap.set('explosion', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('explosion'), { centerX: 200, centerY: 250, rotation: 0, velocityX: 10, velocityY: -10 }));
+        this.spriteMap.set('ship_fbmark', GameSprite.buildGameSpriteFactory(this.spriteSystem, this.spriteSheetMap.get('ship_fbmark'), { centerX: 20, centerY: 250, rotation: .8, velocityX: 58, velocityY: -60 }));
 
         this.atlas.onload = start;
         let self = this;

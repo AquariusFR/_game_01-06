@@ -1,3 +1,4 @@
+import { GetShaderService } from 'app/get-shader.service';
 import { AfterContentInit, Component, ElementRef } from '@angular/core';
 import GameMap from 'app/game-map';
 import GameSprites from 'app/game-sprites';
@@ -8,6 +9,7 @@ import GameCamera from 'app/game-camera';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
+  providers: [ GetShaderService ],
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements AfterContentInit {
@@ -15,7 +17,7 @@ export class AppComponent implements AfterContentInit {
   private map: GameMap;
   private sprites: GameSprites;
 
-  public constructor(private elementRef: ElementRef) { }
+  public constructor(private elementRef: ElementRef, private shaderService: GetShaderService) { }
 
   public moveRight(): void {
     this.camera.panRight();
@@ -78,7 +80,7 @@ export class AppComponent implements AfterContentInit {
     let mapSpritesCanvas: HTMLCanvasElement = this.getSpritesCanvas();
     this.camera = new GameCamera(() => this.refresh());
     this.map = new GameMap(mapBackgroundCanvas, this.camera);
-    this.sprites = new GameSprites(mapSpritesCanvas, this.camera);
+    this.sprites = new GameSprites(mapSpritesCanvas, this.camera, this.shaderService);
   }
 
   private refresh(): void {

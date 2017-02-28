@@ -1,4 +1,8 @@
+import { GetShaderService } from 'app/get-shader.service';
 import { GameSpriteLibrary, shaderTypeEnum } from 'app/animation/game-sprite-library';
+import { GameSpriteAtlas } from 'app/animation/game-sprite-atlas';
+
+declare var m4: any; // TODO en fait une bibliothèque typescript
 
 export interface SpriteParam {
     centerX?: number,
@@ -82,9 +86,15 @@ export class GameSpriteSystem {
     private positionData_: Float32Array;
     private constantData_: Float32Array;
     private precisePositionView_: Float32Array;
+
+
+    private projectionMatrix: Float32Array;
+    private cameraMatrix: Float32Array;
     private startPositionData_: Array<number>;
     private velocityData_: Array<number>;
     private spriteSizeData_: Array<number>;
+
+
     // webgl reference
     private gl: WebGLRenderingContext;
     private program_: WebGLProgram;
@@ -95,8 +105,9 @@ export class GameSpriteSystem {
     private texture1Loc_: WebGLUniformLocation;
     private texture2Loc_: WebGLUniformLocation;
     private texture3Loc_: WebGLUniformLocation;
+    private matrixLocation:WebGLUniformLocation;
 
-    constructor(private spriteLibrary: GameSpriteLibrary) {
+    constructor(private spriteLibrary: GameSpriteLibrary, private shaderService: GetShaderService) {
         this.gl = spriteLibrary.gl;
         this.canvasWidth = this.gl.canvas.width;
         this.canvasHeight = this.gl.canvas.height;
@@ -106,6 +117,43 @@ export class GameSpriteSystem {
         this.frameOffset_ = 0;
         this.spriteBuffer_ = this.gl.createBuffer();
         this.clearAllSprites();
+    }
+
+    private radToDeg(r): number {
+        return r * 180 / Math.PI;
+    }
+
+    private degToRad(d): number {
+        return d * Math.PI / 180;
+    }
+
+    private buildProjectionMatrix(): void {
+        var fieldOfViewRadians = this.degToRad(80);
+        var aspect = this.canvasWidth / this.canvasHeight;
+        var zNear = 1;
+        var zFar = 1;
+        this.projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
+    }
+
+    private buildCamera(): void {
+        var cameraAngleRadians = this.degToRad(0),
+            radius = 200;
+        // Compute a matrix for the camera
+        var cameraMatrix = m4.yRotation(cameraAngleRadians);
+        cameraMatrix = m4.translate(cameraMatrix, 0, 0,0);
+        this.cameraMatrix = cameraMatrix;
+    }
+
+    private getViewMatrix(): Float32Array {
+        // Make a view matrix from the camera matrix.
+        return m4.inverse(this.cameraMatrix);
+    }
+
+    private getViewProjectionMatrix(): Float32Array {
+        this.buildProjectionMatrix();
+        this.buildCamera();
+        // Compute a view projection matrix
+        return m4.multiply(this.projectionMatrix, this.getViewMatrix());
     }
 
 
@@ -190,6 +238,9 @@ export class GameSpriteSystem {
         }
     }
     loadProgram_(): void {
+
+
+        let vertexShader2 = this.spriteLibrary.loadShaderBis('spriteVertexShader', shaderTypeEnum.VERTEX_SHADER);
         let fragmentShaderName = 'spriteFragmentShader'; // je m'en tappe du slow shader :)
         let vertexShader = this.spriteLibrary.loadShader('spriteVertexShader', shaderTypeEnum.VERTEX_SHADER);
         let fragmentShader = this.spriteLibrary.loadShader(fragmentShaderName, shaderTypeEnum.FRAGMENT_SHADER);
@@ -227,6 +278,8 @@ export class GameSpriteSystem {
         this.texture1Loc_ = this.gl.getUniformLocation(program, "u_texture1");
         this.texture2Loc_ = this.gl.getUniformLocation(program, "u_texture2");
         this.texture3Loc_ = this.gl.getUniformLocation(program, "u_texture3");
+
+        this.matrixLocation = this.gl.getUniformLocation(program, "u_matrix");
     }
     private offsetForIndex(index): number {
         return constantAttributeInfo_[index].offset;
@@ -315,7 +368,7 @@ export class GameSpriteSystem {
      * getVertexPosition
      */
     public getVertexPosition(vertexIndex: number): SpriteParam {
-        
+
         let baseIndex = GameSpriteSystem.constantAttributeStride_ * vertexIndex;
         return {
             centerX: this.positionData_[2 * vertexIndex],
@@ -363,53 +416,62 @@ export class GameSpriteSystem {
             baseOffset + Float32Array.BYTES_PER_ELEMENT * constantAttributeInfo[index].offset);
     }
 
+    private recomputeSpritePositions(deltaTime: number): GameSpriteSystem {
+        // Recompute all sprites' positions. Wrap around offscreen.
+        let numVertices: Array<any> = Array.from(Array(this.numVertices_)),
 
+            viewProjectionMatrix: Float32Array = this.getViewProjectionMatrix();
+        numVertices.forEach((v, index) => this.recomputeVertix(index, deltaTime, viewProjectionMatrix));
+        return this;
+    }
+    private recomputeVertix(vertexIndex: number, deltaTime: number, viewProjectionMatrix: Float32Array): void {
+        var newPosX = this.startPositionData_[2 * vertexIndex] + deltaTime * this.velocityData_[2 * vertexIndex];
+        var newPosY = this.startPositionData_[2 * vertexIndex + 1] + deltaTime * this.velocityData_[2 * vertexIndex + 1];
 
-    public draw = function (atlas, deltaTime) {
+        var spriteSize = this.spriteSizeData_[vertexIndex];
+        if (newPosX > this.canvasWidth + 1.1 * spriteSize) {
+            newPosX = -spriteSize;
+        } else if (newPosX < -1.1 * spriteSize) {
+            newPosX = this.canvasWidth + spriteSize;
+        }
+
+        if (newPosY > this.canvasHeight + 1.1 * spriteSize) {
+            newPosY = -spriteSize;
+        } else if (newPosY < -1.1 * spriteSize) {
+            newPosY = this.canvasHeight + spriteSize;
+        }
+
+        this.startPositionData_[2 * vertexIndex] = newPosX;
+        this.startPositionData_[2 * vertexIndex + 1] = newPosY;
+        this.positionData_[2 * vertexIndex] = newPosX;
+        this.positionData_[2 * vertexIndex + 1] = newPosY;
+    }
+
+    private uploadSpritesPositions(): GameSpriteSystem {
+        // Upload all sprites' positions.
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.spriteBuffer_);
+        if (!this.precisePositionView_ || this.precisePositionView_.length != 2 * this.numVertices_) {
+            this.precisePositionView_ = this.positionData_.subarray(0, 2 * this.numVertices_);
+        }
+        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.precisePositionView_);
+        return this;
+    }
+
+    private prepareDrawParameters(): GameSpriteSystem {
         this.gl.enable(this.gl.BLEND);
         this.gl.disable(this.gl.DEPTH_TEST);
         this.gl.disable(this.gl.CULL_FACE);
         this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
-
-        // Recompute all sprites' positions. Wrap around offscreen.
-        var numVertices = this.numVertices_;
-        for (var ii = 0; ii < numVertices; ++ii) {
-            var newPosX = this.startPositionData_[2 * ii] + deltaTime * this.velocityData_[2 * ii];
-            var newPosY = this.startPositionData_[2 * ii + 1] + deltaTime * this.velocityData_[2 * ii + 1];
-
-            var spriteSize = this.spriteSizeData_[ii];
-            if (newPosX > this.canvasWidth + 1.1 * spriteSize) {
-                newPosX = -spriteSize;
-            } else if (newPosX < -1.1 * spriteSize) {
-                newPosX = this.canvasWidth + spriteSize;
-            }
-
-            if (newPosY > this.canvasHeight + 1.1 * spriteSize) {
-                newPosY = -spriteSize;
-            } else if (newPosY < -1.1 * spriteSize) {
-                newPosY = this.canvasHeight + spriteSize;
-            }
-
-            this.startPositionData_[2 * ii] = newPosX;
-            this.startPositionData_[2 * ii + 1] = newPosY;
-            this.positionData_[2 * ii] = newPosX;
-            this.positionData_[2 * ii + 1] = newPosY;
-        }
-
-        // Upload all sprites' positions.
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.spriteBuffer_);
-        if (!this.precisePositionView_ || this.precisePositionView_.length != 2 * numVertices) {
-            this.precisePositionView_ = this.positionData_.subarray(0, 2 * numVertices);
-        }
-        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.precisePositionView_);
-
-        // Bind all textures.
-        atlas.bindTextures();
-
-        // Prepare to draw.
         this.gl.useProgram(this.program_);
+        return this;
+    }
 
-        // Set up streams.
+    private bindTextures(atlas: GameSpriteAtlas): GameSpriteSystem {
+        atlas.bindTextures();
+        return this;
+    }
+
+    private setUpStreams(): GameSpriteSystem {
         this.gl.enableVertexAttribArray(this.centerPositionLoc_);
         this.gl.vertexAttribPointer(this.centerPositionLoc_, 2, this.gl.FLOAT, false, 0, 0);
         this.setupConstantLoc_(this.rotationLoc_, ROTATION_INDEX);
@@ -420,21 +482,42 @@ export class GameSpriteSystem {
         this.setupConstantLoc_(this.spritesPerRowLoc_, SPRITES_PER_ROW_INDEX);
         this.setupConstantLoc_(this.numFramesLoc_, NUM_FRAMES_INDEX);
         this.setupConstantLoc_(this.textureWeightsLoc_, TEXTURE_WEIGHTS_INDEX);
+        return this;
+    }
 
-        // Set up uniforms.
+    private setUpUniforms(): GameSpriteSystem {
         this.gl.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
         this.gl.uniform4f(this.screenDimsLoc_,
             2.0 / this.screenWidth_,
             -2.0 / this.screenHeight_,
             -1.0,
             1.0);
+        return this;
+    }
+
+    private setUpTextureLocations(atlas: GameSpriteAtlas): GameSpriteSystem {
         // FIXME: query atlas for the number of textures.
+        //getTextureNumber()
         this.gl.uniform1i(this.texture0Loc_, 0);
         this.gl.uniform1i(this.texture1Loc_, 1);
         this.gl.uniform1i(this.texture2Loc_, 2);
         this.gl.uniform1i(this.texture3Loc_, 3);
 
+        return this;
+    }
+    //appel terminal
+    private doDraw(): void {
         // Do the draw call.
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.numVertices_);
+    }
+    public draw(atlas: GameSpriteAtlas, deltaTime: number): void {
+        this.prepareDrawParameters()
+            .recomputeSpritePositions(deltaTime)
+            .uploadSpritesPositions()
+            .bindTextures(atlas)
+            .setUpStreams()
+            .setUpUniforms()
+            .setUpTextureLocations(atlas)
+            .doDraw();
     }
 }
