@@ -6,7 +6,6 @@ const baseUrl: String = './';
 export default class LoaderImage {
 	imagesToLoad: Array<ImageToLoad>;
 
-	public callback: (loaded: Array<ImageToLoad>) => void;
 
 	loadImages(imagesToLoad: Array<ImageToLoad>): Promise<Array<ImageToLoad>> {
 		this.imagesToLoad = imagesToLoad;

@@ -25,18 +25,18 @@ export class GameSpriteLibrary {
         return shaderScript.text;
     }
 
-    loadShaderBis(id: string, shaderType: shaderTypeEnum) :Subscription{
+    loadShaderBis(id: string, shaderType: shaderTypeEnum, callback:(id:string, shader: WebGLShader) => void) :Subscription{
 
-        return this.shaderService.getProgram().subscribe(
-            next => this.loadShaderFromText(next, shaderType),
+        return this.shaderService.getProgram(id).subscribe(
+            next => callback(id, this.loadShaderFromText(next, shaderType)),
             error => console.error('error loading shader'),
             () => console.log('c\'est fini'));
     }
 
-    loadShaderFromText(text: string, shaderType: shaderTypeEnum) {
+    loadShaderFromText(text: string, shaderType: shaderTypeEnum):WebGLShader {
 
         // Create the shader object
-        var shader = this.gl.createShader(shaderType);
+        var shader:WebGLShader = this.gl.createShader(shaderType);
         if (shader == null) {
             throw "Error: unable to create shader";
         }

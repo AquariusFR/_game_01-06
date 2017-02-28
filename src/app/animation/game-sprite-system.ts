@@ -105,7 +105,7 @@ export class GameSpriteSystem {
     private texture1Loc_: WebGLUniformLocation;
     private texture2Loc_: WebGLUniformLocation;
     private texture3Loc_: WebGLUniformLocation;
-    private matrixLocation:WebGLUniformLocation;
+    private matrixLocation: WebGLUniformLocation;
 
     constructor(private spriteLibrary: GameSpriteLibrary, private shaderService: GetShaderService) {
         this.gl = spriteLibrary.gl;
@@ -140,7 +140,7 @@ export class GameSpriteSystem {
             radius = 200;
         // Compute a matrix for the camera
         var cameraMatrix = m4.yRotation(cameraAngleRadians);
-        cameraMatrix = m4.translate(cameraMatrix, 0, 0,0);
+        cameraMatrix = m4.translate(cameraMatrix, 0, 0, 0);
         this.cameraMatrix = cameraMatrix;
     }
 
@@ -237,17 +237,41 @@ export class GameSpriteSystem {
             }
         }
     }
+    shaderLoaded(shader: WebGLShader): void {
+        console.log('j\'arrive a charger un shader de manière asynchrone', shader);
+    }
+
+    private vertexShader: WebGLShader;
+    private fragmentShader: WebGLShader;
+
+    private setShader (id:string, shaderLoaded:WebGLShader) {
+        switch (id) {
+            case 'spriteVertexShader.sdr':
+                this.vertexShader = shaderLoaded
+                break;
+            case 'spriteFragmentShader.sdr':
+                this.fragmentShader = shaderLoaded
+                break;
+        
+            default:
+                console.error('wtf ???');
+                break;
+        }
+
+        if(this.vertexShader && this.fragmentShader){
+            this.setProgram(this.vertexShader, this.fragmentShader);
+        }
+    }
+
     loadProgram_(): void {
-
-
-        let vertexShader2 = this.spriteLibrary.loadShaderBis('spriteVertexShader', shaderTypeEnum.VERTEX_SHADER);
-        let fragmentShaderName = 'spriteFragmentShader'; // je m'en tappe du slow shader :)
+        this.spriteLibrary.loadShaderBis('spriteVertexShader.sdr', shaderTypeEnum.VERTEX_SHADER, (id: string, shader: WebGLShader) => this.setShader(id, shader));
+        this.spriteLibrary.loadShaderBis('spriteFragmentShader.sdr', shaderTypeEnum.FRAGMENT_SHADER, (id: string, shader: WebGLShader) => this.setShader(id, shader));
+/*        let fragmentShaderName = 'spriteFragmentShader'; // je m'en tappe du slow shader :)
         let vertexShader = this.spriteLibrary.loadShader('spriteVertexShader', shaderTypeEnum.VERTEX_SHADER);
-        let fragmentShader = this.spriteLibrary.loadShader(fragmentShaderName, shaderTypeEnum.FRAGMENT_SHADER);
+        let fragmentShader = this.spriteLibrary.loadShader(fragmentShaderName, shaderTypeEnum.FRAGMENT_SHADER);*/
+    }
+    setProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader): void {
         let program = this.gl.createProgram(); // a déporter dans spritelbrary
-
-        console.log("GameSpriteSystem using fragment shader " + fragmentShaderName);
-
         this.gl.attachShader(program, vertexShader);
         this.gl.attachShader(program, fragmentShader);
         this.gl.linkProgram(program);
@@ -511,6 +535,7 @@ export class GameSpriteSystem {
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.numVertices_);
     }
     public draw(atlas: GameSpriteAtlas, deltaTime: number): void {
+
         this.prepareDrawParameters()
             .recomputeSpritePositions(deltaTime)
             .uploadSpritesPositions()

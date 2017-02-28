@@ -89,7 +89,7 @@ export default class GameSprites {
     }
 
     private processLoadedImages(): void {
-        let spriteLibrary: GameSpriteLibrary = new GameSpriteLibrary(this.spriteContextGl);
+        let spriteLibrary: GameSpriteLibrary = new GameSpriteLibrary(this.spriteContextGl, this.shaderService);
         // once spritesheets are loaded
         // create GameSpriteSheet
         this.mapGameSpriteSheet();
