@@ -42,6 +42,8 @@ export class Game {
         this.phaserGame.load.image("background", "assets/lightworld_large.gif");
     }
 
+    private group: Phaser.Group;
+
     create() {
         var image = this.phaserGame.make.image(0, 0, "background");
 
@@ -56,6 +58,9 @@ export class Game {
 
         };
 
+
+        this.group = this.phaserGame.add.physicsGroup();
+
         this.scroller = this.phaserGame.add.existing(new ScrollableArea(this.phaserGame, 0, 0, this.phaserGame.width, this.phaserGame.height));
 
         this.scroller.addChild(image);
@@ -63,6 +68,10 @@ export class Game {
 
         this.phaserGame.physics.enable(this.placeholderSprite, Phaser.Physics.ARCADE);
         this.placeholderSprite.body.collideWorldBounds = true;
+
+
+        this.placeholderSprite.body.onCollide = new Phaser.Signal();
+        this.placeholderSprite.body.onCollide.add(this.hitSprite, this.scroller);
         this.scroller.addChild(this.placeholderSprite);
 
         this.scroller.start();
@@ -73,13 +82,19 @@ export class Game {
     private startX: number;
     private startY: number;
 
+
+    hitSprite() {
+        console.log('collision !!!');
+    }
+
     update() {
 
         this.now = Date.now();
         var elapsed = this.now - this.timestamp;
         this.timestamp = this.now;
-
-
+        if (this.phaserGame.physics.arcade.collide(this.placeholderSprite, this.scroller,this.hitSprite, this.hitSprite, this.phaserGame)) {
+            console.log('boom');
+        }
         if (false && this.placeholderSprite.body.velocity.x || this.placeholderSprite.body.velocity.y) {
 
             var coeffX = this.startX ? (this.timestamp - this.startX) * 150 / 1000 : 0;
@@ -106,16 +121,20 @@ export class Game {
                 this.startY = 0;
             }
         }
-        this.placeholderSprite.body.velocity.set(0);
 
+        let noDirectionPressedflag = true;
 
         if (this.wasd.left.isDown) {
             this.placeholderSprite.body.velocity.x = -this.speed;
             this.startX = Date.now();
+            noDirectionPressedflag = false;
         }
         else if (this.wasd.right.isDown) {
-            this.placeholderSprite.body.velocity.x = this.speed;
+            console.log('start', this.placeholderSprite.body.velocity.x);
+            this.placeholderSprite.body.velocity.x = this.placeholderSprite.body.velocity.x < this.speed ? this.speed : this.placeholderSprite.body.velocity.x *1.05;
+            console.log('end', this.placeholderSprite.body.velocity.x);
             this.startX = Date.now();
+            noDirectionPressedflag = false;
             //// Define your actionsvar ACTIONS = {    LEFT: 1,    UP: 2,    RIGHT: 3,    DOWN: 4,    ATTACK: 5,    BASIC_ATTACK: 6,};// Define your keymap, as many keys per action as we wantvar defaultKeymap = {    [ACTION.LEFT]:  [Phaser.KeyCode.A, Phaser.KeyCode.LEFT],    [ACTION.UP]:    [Phaser.KeyCode.W, Phaser.KeyCode.UP],    [ACTION.RIGHT]: [Phaser.KeyCode.D, Phaser.KeyCode.RIGHT],    [ACTION.DOWN]:  [Phaser.KeyCode.S, Phaser.KeyCode.DOWN],    [ACTION.BASIC_ATTACK]: Phaser.KeyCode.CONTROL};// Create Keymap classvar Keymap = function( keyboard, defaultKeymap ) {    this.map = {};    var self = this;    _.forEach(defaultKeymap, function(KeyCode, action) {        self.map[action] = [];        if(_.isArray(KeyCode)) {            _.forEach(KeyCode, (code) => {                self.map[action].push(keyboard.addKey(code));            });        } else {            self.map[action].push(keyboard.addKey(KeyCode));        }    });};// isDown function for your actionKeymap.prototype.isDown = function(action) {    for(let i = 0, length = this.map[action].length; i < length; i++ ){        if(this.map[action][i].isDown) {            return true;        }    }    return false;};// Create the Keymapvar myMap = new Keymap(game.input.keyboard, defaultKeymap);// In your update function you can now useif( myMap.isDown(ACTION.LEFT) ) {    // do stuff}
 
         }
@@ -123,10 +142,16 @@ export class Game {
         if (this.wasd.up.isDown) {
             this.placeholderSprite.body.velocity.y = -this.speed;
             this.startY = Date.now();
+            noDirectionPressedflag = false;
         }
         else if (this.wasd.down.isDown) {
             this.placeholderSprite.body.velocity.y = this.speed;
             this.startY = Date.now();
+            noDirectionPressedflag = false;
+        }
+
+        if(noDirectionPressedflag){
+            this.placeholderSprite.body.velocity.set(0);
         }
     }
 }
