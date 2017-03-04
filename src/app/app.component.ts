@@ -1,4 +1,5 @@
 import { AfterContentInit, Component, ElementRef } from '@angular/core';
+import { GameService } from 'app/loader/game.service'; 
 import GameMap from 'app/game-map';
 import GameSprites from 'app/game-sprites';
 import { GameSprite } from 'app/game-sprite';
@@ -9,6 +10,7 @@ import { Game } from 'app/phaser/game';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
+  providers: [ GameService ], 
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements AfterContentInit {
@@ -17,7 +19,7 @@ export class AppComponent implements AfterContentInit {
   private sprites: GameSprites;
   private game: Game;
 
-  public constructor(private elementRef: ElementRef) { }
+  public constructor(private elementRef: ElementRef, private gameService: GameService) { }
 
   public moveRight(): void {
     this.camera.panRight();
@@ -83,7 +85,7 @@ export class AppComponent implements AfterContentInit {
     this.camera = new GameCamera(() => this.refresh());
     this.map = new GameMap(mapBackgroundCanvas, this.camera);
     this.sprites = new GameSprites(mapSpritesCanvas, this.camera);*/
-    this.game = new Game();
+    this.game = new Game(this.gameService);
   }
 
   private refresh(): void {
