@@ -41,7 +41,7 @@ export class GameService {
     }
 
     public create(mapResponse: MapResponse, game: Phaser.Game): CreatedMap {
-        let map: Phaser.Tilemap = game.add.tilemap(mapResponse.name);
+        let map: Phaser.Tilemap = game.add.tilemap(mapResponse.name, 16 ,16);
         mapResponse.tilesetImages.forEach(t => {
             game.load.image(t.key, t.url);
             map.addTilesetImage(t.key, t.key);

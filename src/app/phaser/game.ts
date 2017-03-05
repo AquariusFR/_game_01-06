@@ -1,6 +1,7 @@
 import { ScrollableArea } from 'app/phaser/phaser.scrollable';
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
 export class Game {
+    marker: Phaser.Sprite;
     collisionLayer: Phaser.TilemapLayer;
 
     private horizontalScroll = true;
@@ -23,10 +24,9 @@ export class Game {
             () => console.log('c\'est fini'));
 
     }
-
     public init(mapResponse: MapResponse) {
         let self = this;
-        this.phaserGame = new Phaser.Game(600 * window.devicePixelRatio, 400 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update });
+        this.phaserGame = new Phaser.Game(1280 * window.devicePixelRatio, 960 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update });
 
         function preload() {
             self.preload(mapResponse);
@@ -51,6 +51,8 @@ export class Game {
         //this.phaserGame.load.image('map', 'assets/bigtile.png');
         this.phaserGame.load.image('placeholder', 'assets/placeholder_sprite.png');
         this.phaserGame.load.image('background', 'assets/lightworld_large.gif');
+        this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+
     }
 
     private group: Phaser.Group;
@@ -71,7 +73,6 @@ export class Game {
         this.map.setCollisionByExclusion([], true, this.collisionLayer);
         this.collisionLayer.resizeWorld();
 
-
         this.cursors = game.input.keyboard.createCursorKeys();
         this.wasd = {
             up: game.input.keyboard.addKey(Phaser.Keyboard.Z),
@@ -83,14 +84,16 @@ export class Game {
 
 
         this.group = this.phaserGame.add.physicsGroup();
+        this.placeholderSprite = game.add.sprite(16, 32, 'sprites');
+        this.placeholderSprite.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
+        this.placeholderSprite.play("down");
+        //this.placeholderSprite = this.phaserGame.add.sprite(game.world.centerX, game.world.centerY, 'placeholder');
+
+        game.physics.enable(this.placeholderSprite, Phaser.Physics.ARCADE);
 
         //this.scroller = this.phaserGame.add.existing(new ScrollableArea(this.phaserGame, 0, 0, this.phaserGame.width, this.phaserGame.height));
 
         //this.scroller.addChild(image);
-        this.placeholderSprite = this.phaserGame.add.sprite(game.world.centerX, game.world.centerY, 'placeholder');
-
-        game.physics.enable(this.placeholderSprite, Phaser.Physics.ARCADE);
-        game.camera.follow(this.placeholderSprite);
         //this.placeholderSprite.body.collideWorldBounds = true;
 
         //this.placeholderSprite.body.onCollide = new Phaser.Signal();
@@ -98,12 +101,23 @@ export class Game {
         //this.scroller.addChild(this.placeholderSprite);
 
         //this.scroller.start();
+
+
+
+        game.input.mouse.capture = true;
+        this.marker = game.add.sprite(0, 0, 'sprites');
+        this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
+        this.marker.play("blink");
+        ///game.camera.follow(this.marker);
+        game.camera.scale.x = 2;
+        game.camera.scale.y = 2;
+
     }
 
 
 
     moveTo(x, y) {/*
-        var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
+        var game = new Phaser.Game(tilesetSize00, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
         function preload() { game.load.image('arrow', 'assets/sprites/arrow.png'); }
         var sprite; var tween; function create() {
             sprite = game.add.sprite(32, 32, 'arrow'); sprite.anchor.setTo(0.5, 0.5);
@@ -129,7 +143,17 @@ export class Game {
         console.log('collision !!!');
     }
 
+
     update() {
+       var  tilesetSize = 16 * this.phaserGame.camera.scale.x;
+
+        var cameraPosition = this.phaserGame.camera.position;
+
+        this.marker.x = (tilesetSize * Math.round((this.phaserGame.input.activePointer.x - cameraPosition.x) / tilesetSize))/this.phaserGame.camera.scale.x;
+        this.marker.y = (tilesetSize * Math.round((this.phaserGame.input.activePointer.y - cameraPosition.y) / tilesetSize))/this.phaserGame.camera.scale.x;
+
+
+        console.log('camera', this.phaserGame.camera.position)
 
         this.now = Date.now();
         var elapsed = this.now - this.timestamp;
