@@ -26,7 +26,7 @@ export class Game {
     }
     public init(mapResponse: MapResponse) {
         let self = this;
-        this.phaserGame = new Phaser.Game(1280 * window.devicePixelRatio, 960 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update });
+        this.phaserGame = new Phaser.Game(600 * window.devicePixelRatio, 600 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update });
 
         function preload() {
             self.preload(mapResponse);
@@ -79,12 +79,14 @@ export class Game {
             down: game.input.keyboard.addKey(Phaser.Keyboard.S),
             left: game.input.keyboard.addKey(Phaser.Keyboard.Q),
             right: game.input.keyboard.addKey(Phaser.Keyboard.D),
-
+            cameraDown: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_2),
+            cameraUp: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_8),
+            topTown: game.input.keyboard.addKey(Phaser.Keyboard.END)
         };
 
 
         this.group = this.phaserGame.add.physicsGroup();
-        this.placeholderSprite = game.add.sprite(16, 32, 'sprites');
+        this.placeholderSprite = game.add.sprite(128, 128, 'sprites');
         this.placeholderSprite.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
         this.placeholderSprite.play("down");
         //this.placeholderSprite = this.phaserGame.add.sprite(game.world.centerX, game.world.centerY, 'placeholder');
@@ -109,8 +111,13 @@ export class Game {
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         ///game.camera.follow(this.marker);
-        game.camera.scale.x = 2;
-        game.camera.scale.y = 2;
+        game.camera.scale.x = 1;
+        game.camera.scale.y = 1;
+
+
+        //à enlever
+        this.phaserGame.camera.setPosition(32, 32);
+
 
     }
 
@@ -144,23 +151,46 @@ export class Game {
     }
 
 
+    private getTopDownCameraPositionY(): number {
+        var game = this.phaserGame,
+            camera = game.camera;
+        return (camera.bounds.bottom) - (camera.height / 2)
+    }
+
     update() {
-       var  tilesetSize = 16 * this.phaserGame.camera.scale.x;
+        var game = this.phaserGame,
+            tilesetSize = 16 * game.camera.scale.x,
+            activePointer = game.input.activePointer,
+            marker = this.marker,
+            camera = game.camera,
+            cameraPosition = game.camera.position;
 
-        var cameraPosition = this.phaserGame.camera.position;
+        marker.x = (tilesetSize * Math.round((activePointer.x + cameraPosition.x) / tilesetSize)) / camera.scale.x;
+        marker.y = (tilesetSize * Math.round((activePointer.y + cameraPosition.y) / tilesetSize)) / camera.scale.y;
 
-        this.marker.x = (tilesetSize * Math.round((this.phaserGame.input.activePointer.x - cameraPosition.x) / tilesetSize))/this.phaserGame.camera.scale.x;
-        this.marker.y = (tilesetSize * Math.round((this.phaserGame.input.activePointer.y - cameraPosition.y) / tilesetSize))/this.phaserGame.camera.scale.x;
+        console.log(cameraPosition.y);
+
+        if (activePointer.x <= (48 * camera.scale.x)) {
+            this.phaserGame.camera.setPosition(cameraPosition.x - 32, cameraPosition.y);
+        }
+        else if (activePointer.y <= (48) * camera.scale.x) {
+            this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y - 32);
+        }
+        else if (activePointer.x >= (camera.width) - (48) * camera.scale.x) {
+            this.phaserGame.camera.setPosition(cameraPosition.x + 32, cameraPosition.y);
+        }
+        else if (activePointer.y >= (camera.height) - (48) * camera.scale.y) {
 
 
-        console.log('camera', this.phaserGame.camera.position)
+            var max = Math.min(cameraPosition.y + 32, this.getTopDownCameraPositionY());
+
+            this.phaserGame.camera.setPosition(cameraPosition.x, max);
+        }
 
         this.now = Date.now();
         var elapsed = this.now - this.timestamp;
         this.timestamp = this.now;
-        if (this.phaserGame.physics.arcade.collide(this.placeholderSprite, this.scroller, this.hitSprite, this.hitSprite, this.phaserGame)) {
-            console.log('boom');
-        }
+
         if (false && this.placeholderSprite.body.velocity.x || this.placeholderSprite.body.velocity.y) {
 
             var coeffX = this.startX ? (this.timestamp - this.startX) * 150 / 1000 : 0;
@@ -196,9 +226,7 @@ export class Game {
             noDirectionPressedflag = false;
         }
         else if (this.wasd.right.isDown) {
-            console.log('start', this.placeholderSprite.body.velocity.x);
             this.placeholderSprite.body.velocity.x = this.placeholderSprite.body.velocity.x < this.speed ? this.speed : this.placeholderSprite.body.velocity.x * 1.05;
-            console.log('end', this.placeholderSprite.body.velocity.x);
             this.startX = Date.now();
             noDirectionPressedflag = false;
             //// Define your actionsvar ACTIONS = {    LEFT: 1,    UP: 2,    RIGHT: 3,    DOWN: 4,    ATTACK: 5,    BASIC_ATTACK: 6,};// Define your keymap, as many keys per action as we wantvar defaultKeymap = {    [ACTION.LEFT]:  [Phaser.KeyCode.A, Phaser.KeyCode.LEFT],    [ACTION.UP]:    [Phaser.KeyCode.W, Phaser.KeyCode.UP],    [ACTION.RIGHT]: [Phaser.KeyCode.D, Phaser.KeyCode.RIGHT],    [ACTION.DOWN]:  [Phaser.KeyCode.S, Phaser.KeyCode.DOWN],    [ACTION.BASIC_ATTACK]: Phaser.KeyCode.CONTROL};// Create Keymap classvar Keymap = function( keyboard, defaultKeymap ) {    this.map = {};    var self = this;    _.forEach(defaultKeymap, function(KeyCode, action) {        self.map[action] = [];        if(_.isArray(KeyCode)) {            _.forEach(KeyCode, (code) => {                self.map[action].push(keyboard.addKey(code));            });        } else {            self.map[action].push(keyboard.addKey(KeyCode));        }    });};// isDown function for your actionKeymap.prototype.isDown = function(action) {    for(let i = 0, length = this.map[action].length; i < length; i++ ){        if(this.map[action][i].isDown) {            return true;        }    }    return false;};// Create the Keymapvar myMap = new Keymap(game.input.keyboard, defaultKeymap);// In your update function you can now useif( myMap.isDown(ACTION.LEFT) ) {    // do stuff}
@@ -214,10 +242,24 @@ export class Game {
             this.startY = Date.now();
             noDirectionPressedflag = false;
         }
+        if (this.wasd.cameraDown.isDown) {
+            this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y + 5);
+            console.log
+        }
+        if (this.wasd.cameraUp.isDown) {
+            this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y - 5);
+        }
+        if (this.wasd.topTown.isDown) {
+            this.phaserGame.camera.setPosition(cameraPosition.x, (camera.bounds.bottom) - (camera.height / 2));
+
+
+        }
 
         if (noDirectionPressedflag) {
             this.placeholderSprite.body.velocity.set(0);
         }
-        this.phaserGame.physics.arcade.collide(this.placeholderSprite, this.collisionLayer);
+        if (this.phaserGame.physics.arcade.collide(this.placeholderSprite, this.collisionLayer)) {
+            console.log('boom');
+        };
     }
 }
