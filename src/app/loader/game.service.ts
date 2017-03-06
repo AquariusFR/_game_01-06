@@ -41,33 +41,61 @@ export class GameService {
     }
 
     public create(mapResponse: MapResponse, game: Phaser.Game): CreatedMap {
-        let map: Phaser.Tilemap = game.add.tilemap(mapResponse.name, 16 ,16);
+        let map: Phaser.Tilemap = game.add.tilemap(mapResponse.name, 16, 16);
         mapResponse.tilesetImages.forEach(t => {
             game.load.image(t.key, t.url);
             map.addTilesetImage(t.key, t.key);
         });
 
         let layers = new Map<string, Phaser.TilemapLayer>();
+        let tilePropertyMap = new Map<number, any>();
         mapResponse.layers.forEach(l => {
             let layer: Phaser.TilemapLayer = map.createLayer(l.name);
             layer.visible = l.opacity === 1;
             layers.set(l.name, layer);
         })
+
+        let tilesets: Array<any> = mapResponse.data.tilesets;
+        tilesets.map(t => {
+            return {
+                'firstgid': t.firstgid,
+                'tiles': t.tiles
+            }
+        })
+            .filter(t => t.tiles)
+            .map(t => {
+
+                let index = 0,
+                    tiles = t.tiles;
+
+
+                for (var item in tiles) {
+                    let objectgroup = tiles[item].objectgroup;
+                    if(objectgroup){
+                        tilePropertyMap.set(t.firstgid+index, objectgroup);
+                        index++;
+                    }
+                }
+            }
+            );
+
         return {
             map: map,
-            layers: layers
+            layers: layers,
+            tileMap: tilePropertyMap
         };
     }
 }
 
 export interface CreatedMap {
     map: Phaser.Tilemap,
-    layers: Map<string, Phaser.TilemapLayer>
+    layers: Map<string, Phaser.TilemapLayer>,
+    tileMap: Map<number, any>
 }
 
 export interface MapResponse {
     name: string,
-    data: JSON,
+    data: any,
     layers: Array<Layer>
     tilesetImages: Array<Tileset>
 }

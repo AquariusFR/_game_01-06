@@ -1,6 +1,8 @@
 import { ScrollableArea } from 'app/phaser/phaser.scrollable';
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
 export class Game {
+    tileMap: Map<number, any>;
+    text: Phaser.Text;
     marker: Phaser.Sprite;
     collisionLayer: Phaser.TilemapLayer;
 
@@ -10,7 +12,7 @@ export class Game {
     private scroller;
     private phaserGame: Phaser.Game;
     private cursors: Phaser.CursorKeys;
-    private placeholderSprite: Phaser.Sprite;
+    private player: Phaser.Sprite;
     private wasd: any;
     private speed = 300;
 
@@ -26,7 +28,8 @@ export class Game {
     }
     public init(mapResponse: MapResponse) {
         let self = this;
-        this.phaserGame = new Phaser.Game(600 * window.devicePixelRatio, 600 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update });
+
+        this.phaserGame = new Phaser.Game(600 * window.devicePixelRatio, window.innerHeight / 2 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
 
         function preload() {
             self.preload(mapResponse);
@@ -46,6 +49,15 @@ export class Game {
     }
 
     private preload(mapResponse: MapResponse) {
+
+
+
+        this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
+        this.phaserGame.scale.setUserScale(2, 2);
+        //this.phaserGame.renderer.renderSession.roundPixels = true;
+        Phaser.Canvas.setImageRenderingCrisp(this.phaserGame.canvas);
+
+
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
 
         //this.phaserGame.load.image('map', 'assets/bigtile.png');
@@ -55,22 +67,32 @@ export class Game {
 
     }
 
-    private group: Phaser.Group;
     private map: Phaser.Tilemap;
 
     create(mapResponse: MapResponse) {
-        var game: Phaser.Game = this.phaserGame;
+        let game: Phaser.Game = this.phaserGame;
+        //game.camera.scale.x = 2;
+        //game.camera.scale.y = 2;
+
+
+        //à enlever
+        this.phaserGame.camera.setPosition(32, 32);
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        var image = game.make.image(0, 0, "background");
+        let image = game.make.image(0, 0, "background");
         //  The 'tavern' key here is the Loader key given in game.load.tilemap
         let createdMap: CreatedMap = this.gameService.create(mapResponse, game);
         this.map = createdMap.map;
+        this.tileMap = createdMap.tileMap;
 
-        let collisionsMap = createdMap.layers.get('collisions');
-        this.collisionLayer = collisionsMap;
+        let collisionLayer = createdMap.layers.get('collisions');
+
+        //collisionsLayer.setScale(2);
+
+        this.collisionLayer = collisionLayer;
         this.map.setCollisionByExclusion([], true, this.collisionLayer);
+
         this.collisionLayer.resizeWorld();
 
         this.cursors = game.input.keyboard.createCursorKeys();
@@ -81,52 +103,57 @@ export class Game {
             right: game.input.keyboard.addKey(Phaser.Keyboard.D),
             cameraDown: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_2),
             cameraUp: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_8),
+            cameraLeft: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_4),
+            cameraRight: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_6),
             topTown: game.input.keyboard.addKey(Phaser.Keyboard.END)
         };
 
 
-        this.group = this.phaserGame.add.physicsGroup();
-        this.placeholderSprite = game.add.sprite(128, 128, 'sprites');
-        this.placeholderSprite.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
-        this.placeholderSprite.play("down");
-        //this.placeholderSprite = this.phaserGame.add.sprite(game.world.centerX, game.world.centerY, 'placeholder');
-
-        game.physics.enable(this.placeholderSprite, Phaser.Physics.ARCADE);
-
-        //this.scroller = this.phaserGame.add.existing(new ScrollableArea(this.phaserGame, 0, 0, this.phaserGame.width, this.phaserGame.height));
-
-        //this.scroller.addChild(image);
-        //this.placeholderSprite.body.collideWorldBounds = true;
-
-        //this.placeholderSprite.body.onCollide = new Phaser.Signal();
-        //this.placeholderSprite.body.onCollide.add(this.hitSprite, this.scroller);
-        //this.scroller.addChild(this.placeholderSprite);
-
-        //this.scroller.start();
-
-
-
+        this.player = game.add.sprite(32, 32, 'sprites');
+        this.player.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
+        this.player.play("down");
+        game.physics.enable(this.player, Phaser.Physics.ARCADE);
         game.input.mouse.capture = true;
         this.marker = game.add.sprite(0, 0, 'sprites');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
+        this.marker.inputEnabled = true;
+        this.marker.events.onInputDown.add(this.listener, this);
         ///game.camera.follow(this.marker);
-        game.camera.scale.x = 1;
-        game.camera.scale.y = 1;
 
 
-        //à enlever
-        this.phaserGame.camera.setPosition(32, 32);
+        this.text = game.add.text(250, 16, '', { fill: '#ffffff' });
+    }
 
+    private counter: number = 0;
 
+    listener() {
+        let x = this.phaserGame.input.activePointer.x,
+            y = this.phaserGame.input.activePointer.y;
+        this.counter++;
+        this.text.x = x;
+        this.text.y = y;
+
+        this.map.objects;
+
+        //var _x = this.collisionLayer.getTileX(this.phaserGame.input.activePointer.worldX);
+        //var _y = this.collisionLayer.getTileY(this.phaserGame.input.activePointer.worldY);
+
+        //var tile = this.map.getTile(_x, _y, this.collisionLayer);
+
+        let tile: Phaser.Tile = this.map.getTileWorldXY(x, y, 16, 16, this.collisionLayer);
+        if (tile && this.tileMap.has(tile.index)) {
+            console.log(this.tileMap.get(tile.index));
+        }
+        this.text.text = ("You clicked " + tile + this.counter + " times!");
     }
 
 
 
     moveTo(x, y) {/*
-        var game = new Phaser.Game(tilesetSize00, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
+        let game = new Phaser.Game(tilesetSize00, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
         function preload() { game.load.image('arrow', 'assets/sprites/arrow.png'); }
-        var sprite; var tween; function create() {
+        let sprite; let tween; function create() {
             sprite = game.add.sprite(32, 32, 'arrow'); sprite.anchor.setTo(0.5, 0.5);
             game.input.onDown.add(moveSprite, this);
         }
@@ -135,7 +162,7 @@ export class Game {
                 tween.stop();
             } sprite.rotation = game.physics.angleToPointer(sprite, pointer);
             //  300 = 300 pixels per second = the speed the sprite will move at, regardless of the distance it has to travel   
-            var duration = (game.physics.distanceToPointer(sprite, pointer) / 300) * 1000;
+            let duration = (game.physics.distanceToPointer(sprite, pointer) / 300) * 1000;
             tween = game.add.tween(sprite).to({ x: pointer.x, y: pointer.y }, duration, Phaser.Easing.Linear.None, true);
         }*/
     }
@@ -152,114 +179,138 @@ export class Game {
 
 
     private getTopDownCameraPositionY(): number {
-        var game = this.phaserGame,
+        let game = this.phaserGame,
             camera = game.camera;
         return (camera.bounds.bottom) - (camera.height / 2)
     }
 
-    update() {
-        var game = this.phaserGame,
-            tilesetSize = 16 * game.camera.scale.x,
-            activePointer = game.input.activePointer,
-            marker = this.marker,
+    private updateCamera() {
+        let game = this.phaserGame,
             camera = game.camera,
-            cameraPosition = game.camera.position;
+            activePointer = game.input.activePointer,
+            cameraPosition = camera.position,
+            livezone = 32,
+            cameraStep = 16;
 
-        marker.x = (tilesetSize * Math.round((activePointer.x + cameraPosition.x) / tilesetSize)) / camera.scale.x;
-        marker.y = (tilesetSize * Math.round((activePointer.y + cameraPosition.y) / tilesetSize)) / camera.scale.y;
 
-        console.log(cameraPosition.y);
-
-        if (activePointer.x <= (48 * camera.scale.x)) {
-            this.phaserGame.camera.setPosition(cameraPosition.x - 32, cameraPosition.y);
+        if (activePointer.x <= livezone) {
+            this.phaserGame.camera.setPosition(cameraPosition.x - cameraStep, cameraPosition.y);
         }
-        else if (activePointer.y <= (48) * camera.scale.x) {
-            this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y - 32);
+        else if (activePointer.y <= livezone) {
+            this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y - cameraStep);
         }
-        else if (activePointer.x >= (camera.width) - (48) * camera.scale.x) {
-            this.phaserGame.camera.setPosition(cameraPosition.x + 32, cameraPosition.y);
+        else if (activePointer.x >= camera.width - livezone) {
+            this.phaserGame.camera.setPosition(cameraPosition.x + cameraStep, cameraPosition.y);
         }
-        else if (activePointer.y >= (camera.height) - (48) * camera.scale.y) {
-
-
-            var max = Math.min(cameraPosition.y + 32, this.getTopDownCameraPositionY());
-
+        else if (activePointer.y >= camera.height - livezone) {
+            let max = Math.min(cameraPosition.y + cameraStep, this.getTopDownCameraPositionY());
             this.phaserGame.camera.setPosition(cameraPosition.x, max);
         }
-
-        this.now = Date.now();
-        var elapsed = this.now - this.timestamp;
-        this.timestamp = this.now;
-
-        if (false && this.placeholderSprite.body.velocity.x || this.placeholderSprite.body.velocity.y) {
-
-            var coeffX = this.startX ? (this.timestamp - this.startX) * 150 / 1000 : 0;
-            var coeffY = this.startY ? (this.timestamp - this.startY) * 150 / 1000 : 0;
-
-            var velocityx = Math.abs(this.placeholderSprite.body.velocity.x) - coeffX;
-            var velocityy = Math.abs(this.placeholderSprite.body.velocity.y) - coeffY;
-
-            velocityx = velocityx < 10 ? 0 : velocityx;
-            velocityy = velocityy < 10 ? 0 : velocityy;
-
-            velocityx = this.placeholderSprite.body.velocity.x > 0 ? velocityx : -velocityx;
-            velocityy = this.placeholderSprite.body.velocity.y > 0 ? velocityy : -velocityy;
+    }
 
 
+    private setMarker() {
+        let game = this.phaserGame,
+            camera = game.camera,
+            activePointer = game.input.activePointer,
+            tilesetSize = 16,
+            cameraPosition = camera.position,
+            marker = this.marker;
 
-            this.placeholderSprite.body.velocity.x = velocityx;
-            this.placeholderSprite.body.velocity.y = velocityy;
+        marker.x = tilesetSize * Math.round((activePointer.x + cameraPosition.x - 8) / tilesetSize);
+        marker.y = tilesetSize * Math.round((activePointer.y + cameraPosition.y - 8) / tilesetSize);
+    }
 
-            if (this.placeholderSprite.body.velocity.x = 0) {
-                this.startX = 0;
-            }
-            if (this.placeholderSprite.body.velocity.y = 0) {
-                this.startY = 0;
-            }
-        }
 
+    private handlerKeyBoard() {
+        let camera = this.phaserGame.camera,
+            cameraPosition = camera.position;
         let noDirectionPressedflag = true;
 
         if (this.wasd.left.isDown) {
-            this.placeholderSprite.body.velocity.x = -this.speed;
+            this.player.body.velocity.x = -this.speed;
             this.startX = Date.now();
             noDirectionPressedflag = false;
         }
         else if (this.wasd.right.isDown) {
-            this.placeholderSprite.body.velocity.x = this.placeholderSprite.body.velocity.x < this.speed ? this.speed : this.placeholderSprite.body.velocity.x * 1.05;
+            this.player.body.velocity.x = this.player.body.velocity.x < this.speed ? this.speed : this.player.body.velocity.x * 1.05;
             this.startX = Date.now();
             noDirectionPressedflag = false;
-            //// Define your actionsvar ACTIONS = {    LEFT: 1,    UP: 2,    RIGHT: 3,    DOWN: 4,    ATTACK: 5,    BASIC_ATTACK: 6,};// Define your keymap, as many keys per action as we wantvar defaultKeymap = {    [ACTION.LEFT]:  [Phaser.KeyCode.A, Phaser.KeyCode.LEFT],    [ACTION.UP]:    [Phaser.KeyCode.W, Phaser.KeyCode.UP],    [ACTION.RIGHT]: [Phaser.KeyCode.D, Phaser.KeyCode.RIGHT],    [ACTION.DOWN]:  [Phaser.KeyCode.S, Phaser.KeyCode.DOWN],    [ACTION.BASIC_ATTACK]: Phaser.KeyCode.CONTROL};// Create Keymap classvar Keymap = function( keyboard, defaultKeymap ) {    this.map = {};    var self = this;    _.forEach(defaultKeymap, function(KeyCode, action) {        self.map[action] = [];        if(_.isArray(KeyCode)) {            _.forEach(KeyCode, (code) => {                self.map[action].push(keyboard.addKey(code));            });        } else {            self.map[action].push(keyboard.addKey(KeyCode));        }    });};// isDown function for your actionKeymap.prototype.isDown = function(action) {    for(let i = 0, length = this.map[action].length; i < length; i++ ){        if(this.map[action][i].isDown) {            return true;        }    }    return false;};// Create the Keymapvar myMap = new Keymap(game.input.keyboard, defaultKeymap);// In your update function you can now useif( myMap.isDown(ACTION.LEFT) ) {    // do stuff}
         }
-
         if (this.wasd.up.isDown) {
-            this.placeholderSprite.body.velocity.y = -this.speed;
+            this.player.body.velocity.y = -this.speed;
             this.startY = Date.now();
             noDirectionPressedflag = false;
         }
         else if (this.wasd.down.isDown) {
-            this.placeholderSprite.body.velocity.y = this.speed;
+            this.player.body.velocity.y = this.speed;
             this.startY = Date.now();
             noDirectionPressedflag = false;
         }
         if (this.wasd.cameraDown.isDown) {
             this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y + 5);
-            console.log
+        }
+        if (this.wasd.cameraLeft.isDown) {
+            this.phaserGame.camera.setPosition(cameraPosition.x - 5, cameraPosition.y);
+        }
+        if (this.wasd.cameraRight.isDown) {
+            this.phaserGame.camera.setPosition(cameraPosition.x + 5, cameraPosition.y);
         }
         if (this.wasd.cameraUp.isDown) {
             this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y - 5);
         }
         if (this.wasd.topTown.isDown) {
             this.phaserGame.camera.setPosition(cameraPosition.x, (camera.bounds.bottom) - (camera.height / 2));
-
-
         }
 
         if (noDirectionPressedflag) {
-            this.placeholderSprite.body.velocity.set(0);
+            this.player.body.velocity.set(0);
         }
-        if (this.phaserGame.physics.arcade.collide(this.placeholderSprite, this.collisionLayer)) {
+        if (this.phaserGame.physics.arcade.collide(this.player, this.collisionLayer)) {
             console.log('boom');
         };
+    }
+
+    update() {
+        let game = this.phaserGame,
+            camera = game.camera,
+            cameraPosition = game.camera.position;
+
+        this.setMarker();
+        this.updateCamera();
+
+        this.now = Date.now();
+        let elapsed = this.now - this.timestamp;
+        this.timestamp = this.now;
+
+        if (false && this.player.body.velocity.x || this.player.body.velocity.y) {
+
+            let coeffX = this.startX ? (this.timestamp - this.startX) * 150 / 1000 : 0;
+            let coeffY = this.startY ? (this.timestamp - this.startY) * 150 / 1000 : 0;
+
+            let velocityx = Math.abs(this.player.body.velocity.x) - coeffX;
+            let velocityy = Math.abs(this.player.body.velocity.y) - coeffY;
+
+            velocityx = velocityx < 10 ? 0 : velocityx;
+            velocityy = velocityy < 10 ? 0 : velocityy;
+
+            velocityx = this.player.body.velocity.x > 0 ? velocityx : -velocityx;
+            velocityy = this.player.body.velocity.y > 0 ? velocityy : -velocityy;
+
+            this.player.body.velocity.x = velocityx;
+            this.player.body.velocity.y = velocityy;
+
+            if (this.player.body.velocity.x = 0) {
+                this.startX = 0;
+            }
+            if (this.player.body.velocity.y = 0) {
+                this.startY = 0;
+            }
+        }
+
+        this.handlerKeyBoard();
+
+        //game.debug.bodyInfo(this.player, 32, 32);
+        //game.debug.body(this.player);
     }
 }
