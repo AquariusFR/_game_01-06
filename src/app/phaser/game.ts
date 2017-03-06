@@ -1,11 +1,10 @@
 import { ScrollableArea } from 'app/phaser/phaser.scrollable';
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
 export class Game {
-    tileMap: Map<number, any>;
-    text: Phaser.Text;
-    marker: Phaser.Sprite;
-    collisionLayer: Phaser.TilemapLayer;
-
+    private tileMap: Map<number, any>;
+    private text: Phaser.Text;
+    private marker: Phaser.Sprite;
+    private collisionLayer: Phaser.TilemapLayer;
     private horizontalScroll = true;
     private verticalScroll = true;
     private kineticMovement = true;
@@ -15,7 +14,10 @@ export class Game {
     private player: Phaser.Sprite;
     private wasd: any;
     private speed = 300;
-
+    private map: Phaser.Tilemap;
+    private tween: Phaser.Tween;
+    private startX: number;
+    private startY: number;
 
     constructor(private gameService: GameService) {
 
@@ -26,7 +28,7 @@ export class Game {
             () => console.log('c\'est fini'));
 
     }
-    public init(mapResponse: MapResponse) {
+    private init(mapResponse: MapResponse) {
         let self = this;
 
         this.phaserGame = new Phaser.Game(600 * window.devicePixelRatio, window.innerHeight / 2 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
@@ -50,50 +52,35 @@ export class Game {
 
     private preload(mapResponse: MapResponse) {
 
-
-
+        Phaser.Canvas.setImageRenderingCrisp(this.phaserGame.canvas);
         this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
         this.phaserGame.scale.setUserScale(2, 2);
-        //this.phaserGame.renderer.renderSession.roundPixels = true;
-        Phaser.Canvas.setImageRenderingCrisp(this.phaserGame.canvas);
-
-
-        this.gameService.LoadTileMap(mapResponse, this.phaserGame);
-
-        //this.phaserGame.load.image('map', 'assets/bigtile.png');
         this.phaserGame.load.image('placeholder', 'assets/placeholder_sprite.png');
-        this.phaserGame.load.image('background', 'assets/lightworld_large.gif');
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-
+        this.gameService.LoadTileMap(mapResponse, this.phaserGame);
     }
 
-    private map: Phaser.Tilemap;
+
 
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
-        //game.camera.scale.x = 2;
-        //game.camera.scale.y = 2;
-
 
         //à enlever
         this.phaserGame.camera.setPosition(32, 32);
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        let image = game.make.image(0, 0, "background");
         //  The 'tavern' key here is the Loader key given in game.load.tilemap
         let createdMap: CreatedMap = this.gameService.create(mapResponse, game);
         this.map = createdMap.map;
         this.tileMap = createdMap.tileMap;
 
         let collisionLayer = createdMap.layers.get('collisions');
-
-        //collisionsLayer.setScale(2);
-
         this.collisionLayer = collisionLayer;
         this.map.setCollisionByExclusion([], true, this.collisionLayer);
 
         this.collisionLayer.resizeWorld();
+
 
         this.cursors = game.input.keyboard.createCursorKeys();
         this.wasd = {
@@ -112,71 +99,51 @@ export class Game {
         this.player = game.add.sprite(32, 32, 'sprites');
         this.player.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
         this.player.play("down");
-        game.physics.enable(this.player, Phaser.Physics.ARCADE);
-        game.input.mouse.capture = true;
         this.marker = game.add.sprite(0, 0, 'sprites');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         this.marker.inputEnabled = true;
         this.marker.events.onInputDown.add(this.listener, this);
+        game.physics.enable(this.player, Phaser.Physics.ARCADE);
+        game.physics.enable(this.marker, Phaser.Physics.ARCADE);
+
+
+        game.input.mouse.capture = true;
         ///game.camera.follow(this.marker);
 
 
-        this.text = game.add.text(250, 16, '', { fill: '#ffffff' });
+        this.text = game.add.text(250, 8, '', {
+            fontSize: '8px',
+            fill: '#ffffff'
+        });
+        this.text.alpha = 0.8;
     }
 
-    private counter: number = 0;
 
-    listener() {
-        let x = this.phaserGame.input.activePointer.x,
-            y = this.phaserGame.input.activePointer.y;
-        this.counter++;
-        this.text.x = x;
-        this.text.y = y;
+    private listener() {
+        let marker = this.marker;
 
-        this.map.objects;
+        this.text.x = this.marker.x;
+        this.text.y = this.marker.y;
 
-        //var _x = this.collisionLayer.getTileX(this.phaserGame.input.activePointer.worldX);
-        //var _y = this.collisionLayer.getTileY(this.phaserGame.input.activePointer.worldY);
-
-        //var tile = this.map.getTile(_x, _y, this.collisionLayer);
-
-        let tile: Phaser.Tile = this.map.getTileWorldXY(x, y, 16, 16, this.collisionLayer);
+        let tile: Phaser.Tile = this.map.getTileWorldXY(marker.x, marker.y, 16, 16, this.collisionLayer);
         if (tile && this.tileMap.has(tile.index)) {
             console.log(this.tileMap.get(tile.index));
+            this.text.text = ("on ne peux pas bouger ici !");
+        } else {
+            this.moveTo(this.player, marker.x, marker.y);
+            this.text.text = ("Let's go !");
         }
-        this.text.text = ("You clicked " + tile + this.counter + " times!");
     }
 
-
-
-    moveTo(x, y) {/*
-        let game = new Phaser.Game(tilesetSize00, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
-        function preload() { game.load.image('arrow', 'assets/sprites/arrow.png'); }
-        let sprite; let tween; function create() {
-            sprite = game.add.sprite(32, 32, 'arrow'); sprite.anchor.setTo(0.5, 0.5);
-            game.input.onDown.add(moveSprite, this);
+    public moveTo(sprite: Phaser.Sprite, x: number, y: number) {
+        let game = this.phaserGame,
+            duration = (game.physics.arcade.distanceToPointer(sprite, this.phaserGame.input.activePointer) / 300) * 1000;
+        if (this.tween && this.tween.isRunning) {
+            this.tween.stop();
         }
-        function moveSprite(pointer) {
-            if (tween && tween.isRunning) {
-                tween.stop();
-            } sprite.rotation = game.physics.angleToPointer(sprite, pointer);
-            //  300 = 300 pixels per second = the speed the sprite will move at, regardless of the distance it has to travel   
-            let duration = (game.physics.distanceToPointer(sprite, pointer) / 300) * 1000;
-            tween = game.add.tween(sprite).to({ x: pointer.x, y: pointer.y }, duration, Phaser.Easing.Linear.None, true);
-        }*/
+        this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
     }
-
-    private now: number;
-    private timestamp: number;
-    private startX: number;
-    private startY: number;
-
-
-    hitSprite() {
-        console.log('collision !!!');
-    }
-
 
     private getTopDownCameraPositionY(): number {
         let game = this.phaserGame,
@@ -191,7 +158,6 @@ export class Game {
             cameraPosition = camera.position,
             livezone = 32,
             cameraStep = 16;
-
 
         if (activePointer.x <= livezone) {
             this.phaserGame.camera.setPosition(cameraPosition.x - cameraStep, cameraPosition.y);
@@ -208,20 +174,30 @@ export class Game {
         }
     }
 
-
     private setMarker() {
+        let marker: Phaser.Sprite = this.marker,
+            tilePointBelowPointer: Phaser.Point = this.pointToTilePosition(); // get tile coordinate below activePointer
+        let tileBelowPointer: Phaser.Tile = this.map.getTileWorldXY(tilePointBelowPointer.x, tilePointBelowPointer.y, 16, 16, this.collisionLayer);
+
+        if (tileBelowPointer && tileBelowPointer.canCollide) {
+            // do something if you want
+        } else {
+            marker.x = tilePointBelowPointer.x;
+            marker.y = tilePointBelowPointer.y;
+        }
+    }
+
+    private pointToTilePosition(): Phaser.Point {
         let game = this.phaserGame,
             camera = game.camera,
             activePointer = game.input.activePointer,
-            tilesetSize = 16,
             cameraPosition = camera.position,
-            marker = this.marker;
-
-        marker.x = tilesetSize * Math.round((activePointer.x + cameraPosition.x - 8) / tilesetSize);
-        marker.y = tilesetSize * Math.round((activePointer.y + cameraPosition.y - 8) / tilesetSize);
+            tilesetSize = 16,
+            point = new Phaser.Point();
+        point.x = tilesetSize * Math.round((activePointer.x + cameraPosition.x - 8) / tilesetSize);
+        point.y = tilesetSize * Math.round((activePointer.y + cameraPosition.y - 8) / tilesetSize);
+        return point;
     }
-
-
     private handlerKeyBoard() {
         let camera = this.phaserGame.camera,
             cameraPosition = camera.position;
@@ -268,46 +244,15 @@ export class Game {
         }
         if (this.phaserGame.physics.arcade.collide(this.player, this.collisionLayer)) {
             console.log('boom');
-        };
+        }
+        if (this.phaserGame.physics.arcade.collide(this.marker, this.collisionLayer)) {
+            console.log('hey, cursor is over collide area !!');
+        }
     }
 
     update() {
-        let game = this.phaserGame,
-            camera = game.camera,
-            cameraPosition = game.camera.position;
-
         this.setMarker();
         this.updateCamera();
-
-        this.now = Date.now();
-        let elapsed = this.now - this.timestamp;
-        this.timestamp = this.now;
-
-        if (false && this.player.body.velocity.x || this.player.body.velocity.y) {
-
-            let coeffX = this.startX ? (this.timestamp - this.startX) * 150 / 1000 : 0;
-            let coeffY = this.startY ? (this.timestamp - this.startY) * 150 / 1000 : 0;
-
-            let velocityx = Math.abs(this.player.body.velocity.x) - coeffX;
-            let velocityy = Math.abs(this.player.body.velocity.y) - coeffY;
-
-            velocityx = velocityx < 10 ? 0 : velocityx;
-            velocityy = velocityy < 10 ? 0 : velocityy;
-
-            velocityx = this.player.body.velocity.x > 0 ? velocityx : -velocityx;
-            velocityy = this.player.body.velocity.y > 0 ? velocityy : -velocityy;
-
-            this.player.body.velocity.x = velocityx;
-            this.player.body.velocity.y = velocityy;
-
-            if (this.player.body.velocity.x = 0) {
-                this.startX = 0;
-            }
-            if (this.player.body.velocity.y = 0) {
-                this.startY = 0;
-            }
-        }
-
         this.handlerKeyBoard();
 
         //game.debug.bodyInfo(this.player, 32, 32);
