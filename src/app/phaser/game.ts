@@ -56,7 +56,7 @@ export class Game {
         //this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
         //this.phaserGame.scale.setUserScale(2, 2);
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.atlas('z-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Female_Heroes.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('z-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
     }
 
@@ -97,7 +97,7 @@ export class Game {
 
 
         this.player = game.add.sprite(32, 32, 'z-sprites');
-        this.player.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
+        this.player.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
         this.player.play("down");
         this.marker = game.add.sprite(0, 0, 'sprites');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
