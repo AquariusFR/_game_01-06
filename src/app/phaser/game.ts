@@ -22,7 +22,7 @@ export class Game {
     constructor(private gameService: GameService) {
 
 
-        this.gameService.getMapJson('map00').subscribe(
+        this.gameService.getMapJson('zombie').subscribe(
             next => this.init(next),
             error => console.error('error loading map'),
             () => console.log('c\'est fini'));
@@ -53,10 +53,10 @@ export class Game {
     private preload(mapResponse: MapResponse) {
 
         Phaser.Canvas.setImageRenderingCrisp(this.phaserGame.canvas);
-        this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
-        this.phaserGame.scale.setUserScale(2, 2);
-        this.phaserGame.load.image('placeholder', 'assets/placeholder_sprite.png');
+        //this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
+        //this.phaserGame.scale.setUserScale(2, 2);
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('z-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Female_Heroes.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
     }
 
@@ -96,7 +96,7 @@ export class Game {
         };
 
 
-        this.player = game.add.sprite(32, 32, 'sprites');
+        this.player = game.add.sprite(32, 32, 'z-sprites');
         this.player.animations.add("down", ["hero/hero-down-0", "hero/hero-down-1"], 5, true);
         this.player.play("down");
         this.marker = game.add.sprite(0, 0, 'sprites');
