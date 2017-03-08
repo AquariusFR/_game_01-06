@@ -31,7 +31,7 @@ export class Game {
     private init(mapResponse: MapResponse) {
         let self = this;
 
-        this.phaserGame = new Phaser.Game(600 * window.devicePixelRatio, window.innerHeight / 2 * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
+        this.phaserGame = new Phaser.Game((window.innerWidth - 100) * window.devicePixelRatio, (window.innerHeight - 100) * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
 
         function preload() {
             self.preload(mapResponse);
