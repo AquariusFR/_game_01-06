@@ -1,5 +1,7 @@
 import { ScrollableArea } from 'app/phaser/phaser.scrollable';
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
+
+// https://www.leshylabs.com/apps/sstool/
 export class Game {
     private tileMap: Map<number, any>;
     private text: Phaser.Text;
