@@ -60,6 +60,7 @@ export class Game {
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('zombie-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('icon-set', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
     }
 
@@ -104,7 +105,7 @@ export class Game {
         player.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
         player.animations.add("stand-down", ["sprite2"], 5, true);
         player.play("stand-down");
-        this.marker = game.add.sprite(0, 0, 'sprites');
+        this.marker = game.add.sprite(0, 0, 'icon-set');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         this.marker.inputEnabled = true;
@@ -113,7 +114,16 @@ export class Game {
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
         player.body.collideWorldBounds = true;
 
-
+        this.createZombie(132,82);
+        this.createZombie(172,82);
+        this.createZombie(212,82);
+        this.createZombie(282,84);
+        this.createZombie(322,82);
+        this.createZombie(135,85);
+        this.createZombie(175,62);
+        this.createZombie(215,66);
+        this.createZombie(285,72);
+        this.createZombie(325,77);
         
         let zombie = game.add.sprite(132, 32, 'zombie-sprites');
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
@@ -129,6 +139,13 @@ export class Game {
             fill: '#ffffff'
         });
         this.text.alpha = 0.8;
+    }
+
+
+    private createZombie(x,y) {
+        let zombie = this.phaserGame.add.sprite(x, y, 'zombie-sprites');
+        zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
+        zombie.play("z-down");
     }
 
 
