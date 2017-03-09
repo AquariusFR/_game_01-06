@@ -58,7 +58,8 @@ export class Game {
         //this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
         //this.phaserGame.scale.setUserScale(2, 2);
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.atlas('z-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('zombie-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
     }
 
@@ -98,16 +99,25 @@ export class Game {
         };
 
 
-        this.player = game.add.sprite(32, 32, 'z-sprites');
-        this.player.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
-        this.player.play("down");
+        this.player = game.add.sprite(32, 32, 'heroes-sprites');
+        let player = this.player;
+        player.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
+        player.animations.add("stand-down", ["sprite2"], 5, true);
+        player.play("stand-down");
         this.marker = game.add.sprite(0, 0, 'sprites');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         this.marker.inputEnabled = true;
         this.marker.events.onInputDown.add(this.listener, this);
-        game.physics.enable(this.player, Phaser.Physics.ARCADE);
+        game.physics.enable(player, Phaser.Physics.ARCADE);
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
+        player.body.collideWorldBounds = true;
+
+
+        
+        let zombie = game.add.sprite(132, 32, 'zombie-sprites');
+        zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
+        zombie.play("z-down");
 
 
         game.input.mouse.capture = true;
@@ -133,7 +143,7 @@ export class Game {
             console.log(this.tileMap.get(tile.index));
             this.text.text = ("on ne peux pas bouger ici !");
         } else {
-            this.moveTo(this.player, marker.x, marker.y);
+            this.moveTo(this.player, marker.x, marker.y-36);
             this.text.text = ("Let's go !");
         }
     }
@@ -144,7 +154,14 @@ export class Game {
         if (this.tween && this.tween.isRunning) {
             this.tween.stop();
         }
+
+        this.player.play("down");
         this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
+        this.tween.onComplete.add(this.onComplete, this);
+    }
+
+    private onComplete() {
+        this.player.play("stand-down");
     }
 
     private getTopDownCameraPositionY(): number {
