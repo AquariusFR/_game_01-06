@@ -1,8 +1,10 @@
+import { Entity } from 'app/game/entity'
 import { ScrollableArea } from 'app/phaser/phaser.scrollable';
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
+import { Observable } from 'rxjs/Observable';
 
 // https://www.leshylabs.com/apps/sstool/
-export class Game {
+export class Engine {
     private tileMap: Map<number, any>;
     private text: Phaser.Text;
     private marker: Phaser.Sprite;
@@ -13,22 +15,26 @@ export class Game {
     private scroller;
     private phaserGame: Phaser.Game;
     private cursors: Phaser.CursorKeys;
-    private player: Phaser.Sprite;
+    //private player: Phaser.Sprite;
     private wasd: any;
     private speed = 300;
     private map: Phaser.Tilemap;
     private tween: Phaser.Tween;
     private startX: number;
     private startY: number;
+    public observable: Observable<string>;
+    private status: (string) => void;
+    private o;
 
     constructor(private gameService: GameService) {
-
-
+        this.observable = Observable.create(o => {
+            this.o = o;
+            this.status = o.next;
+        });
         this.gameService.getMapJson('zombie').subscribe(
             next => this.init(next),
             error => console.error('error loading map'),
             () => console.log('c\'est fini'));
-
     }
     private init(mapResponse: MapResponse) {
         let self = this;
@@ -64,8 +70,6 @@ export class Game {
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
     }
 
-
-
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
 
@@ -85,13 +89,8 @@ export class Game {
 
         this.collisionLayer.resizeWorld();
 
-
         this.cursors = game.input.keyboard.createCursorKeys();
         this.wasd = {
-            up: game.input.keyboard.addKey(Phaser.Keyboard.Z),
-            down: game.input.keyboard.addKey(Phaser.Keyboard.S),
-            left: game.input.keyboard.addKey(Phaser.Keyboard.Q),
-            right: game.input.keyboard.addKey(Phaser.Keyboard.D),
             cameraDown: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_2),
             cameraUp: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_8),
             cameraLeft: game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_4),
@@ -99,35 +98,12 @@ export class Game {
             topTown: game.input.keyboard.addKey(Phaser.Keyboard.END)
         };
 
-
-        this.player = game.add.sprite(32, 32, 'heroes-sprites');
-        let player = this.player;
-        player.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
-        player.animations.add("stand-down", ["sprite2"], 5, true);
-        player.play("stand-down");
         this.marker = game.add.sprite(0, 0, 'icon-set');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
-        this.marker.inputEnabled = true;
-        this.marker.events.onInputDown.add(this.listener, this);
-        game.physics.enable(player, Phaser.Physics.ARCADE);
+        //this.marker.events.onInputDown.add(this.listener, this);
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
-        player.body.collideWorldBounds = true;
 
-        this.createZombie(132,82);
-        this.createZombie(172,82);
-        this.createZombie(212,82);
-        this.createZombie(282,84);
-        this.createZombie(322,82);
-        this.createZombie(135,85);
-        this.createZombie(175,62);
-        this.createZombie(215,66);
-        this.createZombie(285,72);
-        this.createZombie(325,77);
-        
-        let zombie = game.add.sprite(132, 32, 'zombie-sprites');
-        zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
-        zombie.play("z-down");
 
 
         game.input.mouse.capture = true;
@@ -139,13 +115,30 @@ export class Game {
             fill: '#ffffff'
         });
         this.text.alpha = 0.8;
+        this.o.next('ok');
     }
 
 
-    private createZombie(x,y) {
+    public createHuman(x, y, targeted:()=>void): Phaser.Sprite {
+        let human = this.phaserGame.add.sprite(x, y, 'heroes-sprites');
+        human.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
+        human.animations.add("stand-down", ["sprite2"], 5, true);
+        human.play("stand-down");
+        this.phaserGame.physics.enable(human, Phaser.Physics.ARCADE);
+        human.body.collideWorldBounds = true;
+        human.inputEnabled = true;
+        human.events.onInputDown.add(targeted, this);
+        return human;
+    }
+
+
+    public createZombie(x, y, targeted:(entity:Entity)=>void): Phaser.Sprite {
         let zombie = this.phaserGame.add.sprite(x, y, 'zombie-sprites');
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
         zombie.play("z-down");
+        zombie.inputEnabled = true;
+        zombie.events.onInputDown.add(targeted, this);
+        return zombie;
     }
 
 
@@ -156,12 +149,13 @@ export class Game {
         this.text.y = this.marker.y;
 
         let tile: Phaser.Tile = this.map.getTileWorldXY(marker.x, marker.y, 16, 16, this.collisionLayer);
+
+        // vu que le marker ne peux pas être audessus d'une zone inaccessible
         if (tile && this.tileMap.has(tile.index)) {
             console.log(this.tileMap.get(tile.index));
             this.text.text = ("on ne peux pas bouger ici !");
         } else {
-            this.moveTo(this.player, marker.x, marker.y-36);
-            this.text.text = ("Let's go !");
+            //this.moveTo(this.player, marker.x, marker.y-36);
         }
     }
 
@@ -172,13 +166,13 @@ export class Game {
             this.tween.stop();
         }
 
-        this.player.play("down");
+        //this.player.play("down");
         this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
         this.tween.onComplete.add(this.onComplete, this);
     }
 
     private onComplete() {
-        this.player.play("stand-down");
+        //this.player.play("stand-down");
     }
 
     private getTopDownCameraPositionY(): number {
@@ -238,27 +232,6 @@ export class Game {
         let camera = this.phaserGame.camera,
             cameraPosition = camera.position;
         let noDirectionPressedflag = true;
-
-        if (this.wasd.left.isDown) {
-            this.player.body.velocity.x = -this.speed;
-            this.startX = Date.now();
-            noDirectionPressedflag = false;
-        }
-        else if (this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.player.body.velocity.x < this.speed ? this.speed : this.player.body.velocity.x * 1.05;
-            this.startX = Date.now();
-            noDirectionPressedflag = false;
-        }
-        if (this.wasd.up.isDown) {
-            this.player.body.velocity.y = -this.speed;
-            this.startY = Date.now();
-            noDirectionPressedflag = false;
-        }
-        else if (this.wasd.down.isDown) {
-            this.player.body.velocity.y = this.speed;
-            this.startY = Date.now();
-            noDirectionPressedflag = false;
-        }
         if (this.wasd.cameraDown.isDown) {
             this.phaserGame.camera.setPosition(cameraPosition.x, cameraPosition.y + 5);
         }
@@ -276,11 +249,11 @@ export class Game {
         }
 
         if (noDirectionPressedflag) {
-            this.player.body.velocity.set(0);
+            //this.player.body.velocity.set(0);
         }
-        if (this.phaserGame.physics.arcade.collide(this.player, this.collisionLayer)) {
+        /*if (this.phaserGame.physics.arcade.collide(this.player, this.collisionLayer)) {
             console.log('boom');
-        }
+        }*/
         if (this.phaserGame.physics.arcade.collide(this.marker, this.collisionLayer)) {
             console.log('hey, cursor is over collide area !!');
         }
@@ -290,8 +263,5 @@ export class Game {
         this.setMarker();
         this.updateCamera();
         this.handlerKeyBoard();
-
-        //game.debug.bodyInfo(this.player, 32, 32);
-        //game.debug.body(this.player);
     }
 }

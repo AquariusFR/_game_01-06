@@ -15,8 +15,6 @@ export class GameService {
     }
 
     private buildMapResponse(mapKey: string, response: Response): MapResponse {
-
-
         let json = response.json(),
             tilesets: Array<any> = json.tilesets,
             layers: Array<any> = json.layers;
