@@ -70,11 +70,15 @@ export class Engine {
         this.phaserGame.load.atlas('zombie-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('icon-set', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
-    }
-
-    create(mapResponse: MapResponse) {
-        let game: Phaser.Game = this.phaserGame;
-
+        this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']); 
+    } 
+ 
+    create(mapResponse: MapResponse) { 
+        let game: Phaser.Game = this.phaserGame; 
+        let music = game.add.audio('boden'); 
+ 
+        music.play(); 
+        music.volume = 0.1; 
         //à enlever
         this.phaserGame.camera.setPosition(32, 32);
 
