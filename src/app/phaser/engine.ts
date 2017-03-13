@@ -26,7 +26,7 @@ export class Engine {
     private status: (string) => void;
     private o;
 
-    constructor(private gameService: GameService) {
+    constructor(private gameService: GameService, private moveActiveSpriteTo: (point:Phaser.Point)=> void) {
         this.observable = Observable.create(o => {
             this.o = o;
             this.status = o.next;
@@ -101,15 +101,16 @@ export class Engine {
         this.marker = game.add.sprite(0, 0, 'icon-set');
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
-        //this.marker.events.onInputDown.add(this.listener, this);
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
 
 
-
-        game.input.mouse.capture = true;
-        ///game.camera.follow(this.marker);
+        
 
 
+        let lastLayer = createdMap.layers.get('example sprite');
+        lastLayer.inputEnabled = true;
+        lastLayer.events.onInputDown.add(this.listener, this);
+        
         this.text = game.add.text(250, 8, '', {
             fontSize: '8px',
             fill: '#ffffff'
@@ -122,12 +123,16 @@ export class Engine {
     public createHuman(x, y, targeted:()=>void): Phaser.Sprite {
         let human = this.phaserGame.add.sprite(x, y, 'heroes-sprites');
         human.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
+        human.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
+        human.animations.add("right", ["sprite25", "sprite26", "sprite27"], 5, true);
+        human.animations.add("up", ["sprite37", "sprite38", "sprite39"], 5, true);
         human.animations.add("stand-down", ["sprite2"], 5, true);
         human.play("stand-down");
         this.phaserGame.physics.enable(human, Phaser.Physics.ARCADE);
         human.body.collideWorldBounds = true;
         human.inputEnabled = true;
         human.events.onInputDown.add(targeted, this);
+        human.input.priorityID = 2;
         return human;
     }
 
@@ -138,41 +143,45 @@ export class Engine {
         zombie.play("z-down");
         zombie.inputEnabled = true;
         zombie.events.onInputDown.add(targeted, this);
+        zombie.input.priorityID = 2;
         return zombie;
     }
 
 
     private listener() {
-        let marker = this.marker;
+        let marker = this.marker,
+            targetPoint:Phaser.Point = new Phaser.Point();
 
+        targetPoint.x = marker.x;
+            targetPoint.y= marker.y-36
+
+        this.moveActiveSpriteTo(targetPoint);
+        /*
         this.text.x = this.marker.x;
         this.text.y = this.marker.y;
-
         let tile: Phaser.Tile = this.map.getTileWorldXY(marker.x, marker.y, 16, 16, this.collisionLayer);
-
         // vu que le marker ne peux pas être audessus d'une zone inaccessible
         if (tile && this.tileMap.has(tile.index)) {
             console.log(this.tileMap.get(tile.index));
             this.text.text = ("on ne peux pas bouger ici !");
         } else {
-            //this.moveTo(this.player, marker.x, marker.y-36);
-        }
+        }*/
     }
 
-    public moveTo(sprite: Phaser.Sprite, x: number, y: number) {
+    public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, animationEnd: string) {
         let game = this.phaserGame,
             duration = (game.physics.arcade.distanceToPointer(sprite, this.phaserGame.input.activePointer) / 300) * 1000;
         if (this.tween && this.tween.isRunning) {
             this.tween.stop();
         }
 
-        //this.player.play("down");
+        sprite.play(animationMoving);
         this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
-        this.tween.onComplete.add(this.onComplete, this);
+        this.tween.onComplete.add(()=>this.onComplete(sprite, animationEnd), this);
     }
 
-    private onComplete() {
-        //this.player.play("stand-down");
+    private onComplete(sprite: Phaser.Sprite, animationEnd: string) {
+        sprite.play(animationEnd);
     }
 
     private getTopDownCameraPositionY(): number {
@@ -222,10 +231,10 @@ export class Engine {
             camera = game.camera,
             activePointer = game.input.activePointer,
             cameraPosition = camera.position,
-            tilesetSize = 16,
+            tilesetSize = 32,
             point = new Phaser.Point();
-        point.x = tilesetSize * Math.round((activePointer.x + cameraPosition.x - 8) / tilesetSize);
-        point.y = tilesetSize * Math.round((activePointer.y + cameraPosition.y - 8) / tilesetSize);
+        point.x = tilesetSize * Math.round((activePointer.x + cameraPosition.x - 16) / tilesetSize);
+        point.y = tilesetSize * Math.round((activePointer.y + cameraPosition.y - 16) / tilesetSize);
         return point;
     }
     private handlerKeyBoard() {

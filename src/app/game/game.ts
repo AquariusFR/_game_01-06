@@ -3,7 +3,7 @@ import { Ennemy } from 'app/game/ennemy';
 import { Zombie } from 'app/game/zombie';
 import { Entity, EntityType } from 'app/game/entity';
 import { Engine } from 'app/phaser/engine';
-import { GameService } from 'app/loader/game.service'; 
+import { GameService } from 'app/loader/game.service';
 
 export class Game {
     private engine: Engine;
@@ -14,12 +14,16 @@ export class Game {
     private currentEntity: Entity;
     private currentTeam: Array<Entity>;
 
+    private zombieTeamId: number = 0;
+    private playerTeamId: number = 1;
+    private ennemyTeamId: number = 2;
+
     constructor(gameService: GameService) {
         this.playerTeam = new Array<Player>();
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
         this.turn = 0;
-        this.engine = new Engine(gameService);
+        this.engine = new Engine(gameService, (point:Phaser.Point)=> this.moveTo(point));
 
         this.engine.observable.subscribe(
             next => this.setUpTeams(),
@@ -28,23 +32,27 @@ export class Game {
     }
 
     private setUpTeams() {
-       let engine = this.engine;
-       this.playerTeam = new Array<Player>();
-       this.ennemyTeam = new Array<Ennemy>();
-       this.zombieTeam = new Array<Zombie>();
-        this.zombieTeam.push(new Zombie(engine, 132,82, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 172,82, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 212,82, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 282,84, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 322,82, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 135,85, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 175,62, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 215,66, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 285,72, (z)=>this.targeted(z)));
-        this.zombieTeam.push(new Zombie(engine, 325,77, (z)=>this.targeted(z)));
+        let engine = this.engine,
+            targetCallback = (z) => this.targeted(z);
+        this.playerTeam = new Array<Player>();
+        this.ennemyTeam = new Array<Ennemy>();
+        this.zombieTeam = new Array<Zombie>();
 
-        this.playerTeam.push(new Player(engine,32,32, (p)=>this.targeted(p)));
-        this.playerTeam.push(new Player(engine,42,52, (p)=>this.targeted(p)));
+
+
+        Zombie.popZombie(engine, 132, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 172, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 212, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 282, 84, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 322, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 135, 85, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 175, 62, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 215, 66, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 285, 72, targetCallback, this.zombieTeamId, this.zombieTeam);
+        Zombie.popZombie(engine, 325, 77, targetCallback, this.zombieTeamId, this.zombieTeam);
+
+        Player.popPlayer(engine, 32, 32, (p) => this.targeted(p), this.playerTeamId, this.playerTeam);
+        Player.popPlayer(engine, 42, 32, (p) => this.targeted(p), this.playerTeamId, this.playerTeam);
 
 
         this.currentTeam = this.playerTeam;
