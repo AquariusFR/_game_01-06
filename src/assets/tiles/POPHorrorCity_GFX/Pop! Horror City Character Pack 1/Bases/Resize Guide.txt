@@ -1,0 +1,35 @@
+Resizing POP! Base sprites and facesets for use in RPG Maker
+A Quick Guide
+-----------------------------------------------
+
+Using Gimp -
+
+	Open the file using Gimp
+
+	Select Image > Scale Image
+	Set the "Image Size" drop tab to "%" and set both Width and Height to
+	200% for RPG Maker VX Ace or 300% for RPG Maker MV
+	Under "Quality", set "Interpolation" to "None" and click on "Scale"
+
+	Export the image to .png using File > Export
+
+	And you're all done!
+
+Using Photoshop -
+
+	Open the file using Photoshop
+
+	Select Image > Image Size
+	Set the Pixel Dimensions drop boxes to "Percent" and set both Width and
+	Height to 200% for RPG Maker VX Ace or 300% for RPG Maker MV
+	From the drop tab at the bottom, beneath "Resample Image:" select
+	"Nearest Neighbor (preserve hard edges)" and click on "OK"
+
+	Save the file as a .png using either "Save" or "Save As"
+
+	And you're all done!
+
+
+Note - if you have POP! resources already formatted for VX Ace and wish to
+resize them for use in RPG Maker MV, follow the same steps as above, but
+resize by 150% for both Width and Height.
