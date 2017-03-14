@@ -7,9 +7,12 @@ import { Observable } from 'rxjs/Observable';
 //https://forums.rpgmakerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
+    glowTween: any;
+    private glowPosition: Phaser.Point;
     private tileMap: Map<number, any>;
     private text: Phaser.Text;
     private marker: Phaser.Sprite;
+    private glow: Phaser.Sprite;
     private collisionLayer: Phaser.TilemapLayer;
     private horizontalScroll = true;
     private verticalScroll = true;
@@ -41,7 +44,7 @@ export class Engine {
     private init(mapResponse: MapResponse) {
         let self = this;
 
-        this.phaserGame = new Phaser.Game((window.innerWidth - 100) * window.devicePixelRatio, (window.innerHeight - 100) * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
+        this.phaserGame = new Phaser.Game(1600 * window.devicePixelRatio, (window.innerHeight - 100) * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
 
         function preload() {
             self.preload(mapResponse);
@@ -70,15 +73,17 @@ export class Engine {
         this.phaserGame.load.atlas('zombie-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('icon-set', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
-        this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']); 
-    } 
- 
-    create(mapResponse: MapResponse) { 
-        let game: Phaser.Game = this.phaserGame; 
-        let music = game.add.audio('boden'); 
- 
-        music.play(); 
-        music.volume = 0.1; 
+        this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
+        this.phaserGame.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+
+    }
+
+    create(mapResponse: MapResponse) {
+        let game: Phaser.Game = this.phaserGame;
+        let music = game.add.audio('boden');
+
+        music.play();
+        music.volume = 0.1;
         //à enlever
         this.phaserGame.camera.setPosition(32, 32);
 
@@ -110,7 +115,10 @@ export class Engine {
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
 
 
-
+        this.glow = game.add.sprite(-100, -100, 'candle-glow');
+        this.glow.animations.add("glow", ["glow1", "glow2", "glow3", "glow4", "glow5", "glow6"], 5, true);
+        this.glow.play("glow");
+        game.physics.enable(this.glow, Phaser.Physics.ARCADE);
 
 
         let lastLayer = createdMap.layers.get('example sprite');
@@ -125,6 +133,10 @@ export class Engine {
         this.o.next('ok');
     }
 
+    public setGlowPosition(position: Phaser.Point) {
+        this.glow.x = position.x - 24;
+        this.glow.y = position.y;
+    }
 
     public createHuman(position: Phaser.Point): Phaser.Sprite {
         let human = this.phaserGame.add.sprite(position.x, position.y, 'heroes-sprites');
@@ -155,7 +167,6 @@ export class Engine {
         return zombie;
     }
 
-
     private listener() {
         let marker = this.marker,
             targetPoint: Phaser.Point = new Phaser.Point();
@@ -176,7 +187,7 @@ export class Engine {
         }*/
     }
 
-    public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, animationEnd: string) {
+    public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, animationEnd: string, callback:()=> void) {
         let game = this.phaserGame,
             duration = (game.physics.arcade.distanceToPointer(sprite, this.phaserGame.input.activePointer) / 300) * 1000;
         if (this.tween && this.tween.isRunning) {
@@ -185,11 +196,12 @@ export class Engine {
 
         sprite.play(animationMoving);
         this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
-        this.tween.onComplete.add(() => this.onComplete(sprite, animationEnd), this);
+        this.tween.onComplete.add(() => this.onComplete(sprite, animationEnd, callback), this);
     }
 
-    private onComplete(sprite: Phaser.Sprite, animationEnd: string) {
+    private onComplete(sprite: Phaser.Sprite, animationEnd: string, callback:()=> void) {
         sprite.play(animationEnd);
+        callback();
     }
 
     private getTopDownCameraPositionY(): number {

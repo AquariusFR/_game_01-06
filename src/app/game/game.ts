@@ -7,6 +7,7 @@ import { Engine } from 'app/phaser/engine';
 import { GameService } from 'app/loader/game.service';
 
 export class Game {
+    ticking: any;
     private engine: Engine;
     private playerTeam: Array<Player>;
     private ennemyTeam: Array<Ennemy>;
@@ -66,27 +67,36 @@ export class Game {
     }
 
     public nextCharacter() {
-        if (this.currentIndex >= this.currentTeam.length-1) {
+        if (this.currentIndex >= this.currentTeam.length - 1) {
             this.nextTeam();
             return;
         }
         this.currentIndex = this.currentIndex + 1;
         this.currentEntity = this.currentTeam[this.currentIndex];
         this.currentEntity.currentAction = 0;
+        this.engine.setGlowPosition(this.currentEntity.position);
     }
 
     public nextTeam() {
         this.currentIndex = -1;
 
         if (this.currentTeamId === this.playerTeamId) {
-            this.currentTeamId === this.zombieTeamId;
+            this.currentTeamId = this.zombieTeamId;
             this.currentTeam = this.zombieTeam;
+        } else if (this.currentTeamId === this.zombieTeamId) {
+            this.currentTeamId = this.playerTeamId;
+            this.currentTeam = this.playerTeam;
         }
         this.nextCharacter();
     }
 
     // une entité a été ciblé
     public targeted(target: Entity) {
+        if (this.currentEntity.id === target.id) {
+            console.log('it\'s me');
+            return;
+        }
+
         if (this.IsEntityInCurrentTeam(target)) {
             this.helpTeamMate(target);
         } else {
@@ -108,14 +118,25 @@ export class Game {
     }
 
     public clickOn(target: Phaser.Point) {
+        if (this.ticking) {
+            return
+        }
         let square = this.map.getSquareAtPoint(target);
 
         if (square.entity) {
             this.targeted(square.entity);
+            this.ticking = true;
+            this.nextAction();
         }
         else {
-            this.currentEntity.move(target);
+            this.map.moveEntityAtPoint(this.currentEntity, target, () => this.nextAction());
+            this.ticking = true;
+            this.engine.setGlowPosition(target);
         }
+    }
+
+    private nextAction() {
+        this.ticking = false;
         this.currentEntity.currentAction++;
         if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
             this.nextCharacter();

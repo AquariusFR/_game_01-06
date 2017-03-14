@@ -31,6 +31,18 @@ export class GameMap {
         return square;
     }
 
+    public moveEntityAtPoint(entity: Entity, targetPoint: Phaser.Point, callback:()=> void): Square {
+        let sourceSquare = this.getSquareAtPoint(entity.position),
+            targetSquare = this.getSquareAtPoint(targetPoint);
+
+
+        sourceSquare.entity = null;
+        targetSquare.entity = entity;
+
+        entity.move(targetPoint, callback);
+        return targetSquare;
+    }
+
     public getName(): string {
         return this.name;
     }

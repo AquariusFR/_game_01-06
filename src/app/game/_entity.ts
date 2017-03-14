@@ -3,6 +3,8 @@ import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 
 export class _Entity implements Entity {
+    static idcount:number = 0
+    id: number;
     engine: Engine;
     teamId: number;
     sprite: Phaser.Sprite;
@@ -21,6 +23,7 @@ export class _Entity implements Entity {
     constructor(engine: Engine, position: Phaser.Point) {
         this.engine = engine;
         this.position = position;
+        this.id = _Entity.idcount++;
     }
 
     listener() {
@@ -51,13 +54,13 @@ export class _Entity implements Entity {
         }
     }
 
-    public move(targetPosition: Phaser.Point) {
+    public move(targetPosition: Phaser.Point, callback:()=> void) {
 
         let direction: string = this.getDirection(this.position, targetPosition);
 
         console.log('direction', direction);
 
         this.position = targetPosition;
-        this.engine.moveTo(this.sprite, this.position.x, this.position.y, direction, 'stand-down');
+        this.engine.moveTo(this.sprite, this.position.x, this.position.y, direction, 'stand-down', callback);
     }
 }

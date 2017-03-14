@@ -10,6 +10,7 @@ export class Zombie extends _Entity {
         this.maxAction = 2;
     }
 
+
     static popZombie(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Zombie>): Zombie {
         let newZombie = new Zombie(engine, position, teamId);
         team.push(newZombie);

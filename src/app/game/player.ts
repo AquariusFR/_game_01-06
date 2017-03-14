@@ -10,8 +10,8 @@ export class Player extends _Entity {
         this.maxAction = 2;
     }
 
-    move(targetPosition:Phaser.Point){
-        super.move(targetPosition);
+    move(targetPosition:Phaser.Point, callback:()=> void){
+        super.move(targetPosition, callback);
     }
 
     static popPlayer(engine: Engine, position:Phaser.Point, teamId:number, team:Array<Player>):Player{
