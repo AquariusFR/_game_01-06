@@ -28,12 +28,12 @@ export class Engine {
     private status: (string) => void;
     private o;
 
-    constructor(private gameService: GameService, private moveActiveSpriteTo: (point:Phaser.Point)=> void) {
+    constructor(mapName: string, private gameService: GameService, private moveActiveSpriteTo: (point: Phaser.Point) => void) {
         this.observable = Observable.create(o => {
             this.o = o;
             this.status = o.next;
         });
-        this.gameService.getMapJson('zombie').subscribe(
+        this.gameService.getMapJson(mapName).subscribe(
             next => this.init(next),
             error => console.error('error loading map'),
             () => console.log('c\'est fini'));
@@ -57,7 +57,7 @@ export class Engine {
     public shake() {
         this.phaserGame.camera.resetFX();
         this.phaserGame.camera.shake(0.004, 100, true, Phaser.Camera.SHAKE_BOTH, true);
-        this.phaserGame.camera.flash(0xff0000, 50, false, 0.7);
+        //this.phaserGame.camera.flash(0xffffff, 50, false, 0.7);
     }
 
     private preload(mapResponse: MapResponse) {
@@ -80,12 +80,12 @@ export class Engine {
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        //  The 'tavern' key here is the Loader key given in game.load.tilemap
         let createdMap: CreatedMap = this.gameService.create(mapResponse, game);
+        let collisionLayer = createdMap.layers.get('collisions');
+
         this.map = createdMap.map;
         this.tileMap = createdMap.tileMap;
 
-        let collisionLayer = createdMap.layers.get('collisions');
         this.collisionLayer = collisionLayer;
         this.map.setCollisionByExclusion([], true, this.collisionLayer);
 
@@ -106,13 +106,13 @@ export class Engine {
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
 
 
-        
+
 
 
         let lastLayer = createdMap.layers.get('example sprite');
         lastLayer.inputEnabled = true;
         lastLayer.events.onInputDown.add(this.listener, this);
-        
+
         this.text = game.add.text(250, 8, '', {
             fontSize: '8px',
             fill: '#ffffff'
@@ -122,8 +122,8 @@ export class Engine {
     }
 
 
-    public createHuman(x, y, targeted:()=>void): Phaser.Sprite {
-        let human = this.phaserGame.add.sprite(x, y, 'heroes-sprites');
+    public createHuman(position: Phaser.Point): Phaser.Sprite {
+        let human = this.phaserGame.add.sprite(position.x, position.y, 'heroes-sprites');
         human.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
         human.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
         human.animations.add("right", ["sprite25", "sprite26", "sprite27"], 5, true);
@@ -132,30 +132,32 @@ export class Engine {
         human.play("stand-down");
         this.phaserGame.physics.enable(human, Phaser.Physics.ARCADE);
         human.body.collideWorldBounds = true;
-        human.inputEnabled = true;
-        human.events.onInputDown.add(targeted, this);
-        human.input.priorityID = 2;
+        //human.inputEnabled = true;
+        //human.events.onInputDown.add(targeted, this);
+        //human.input.priorityID = 2;
         return human;
     }
 
 
-    public createZombie(x, y, targeted:(entity:Entity)=>void): Phaser.Sprite {
-        let zombie = this.phaserGame.add.sprite(x, y, 'zombie-sprites');
+    public createZombie(position: Phaser.Point): Phaser.Sprite {
+        let zombie = this.phaserGame.add.sprite(position.x, position.y, 'zombie-sprites');
+        zombie.smoothed = false;
+        zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
         zombie.play("z-down");
-        zombie.inputEnabled = true;
-        zombie.events.onInputDown.add(targeted, this);
-        zombie.input.priorityID = 2;
+        //zombie.inputEnabled = true;
+        //zombie.events.onInputDown.add(targeted, this);
+        //zombie.input.priorityID = 2;
         return zombie;
     }
 
 
     private listener() {
         let marker = this.marker,
-            targetPoint:Phaser.Point = new Phaser.Point();
+            targetPoint: Phaser.Point = new Phaser.Point();
 
         targetPoint.x = marker.x;
-            targetPoint.y= marker.y-36
+        targetPoint.y = marker.y - 32;
 
         this.moveActiveSpriteTo(targetPoint);
         /*
@@ -179,7 +181,7 @@ export class Engine {
 
         sprite.play(animationMoving);
         this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
-        this.tween.onComplete.add(()=>this.onComplete(sprite, animationEnd), this);
+        this.tween.onComplete.add(() => this.onComplete(sprite, animationEnd), this);
     }
 
     private onComplete(sprite: Phaser.Sprite, animationEnd: string) {

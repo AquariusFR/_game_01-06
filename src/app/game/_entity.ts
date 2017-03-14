@@ -18,20 +18,16 @@ export class _Entity implements Entity {
     maxPv: number;
     mouvementRange: number;
 
-    constructor(engine: Engine, x: number, y: number, public targeted: (Entity) => void) {
+    constructor(engine: Engine, position: Phaser.Point) {
         this.engine = engine;
-        this.position = new Phaser.Point();
-        this.position.x = x;
-        this.position.y = y;
+        this.position = position;
     }
 
     listener() {
-        this.targeted(this);
-        console.log('LOG');
+        //this.targeted(this);
     }
 
-
-    private getDirection(sourcePosition: Phaser.Point, targetPosition: Phaser.Point):string {
+    private getDirection(sourcePosition: Phaser.Point, targetPosition: Phaser.Point): string {
         let angle = Math.atan2(targetPosition.y - sourcePosition.y, targetPosition.x - sourcePosition.x) * (180 / Math.PI);
 
 
@@ -57,7 +53,7 @@ export class _Entity implements Entity {
 
     public move(targetPosition: Phaser.Point) {
 
-        let direction:string = this.getDirection(this.position, targetPosition);
+        let direction: string = this.getDirection(this.position, targetPosition);
 
         console.log('direction', direction);
 

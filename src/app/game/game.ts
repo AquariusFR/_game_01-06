@@ -1,6 +1,7 @@
 import { Player } from 'app/game/player';
 import { Ennemy } from 'app/game/ennemy';
 import { Zombie } from 'app/game/zombie';
+import { GameMap } from 'app/game/map';
 import { Entity, EntityType } from 'app/game/entity';
 import { Engine } from 'app/phaser/engine';
 import { GameService } from 'app/loader/game.service';
@@ -11,19 +12,23 @@ export class Game {
     private ennemyTeam: Array<Ennemy>;
     private zombieTeam: Array<Zombie>;
     private turn: number;
+    private currentIndex: number;
     private currentEntity: Entity;
     private currentTeam: Array<Entity>;
+    private currentTeamId: number;
 
     private zombieTeamId: number = 0;
     private playerTeamId: number = 1;
     private ennemyTeamId: number = 2;
+    private map: GameMap;
 
     constructor(gameService: GameService) {
         this.playerTeam = new Array<Player>();
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
+        this.map = new GameMap('zombie', 100, 100);
         this.turn = 0;
-        this.engine = new Engine(gameService, (point:Phaser.Point)=> this.moveTo(point));
+        this.engine = new Engine(this.map.getName(), gameService, (point: Phaser.Point) => this.clickOn(point));
 
         this.engine.observable.subscribe(
             next => this.setUpTeams(),
@@ -33,38 +38,51 @@ export class Game {
 
     private setUpTeams() {
         let engine = this.engine,
-            targetCallback = (z) => this.targeted(z);
+            targetCallback = (z) => this.targeted(z),
+            map = this.map;
         this.playerTeam = new Array<Player>();
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
 
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(6, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(7, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(10, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(5, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(6, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(7, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 10), this.zombieTeamId, this.zombieTeam));
 
 
-        Zombie.popZombie(engine, 132, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 172, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 212, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 282, 84, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 322, 82, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 135, 85, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 175, 62, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 215, 66, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 285, 72, targetCallback, this.zombieTeamId, this.zombieTeam);
-        Zombie.popZombie(engine, 325, 77, targetCallback, this.zombieTeamId, this.zombieTeam);
+        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(2, 3), this.playerTeamId, this.playerTeam));
+        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(3, 3), this.playerTeamId, this.playerTeam));
 
-        Player.popPlayer(engine, 32, 32, (p) => this.targeted(p), this.playerTeamId, this.playerTeam);
-        Player.popPlayer(engine, 42, 32, (p) => this.targeted(p), this.playerTeamId, this.playerTeam);
-
-
+        this.currentIndex = -1;
+        this.currentTeamId = this.playerTeamId;
         this.currentTeam = this.playerTeam;
-        this.currentEntity = this.playerTeam[0];
+        this.nextCharacter();
     }
 
-    public nextTurn() {
-
+    public nextCharacter() {
+        if (this.currentIndex >= this.currentTeam.length-1) {
+            this.nextTeam();
+            return;
+        }
+        this.currentIndex = this.currentIndex + 1;
+        this.currentEntity = this.currentTeam[this.currentIndex];
+        this.currentEntity.currentAction = 0;
     }
 
     public nextTeam() {
+        this.currentIndex = -1;
 
+        if (this.currentTeamId === this.playerTeamId) {
+            this.currentTeamId === this.zombieTeamId;
+            this.currentTeam = this.zombieTeam;
+        }
+        this.nextCharacter();
     }
 
     // une entité a été ciblé
@@ -77,7 +95,7 @@ export class Game {
     }
 
     public IsEntityInCurrentTeam(target: Entity) {
-
+        return target.teamId === this.currentTeamId;
     }
 
     public helpTeamMate(target: Entity) {
@@ -85,10 +103,22 @@ export class Game {
     }
 
     public attack(target: Entity) {
+        this.engine.shake();
         console.log(this.currentEntity + ' attacks ' + target);
     }
 
-    public moveTo(target: Phaser.Point) {
-        this.currentEntity.move(target);
+    public clickOn(target: Phaser.Point) {
+        let square = this.map.getSquareAtPoint(target);
+
+        if (square.entity) {
+            this.targeted(square.entity);
+        }
+        else {
+            this.currentEntity.move(target);
+        }
+        this.currentEntity.currentAction++;
+        if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
+            this.nextCharacter();
+        }
     }
 }

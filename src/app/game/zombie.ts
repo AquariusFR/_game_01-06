@@ -3,14 +3,16 @@ import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 
 export class Zombie extends _Entity {
-    constructor(engine: Engine, x: number, y: number, targeted: (Entity) => void, team:number) {
-        super(engine, x, y, targeted);
-        this.sprite = engine.createZombie(x, y, () => this.listener());
+    constructor(engine: Engine, position: Phaser.Point, team: number) {
+        super(engine, position);
+        this.sprite = engine.createZombie(position);
         this.teamId = team;
+        this.maxAction = 2;
     }
 
-    static popZombie(engine: Engine, x: number, y: number, targeted: (Entity) => void, teamId:number, team:Array<Zombie>):void{
-        let newZombie = new Zombie(engine, x,y, targeted, teamId);
+    static popZombie(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Zombie>): Zombie {
+        let newZombie = new Zombie(engine, position, teamId);
         team.push(newZombie);
+        return newZombie;
     }
 }
