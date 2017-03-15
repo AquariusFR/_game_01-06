@@ -7,7 +7,8 @@ import { Observable } from 'rxjs/Observable';
 //https://forums.rpgmakerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
-    glowTween: any;
+    private soundeffect: Phaser.Sound;
+    private glowTween: Phaser.Tween;
     private glowPosition: Phaser.Point;
     private tileMap: Map<number, any>;
     private text: Phaser.Text;
@@ -74,18 +75,26 @@ export class Engine {
         this.phaserGame.load.atlas('icon-set', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
         this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
+        this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect.ogg']);
         this.phaserGame.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
     }
 
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
-        let music = game.add.audio('boden');
+        let music = game.add.audio('boden', 1, true);
+        let soundeffect = game.add.audio('soundeffect', 1, true);
 
         music.play();
         music.volume = 0.1;
         //à enlever
         this.phaserGame.camera.setPosition(32, 32);
+
+        soundeffect.allowMultiple = true;
+        soundeffect.addMarker('shotgun', 10.15, 0.940);
+        soundeffect.addMarker('gun', 109.775, 0.550);
+        soundeffect.addMarker('grunt', 197.618, 0.570);
+        this.soundeffect = soundeffect;
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -133,9 +142,22 @@ export class Engine {
         this.o.next('ok');
     }
 
+    public moveGlowPosition(position: Phaser.Point) {
+        let game = this.phaserGame,
+            duration = (game.physics.arcade.distanceToPointer(this.glow, this.phaserGame.input.activePointer) / 300) * 1000;
+        if (this.glowTween && this.glowTween.isRunning) {
+            this.glowTween.stop();
+        }
+
+        this.glowTween = game.add.tween(this.glow).to({ x: position.x - 24, y: position.y }, duration, Phaser.Easing.Linear.None, true);
+        this.glowTween.onComplete.add(() => this.glowTween.stop(), this);
+    }
+
     public setGlowPosition(position: Phaser.Point) {
+        this.phaserGame.tweens.removeAll();
         this.glow.x = position.x - 24;
         this.glow.y = position.y;
+
     }
 
     public createHuman(position: Phaser.Point): Phaser.Sprite {
@@ -148,9 +170,6 @@ export class Engine {
         human.play("stand-down");
         this.phaserGame.physics.enable(human, Phaser.Physics.ARCADE);
         human.body.collideWorldBounds = true;
-        //human.inputEnabled = true;
-        //human.events.onInputDown.add(targeted, this);
-        //human.input.priorityID = 2;
         return human;
     }
 
@@ -161,10 +180,11 @@ export class Engine {
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
         zombie.play("z-down");
-        //zombie.inputEnabled = true;
-        //zombie.events.onInputDown.add(targeted, this);
-        //zombie.input.priorityID = 2;
         return zombie;
+    }
+
+    public playSound(soundName:string) {
+        this.soundeffect.play(soundName);
     }
 
     private listener() {
@@ -175,16 +195,6 @@ export class Engine {
         targetPoint.y = marker.y - 32;
 
         this.moveActiveSpriteTo(targetPoint);
-        /*
-        this.text.x = this.marker.x;
-        this.text.y = this.marker.y;
-        let tile: Phaser.Tile = this.map.getTileWorldXY(marker.x, marker.y, 16, 16, this.collisionLayer);
-        // vu que le marker ne peux pas être audessus d'une zone inaccessible
-        if (tile && this.tileMap.has(tile.index)) {
-            console.log(this.tileMap.get(tile.index));
-            this.text.text = ("on ne peux pas bouger ici !");
-        } else {
-        }*/
     }
 
     public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, animationEnd: string, callback:()=> void) {

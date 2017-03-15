@@ -113,6 +113,14 @@ export class Game {
     }
 
     public attack(target: Entity) {
+
+        if(this.currentTeamId === this.zombieTeamId){
+            this.engine.playSound('grunt');
+
+        } else {
+            this.engine.playSound('gun');
+        }
+
         this.engine.shake();
         console.log(this.currentEntity + ' attacks ' + target);
     }
@@ -131,7 +139,7 @@ export class Game {
         else {
             this.map.moveEntityAtPoint(this.currentEntity, target, () => this.nextAction());
             this.ticking = true;
-            this.engine.setGlowPosition(target);
+            this.engine.moveGlowPosition(target);
         }
     }
 
