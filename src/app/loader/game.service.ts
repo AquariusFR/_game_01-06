@@ -38,7 +38,7 @@ export class GameService {
         });
     }
 
-    public create(mapResponse: MapResponse, game: Phaser.Game): CreatedMap {
+    public create(mapResponse: MapResponse, game: Phaser.Game, group: Phaser.Group): CreatedMap {
         let map: Phaser.Tilemap = game.add.tilemap(mapResponse.name, 16, 16);
         mapResponse.tilesetImages.forEach(t => {
             game.load.image(t.key, t.url);
@@ -51,6 +51,7 @@ export class GameService {
             let layer: Phaser.TilemapLayer = map.createLayer(l.name);
             layer.visible = l.opacity === 1;
             layers.set(l.name, layer);
+            group.add(layer);
         })
 
         let tilesets: Array<any> = mapResponse.data.tilesets;

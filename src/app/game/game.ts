@@ -58,8 +58,8 @@ export class Game {
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 10), this.zombieTeamId, this.zombieTeam));
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 10), this.zombieTeamId, this.zombieTeam));
 
-        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(2, 3), this.playerTeamId, this.playerTeam));
-        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(3, 3), this.playerTeamId, this.playerTeam));
+        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(5, 3), this.playerTeamId, this.playerTeam));
+        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(6, 3), this.playerTeamId, this.playerTeam));
 
         this.currentIndex = -1;
         this.currentTeamId = this.playerTeamId;

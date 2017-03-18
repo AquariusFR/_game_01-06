@@ -6,6 +6,7 @@ import { Observable } from 'rxjs/Observable';
 //https://forums.rpgmakerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
+    gamegroup:  Phaser.Group;
     private soundeffect: Phaser.Sound;
     private glowTween: Phaser.Tween;
     private glowPosition: Phaser.Point;
@@ -71,7 +72,7 @@ export class Engine {
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('zombie-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.atlas('icon-set', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/IconSet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('markers', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
         this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
         this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect.ogg']);
@@ -83,6 +84,8 @@ export class Engine {
         let game: Phaser.Game = this.phaserGame;
         let music = game.add.audio('boden', 1, true);
         let soundeffect = game.add.audio('soundeffect', 1, true);
+        this.gamegroup = game.add.group();
+        let gamegroup = this.gamegroup;
 
         music.play();
         music.volume = 0.1;
@@ -97,14 +100,14 @@ export class Engine {
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        let createdMap: CreatedMap = this.gameService.create(mapResponse, game);
+        let createdMap: CreatedMap = this.gameService.create(mapResponse, game, this.gamegroup);
         let collisionLayer = createdMap.layers.get('collisions');
 
         this.map = createdMap.map;
         this.tileMap = createdMap.tileMap;
 
         this.collisionLayer = collisionLayer;
-        this.map.setCollisionByExclusion([], true, this.collisionLayer);
+        //this.map.setCollisionByExclusion([], true, this.collisionLayer);
 
         this.collisionLayer.resizeWorld();
 
@@ -117,14 +120,16 @@ export class Engine {
             topTown: game.input.keyboard.addKey(Phaser.Keyboard.END)
         };
 
-        this.marker = game.add.sprite(0, 0, 'icon-set');
+        this.marker = game.add.sprite(0, 0, 'markers');
+        gamegroup.add(this.marker);
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
 
 
-        this.glow = game.add.sprite(-100, -100, 'candle-glow');
-        this.glow.animations.add("glow", ["glow1", "glow2", "glow3", "glow4", "glow5", "glow6"], 5, true);
+        this.glow = game.add.sprite(-100, -100, 'markers');
+        gamegroup.add(this.glow);
+        this.glow.animations.add("glow", ["marker/active_entity"], 5, true);
         this.glow.play("glow");
         game.physics.enable(this.glow, Phaser.Physics.ARCADE);
 
@@ -133,29 +138,16 @@ export class Engine {
         lastLayer.inputEnabled = true;
         lastLayer.events.onInputDown.add(this.listener, this);
 
-        this.text = game.add.text(250, 8, '', {
-            fontSize: '8px',
-            fill: '#ffffff'
-        });
-        this.text.alpha = 0.8;
         this.o.next('ok');
+        //this.gamegroup.scale.x = 2;
+        //this.gamegroup.scale.y = 2;
     }
 
-    public moveGlowPosition(position: Phaser.Point) {
-        let game = this.phaserGame,
-            duration = (game.physics.arcade.distanceToPointer(this.glow, this.phaserGame.input.activePointer) / 300) * 1000;
-        if (this.glowTween && this.glowTween.isRunning) {
-            this.glowTween.stop();
-        }
-
-        this.glowTween = game.add.tween(this.glow).to({ x: position.x - 24, y: position.y }, duration, Phaser.Easing.Linear.None, true);
-        this.glowTween.onComplete.add(() => this.glowTween.stop(), this);
-    }
 
     public setGlowPosition(position: Phaser.Point) {
         this.phaserGame.tweens.removeAll();
-        this.glow.x = position.x - 24;
-        this.glow.y = position.y;
+        this.glow.x = position.x;
+        this.glow.y = position.y+32;
 
     }
 
@@ -169,6 +161,7 @@ export class Engine {
         human.play("stand-down");
         this.phaserGame.physics.enable(human, Phaser.Physics.ARCADE);
         human.body.collideWorldBounds = true;
+        this.gamegroup.add(human);
         return human;
     }
 
@@ -179,6 +172,7 @@ export class Engine {
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
         zombie.play("z-down");
+        this.gamegroup.add(zombie);
         return zombie;
     }
 
@@ -191,11 +185,21 @@ export class Engine {
             targetPoint: Phaser.Point = new Phaser.Point();
 
         targetPoint.x = marker.x;
-        targetPoint.y = marker.y - 32;
+        targetPoint.y = marker.y;
 
         this.moveActiveSpriteTo(targetPoint);
     }
 
+    public moveGlowPosition(position: Phaser.Point) {
+        let game = this.phaserGame;
+
+        if (this.glowTween && this.glowTween.isRunning) {
+            this.glowTween.stop();
+        }
+
+        this.glowTween = game.add.tween(this.glow).to({ x: position.x, y: position.y }, 100, Phaser.Easing.Linear.None, true);
+        this.glowTween.onComplete.add(() => this.glowTween.stop(), this);
+    }
     public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, callback: () => void) {
 
         let game = this.phaserGame;
@@ -207,7 +211,7 @@ export class Engine {
             sprite.play(animationMoving);
         }
         this.tween = game.add.tween(sprite).to({ x: x, y: y }, 100, Phaser.Easing.Linear.None, true);
-        this.tween.onComplete.add(() => this.onComplete(sprite,  callback), this);
+        this.tween.onComplete.add(() => this.onComplete(sprite, callback), this);
     }
 
     private onComplete(sprite: Phaser.Sprite, callback: () => void) {
@@ -245,7 +249,7 @@ export class Engine {
 
     public isPositionCollidable(position: Phaser.Point): boolean {
         let tile = this.getTileAtPosition(position);
-        return (tile && tile.canCollide);
+        return (tile && tile.properties.cantGo);
     }
 
     private getTileAtPosition(position: Phaser.Point): Phaser.Tile {
@@ -301,9 +305,9 @@ export class Engine {
         /*if (this.phaserGame.physics.arcade.collide(this.player, this.collisionLayer)) {
             console.log('boom');
         }*/
-        if (this.phaserGame.physics.arcade.collide(this.marker, this.collisionLayer)) {
+        /*if (this.phaserGame.physics.arcade.collide(this.marker, this.collisionLayer)) {
             console.log('hey, cursor is over collide area !!');
-        }
+        }*/
     }
 
     update() {

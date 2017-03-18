@@ -65,6 +65,6 @@ export class _Entity implements Entity {
         console.log('direction', direction);
 
         this.position = targetPosition;
-        this.engine.moveTo(this.sprite, this.position.x, this.position.y, direction, callback);
+        this.engine.moveTo(this.sprite, this.position.x, this.position.y-32, direction, callback);
     }
 }

@@ -1,0 +1,79 @@
+{
+    "frames": [
+        {
+            "filename": "marker/blink1",
+            "frame": {
+                "x": 0,
+                "y": 0,
+                "w": 32,
+                "h": 32
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 17,
+                "h": 17
+            },
+            "sourceSize": {
+                "w": 17,
+                "h": 17
+            }
+        },
+        {
+            "filename": "marker/blink2",
+            "frame": {
+                "x": 32,
+                "y": 0,
+                "w": 32,
+                "h": 32
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 17,
+                "h": 17
+            },
+            "sourceSize": {
+                "w": 17,
+                "h": 17
+            }
+        },
+        {
+            "filename": "marker/active_entity",
+            "frame": {
+                "x": 64,
+                "y": 0,
+                "w": 32,
+                "h": 32
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 17,
+                "h": 17
+            },
+            "sourceSize": {
+                "w": 17,
+                "h": 17
+            }
+        }
+    ],
+    "meta": {
+        "app": "http://www.codeandweb.com/texturepacker",
+        "version": "1.0",
+        "image": "IconSet.json.png",
+        "format": "RGBA8888",
+        "size": {
+            "w": 384,
+            "h": 936
+        },
+        "scale": "1",
+        "smartupdate": "$TexturePacker:SmartUpdate:fdc5e068a880888935c4f90af4460c8e:f096fcf0d920647625f014c2cdafb6fd:1eabdf11f75e3a4fe3147baf7b5be24b$"
+    }
+}

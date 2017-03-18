@@ -486,7 +486,7 @@
         {
             "filename": "marker/blink1",
             "frame": {
-                "x": 8,
+                "x": 0,
                 "y": 48,
                 "w": 32,
                 "h": 32
@@ -507,7 +507,28 @@
         {
             "filename": "marker/blink2",
             "frame": {
-                "x": 45,
+                "x": 32,
+                "y": 48,
+                "w": 32,
+                "h": 32
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 17,
+                "h": 17
+            },
+            "sourceSize": {
+                "w": 17,
+                "h": 17
+            }
+        },
+        {
+            "filename": "marker/active_entity",
+            "frame": {
+                "x": 64,
                 "y": 48,
                 "w": 32,
                 "h": 32

@@ -47,7 +47,11 @@ export class GameMap {
     }
 
     public putEntityAtPoint(entity: Entity): Square {
-        let square = this.getSquareAtPoint(entity.position);
+
+        let position = new Phaser.Point;
+        position.x =entity.position.x;
+        position.y =entity.position.y + 32;
+        let square = this.getSquareAtPoint(position);
 
         if (square.entity) {
             throw new Error("entity.already.here");
@@ -71,10 +75,6 @@ export class GameMap {
             let currentPositionIndex = 0;
             move();
             //add reference of an antity at this point for easyStar
-
-
-            console.log("going from ", sourceSquare.x + ':' + sourceSquare.y + " to " + targetSquare.x + ':' + targetSquare.y, path);
-
             function move() {
                 let currentPathPoint = path[currentPositionIndex],
                     currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y);
@@ -84,7 +84,14 @@ export class GameMap {
                         sourceSquare.entity = null;
                         targetSquare.entity = entity;
 
-                        grid[sourceSquare.y][sourceSquare.x] -= 10;
+                        let sourceInfo = grid[sourceSquare.y][sourceSquare.x];
+
+                        if(sourceInfo === 0 || sourceInfo === 1){
+                            grid[sourceSquare.y][sourceSquare.x] = 0;
+                        } else if(sourceInfo > 9) {
+                            grid[sourceSquare.y][sourceSquare.x] -= 10;
+                        }
+
                         grid[targetSquare.y][targetSquare.x] += 10;
                         callback();
                     });
