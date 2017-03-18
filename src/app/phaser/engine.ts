@@ -1,5 +1,4 @@
 import { Entity } from 'app/game/entity'
-import { ScrollableArea } from 'app/phaser/phaser.scrollable';
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
 import { Observable } from 'rxjs/Observable';
 
@@ -24,7 +23,7 @@ export class Engine {
     //private player: Phaser.Sprite;
     private wasd: any;
     private speed = 300;
-    private map: Phaser.Tilemap;
+    public map: Phaser.Tilemap;
     private tween: Phaser.Tween;
     private startX: number;
     private startY: number;
@@ -183,7 +182,7 @@ export class Engine {
         return zombie;
     }
 
-    public playSound(soundName:string) {
+    public playSound(soundName: string) {
         this.soundeffect.play(soundName);
     }
 
@@ -197,20 +196,21 @@ export class Engine {
         this.moveActiveSpriteTo(targetPoint);
     }
 
-    public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, animationEnd: string, callback:()=> void) {
-        let game = this.phaserGame,
-            duration = (game.physics.arcade.distanceToPointer(sprite, this.phaserGame.input.activePointer) / 300) * 1000;
+    public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, callback: () => void) {
+
+        let game = this.phaserGame;
+
         if (this.tween && this.tween.isRunning) {
             this.tween.stop();
         }
-
-        sprite.play(animationMoving);
-        this.tween = game.add.tween(sprite).to({ x: x, y: y }, duration, Phaser.Easing.Linear.None, true);
-        this.tween.onComplete.add(() => this.onComplete(sprite, animationEnd, callback), this);
+        if (sprite.animations.currentAnim.name != animationMoving) {
+            sprite.play(animationMoving);
+        }
+        this.tween = game.add.tween(sprite).to({ x: x, y: y }, 100, Phaser.Easing.Linear.None, true);
+        this.tween.onComplete.add(() => this.onComplete(sprite,  callback), this);
     }
 
-    private onComplete(sprite: Phaser.Sprite, animationEnd: string, callback:()=> void) {
-        sprite.play(animationEnd);
+    private onComplete(sprite: Phaser.Sprite, callback: () => void) {
         callback();
     }
 
@@ -243,12 +243,20 @@ export class Engine {
         }
     }
 
+    public isPositionCollidable(position: Phaser.Point): boolean {
+        let tile = this.getTileAtPosition(position);
+        return (tile && tile.canCollide);
+    }
+
+    private getTileAtPosition(position: Phaser.Point): Phaser.Tile {
+        return this.map.getTileWorldXY(position.x, position.y, 16, 16, this.collisionLayer);
+    }
+
     private setMarker() {
         let marker: Phaser.Sprite = this.marker,
             tilePointBelowPointer: Phaser.Point = this.pointToTilePosition(); // get tile coordinate below activePointer
-        let tileBelowPointer: Phaser.Tile = this.map.getTileWorldXY(tilePointBelowPointer.x, tilePointBelowPointer.y, 16, 16, this.collisionLayer);
 
-        if (tileBelowPointer && tileBelowPointer.canCollide) {
+        if (this.isPositionCollidable(tilePointBelowPointer)) {
             // do something if you want
         } else {
             marker.x = tilePointBelowPointer.x;

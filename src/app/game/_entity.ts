@@ -54,6 +54,10 @@ export class _Entity implements Entity {
         }
     }
 
+    public finishMoving() {
+        this.sprite.play('stand-down');
+    }
+
     public move(targetPosition: Phaser.Point, callback:()=> void) {
 
         let direction: string = this.getDirection(this.position, targetPosition);
@@ -61,6 +65,6 @@ export class _Entity implements Entity {
         console.log('direction', direction);
 
         this.position = targetPosition;
-        this.engine.moveTo(this.sprite, this.position.x, this.position.y, direction, 'stand-down', callback);
+        this.engine.moveTo(this.sprite, this.position.x, this.position.y, direction, callback);
     }
 }

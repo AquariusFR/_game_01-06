@@ -27,8 +27,8 @@ export class Game {
         this.playerTeam = new Array<Player>();
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
-        this.map = new GameMap('zombie', 100, 100);
         this.turn = 0;
+        this.map = new GameMap('zombie');
         this.engine = new Engine(this.map.getName(), gameService, (point: Phaser.Point) => this.clickOn(point));
 
         this.engine.observable.subscribe(
@@ -41,6 +41,8 @@ export class Game {
         let engine = this.engine,
             targetCallback = (z) => this.targeted(z),
             map = this.map;
+        this.map.setEngine(engine);
+        map.preparePathCalculator();
         this.playerTeam = new Array<Player>();
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
@@ -55,7 +57,6 @@ export class Game {
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(7, 10), this.zombieTeamId, this.zombieTeam));
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 10), this.zombieTeamId, this.zombieTeam));
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 10), this.zombieTeamId, this.zombieTeam));
-
 
         map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(2, 3), this.playerTeamId, this.playerTeam));
         map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(3, 3), this.playerTeamId, this.playerTeam));
@@ -114,7 +115,7 @@ export class Game {
 
     public attack(target: Entity) {
 
-        if(this.currentTeamId === this.zombieTeamId){
+        if (this.currentTeamId === this.zombieTeamId) {
             this.engine.playSound('grunt');
 
         } else {
@@ -137,9 +138,14 @@ export class Game {
             this.nextAction();
         }
         else {
-            this.map.moveEntityAtPoint(this.currentEntity, target, () => this.nextAction());
+            this.map.moveEntityAtPoint(this.currentEntity, target,
+                () => this.nextAction(),
+                (error) => {
+                    console.log('sorry', error);
+                    this.ticking = false;
+                });
+
             this.ticking = true;
-            this.engine.moveGlowPosition(target);
         }
     }
 

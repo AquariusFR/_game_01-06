@@ -16,6 +16,7 @@ export interface Entity {
     type:EntityType
     sprite: Phaser.Sprite
     move(targetPosition:Phaser.Point, callback:()=> void)
+    finishMoving()
     teamId:number
     engine:Engine
     id:number
