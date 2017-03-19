@@ -8,6 +8,7 @@ export class Zombie extends _Entity {
         this.sprite = engine.createZombie(position);
         this.teamId = team;
         this.maxAction = 2;
+        this.mouvementRange = 8;
     }
 
 

@@ -6,7 +6,8 @@ import { Observable } from 'rxjs/Observable';
 //https://forums.rpgmakerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
-    gamegroup:  Phaser.Group;
+    rangegroup: Phaser.Group;
+    gamegroup: Phaser.Group;
     private soundeffect: Phaser.Sound;
     private glowTween: Phaser.Tween;
     private glowPosition: Phaser.Point;
@@ -85,10 +86,11 @@ export class Engine {
         let music = game.add.audio('boden', 1, true);
         let soundeffect = game.add.audio('soundeffect', 1, true);
         this.gamegroup = game.add.group();
+        this.rangegroup = game.add.group();
         let gamegroup = this.gamegroup;
 
-        music.play();
-        music.volume = 0.1;
+        //music.play();
+        music.volume = 0.01;
         //à enlever
         this.phaserGame.camera.setPosition(32, 32);
 
@@ -143,16 +145,24 @@ export class Engine {
         //this.gamegroup.scale.y = 2;
     }
 
-
-    public setGlowPosition(position: Phaser.Point) {
-        this.phaserGame.tweens.removeAll();
-        this.glow.x = position.x;
-        this.glow.y = position.y+32;
-
+    public removeAllAccessibleTiles() {
+        this.rangegroup.removeAll();
     }
 
+    public addAccessibleTiles(tiles: Array<Phaser.Point>) {
+        this.removeAllAccessibleTiles();
+        tiles.forEach(tile => {
+            let tileSprite = this.phaserGame.add.sprite(tile.x, tile.y, 'markers');
+            this.rangegroup.add(tileSprite);
+            tileSprite.animations.add("glow", ["marker/accessible_tile"], 5, true);
+            tileSprite.play("glow");
+        }
+        );
+    }
+
+
     public createHuman(position: Phaser.Point): Phaser.Sprite {
-        let human = this.phaserGame.add.sprite(position.x, position.y, 'heroes-sprites');
+        let human = this.phaserGame.add.sprite(position.x, position.y-32, 'heroes-sprites');
         human.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
         human.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
         human.animations.add("right", ["sprite25", "sprite26", "sprite27"], 5, true);
@@ -167,7 +177,7 @@ export class Engine {
 
 
     public createZombie(position: Phaser.Point): Phaser.Sprite {
-        let zombie = this.phaserGame.add.sprite(position.x, position.y, 'zombie-sprites');
+        let zombie = this.phaserGame.add.sprite(position.x, position.y-32, 'zombie-sprites');
         zombie.smoothed = false;
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
@@ -190,6 +200,13 @@ export class Engine {
         this.moveActiveSpriteTo(targetPoint);
     }
 
+    public setGlowPosition(position: Phaser.Point) {
+        this.phaserGame.tweens.removeAll();
+        this.glow.x = position.x;
+        this.glow.y = position.y;
+
+    }
+
     public moveGlowPosition(position: Phaser.Point) {
         let game = this.phaserGame;
 
@@ -210,7 +227,7 @@ export class Engine {
         if (sprite.animations.currentAnim.name != animationMoving) {
             sprite.play(animationMoving);
         }
-        this.tween = game.add.tween(sprite).to({ x: x, y: y }, 100, Phaser.Easing.Linear.None, true);
+        this.tween = game.add.tween(sprite).to({ x: x, y: y-32 }, 100, Phaser.Easing.Linear.None, true);
         this.tween.onComplete.add(() => this.onComplete(sprite, callback), this);
     }
 

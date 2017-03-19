@@ -47,6 +47,9 @@ export class Game {
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
 
+        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(5, 3), this.playerTeamId, this.playerTeam));
+        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(6, 3), this.playerTeamId, this.playerTeam));
+
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(6, 9), this.zombieTeamId, this.zombieTeam));
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(7, 9), this.zombieTeamId, this.zombieTeam));
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 9), this.zombieTeamId, this.zombieTeam));
@@ -58,13 +61,12 @@ export class Game {
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 10), this.zombieTeamId, this.zombieTeam));
         map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 10), this.zombieTeamId, this.zombieTeam));
 
-        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(5, 3), this.playerTeamId, this.playerTeam));
-        map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(6, 3), this.playerTeamId, this.playerTeam));
 
         this.currentIndex = -1;
         this.currentTeamId = this.playerTeamId;
         this.currentTeam = this.playerTeam;
         this.nextCharacter();
+        this.map.showAccessibleTilesByEntity(this.currentEntity);
     }
 
     public nextCharacter() {
@@ -155,5 +157,6 @@ export class Game {
         if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
             this.nextCharacter();
         }
+        this.map.showAccessibleTilesByEntity(this.currentEntity);
     }
 }

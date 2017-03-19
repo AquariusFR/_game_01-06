@@ -4,6 +4,7 @@ import { Engine } from 'app/phaser/engine'
 
 export class _Entity implements Entity {
     static idcount:number = 0
+    pathes: Map<string, any[]>;
     id: number;
     engine: Engine;
     teamId: number;
@@ -65,6 +66,6 @@ export class _Entity implements Entity {
         console.log('direction', direction);
 
         this.position = targetPosition;
-        this.engine.moveTo(this.sprite, this.position.x, this.position.y-32, direction, callback);
+        this.engine.moveTo(this.sprite, this.position.x, this.position.y, direction, callback);
     }
 }

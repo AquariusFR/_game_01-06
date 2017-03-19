@@ -7,6 +7,7 @@
 *   Original Implementation By Bryce Neal (@prettymuchbryce)
 *   to TypeScript By Fred Nobre (@AquariusFR)
 **/
+import * as _ from 'lodash';
 
 declare var Heap: any;
 
@@ -50,6 +51,134 @@ export class EasyStar {
         if (this.acceptableTiles === undefined) {
             throw new Error("You can't set a path without first calling setAcceptableTiles() on EasyStar.");
         }
+    }
+
+
+    public getTilesInRange(startX: number, startY: number, range: number, callback: (pathes: Map<string, Array<any>>) => void) {
+
+        let self = this;
+        let tilesCalculated = 0;
+        let tilesCalculatedFinish = 0;
+
+        let pathes = new Map<string, Array<any>>();
+
+        //for max range
+        // search surrounding nodes
+
+        _.times(range, searchInGivenRange);
+
+        self.calculate();
+        function searchInGivenRange(currentRange: number) {
+
+            searchLeft(currentRange + 1);
+            searchTop(currentRange + 1);
+            searchBottom(currentRange + 1);
+            searchRight(currentRange + 1);
+        }
+        function searchLeft(currentRange: number) {
+
+            let minY = startY - currentRange,
+                x = self.cleanX(startX + currentRange);
+
+            if (x < 0) {
+                return;
+            }
+
+            _.times((currentRange * 2) + 1, stepY => {
+
+                let y = self.cleanY(minY + stepY);
+                if (y < 0) {
+                    return;
+                }
+
+                tilesCalculated++;
+                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
+                self.calculate();
+            });
+
+        }
+        function searchTop(currentRange: number) {
+            let y = self.cleanY(startY - currentRange),
+                minX = startX - currentRange;
+            if (y < 0) {
+                return;
+            }
+
+            _.times((currentRange * 2) + 1, stepX => {
+                let x = self.cleanX(minX + stepX);
+                if (x < 0) {
+                    return;
+                }
+                tilesCalculated++;
+                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
+                self.calculate();
+            });
+
+        }
+        function searchBottom(currentRange: number) {
+            let y = self.cleanY(startY + currentRange),
+                minX = startX - currentRange;
+            if (y < 0) {
+                return;
+            }
+
+            _.times((currentRange * 2) + 1, stepX => {
+                let x = self.cleanX(minX + stepX);
+                if (x < 0) {
+                    return;
+                }
+                tilesCalculated++;
+                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
+                self.calculate();
+            });
+        }
+        function searchRight(currentRange: number) {
+            let minY = startY - currentRange,
+                x = self.cleanX(startX - currentRange);
+
+            if (x < 0) {
+                return;
+            }
+
+            _.times((currentRange * 2) + 1, stepY => {
+                let y = self.cleanY(minY + stepY);
+
+
+                if (y < 0) {
+                    return;
+                }
+
+                tilesCalculated++;
+                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
+                self.calculate();
+            });
+        }
+        function collectPath(x, y, path) {
+            tilesCalculatedFinish++;
+            if (path) {
+                pathes.set(self.getPointsKey(x, y), path);
+            }
+
+
+            if (tilesCalculated === tilesCalculatedFinish) {
+                callback(pathes);
+            }
+        }
+
+        return null;
+    }
+
+    private cleanX(x: number) {
+        if (x < 0 || x > this.collisionGrid[0].length - 1) {
+            return -1;
+        }
+        return x;
+    }
+    private cleanY(y: number) {
+        if (y < 0 || y > this.collisionGrid.length - 1) {
+            return -1;
+        }
+        return y;
     }
 
     /**
@@ -232,7 +361,13 @@ export class EasyStar {
     * is found, or no path is found.
     *
     **/
-    public findPath(startX: number, startY: number, endX: number, endY: number, callback): void {
+    public findPath(startX: number, startY: number, endX: number, endY: number, callback, maxCost?: number): void {
+
+        if (!maxCost) {
+            maxCost = 999;
+        }
+
+
         // Wraps the callback for sync vs async logic
         let syncEnabled = this.syncEnabled,
             callbackWrapper = function (result) {
@@ -248,7 +383,7 @@ export class EasyStar {
         if (startX < 0 || startY < 0 || endX < 0 || endY < 0 ||
             startX > this.collisionGrid[0].length - 1 || startY > this.collisionGrid.length - 1 ||
             endX > this.collisionGrid[0].length - 1 || endY > this.collisionGrid.length - 1) {
-            throw new Error("Your start or end point is outside the scope of your grid.");
+            throw new Error("Your start or end point is outside the scope of your grid." + startX + ':' + startY + "," + endX + ':' + endY);
         }
 
         // Start and end are the same tile.
@@ -283,10 +418,12 @@ export class EasyStar {
         instance.startY = startY;
         instance.endX = endX;
         instance.endY = endY;
+        instance.maxCost = maxCost;
         instance.callback = callbackWrapper;
 
-        instance.openList.push(this.coordinateToNode(instance, instance.startX,
-            instance.startY, null, STRAIGHT_COST));
+        let node = this.coordinateToNode(instance, instance.startX, instance.startY, null, STRAIGHT_COST);
+
+        instance.openList.push(node);
 
         this.instances.push(instance);
     }
@@ -305,130 +442,39 @@ export class EasyStar {
                 return;
             }
 
-            if (this.syncEnabled) {
-                // If this is a sync instance, we want to make sure that it calculates synchronously.
-                this.iterationsSoFar = 0;
-            }
+            let instance = this.instances[0],
+                searchNode = this.getNode(instance),
+                tilesToSearch = [];
 
-            // Couldn't find a path.
-            if (this.instances[0].openList.size() === 0) {
-                var ic = this.instances[0];
-                ic.callback(null);
-                this.instances.shift();
+            if (!searchNode) {
                 continue;
             }
 
-            var searchNode = this.instances[0].openList.pop();
-
             // Handles the case where we have found the destination
-            if (this.instances[0].endX === searchNode.x && this.instances[0].endY === searchNode.y) {
-                this.instances[0].isDoneCalculating = true;
-                var path = [];
-                path.push({ x: searchNode.x, y: searchNode.y });
-                var parent = searchNode.parent;
-                while (parent != null) {
-                    path.push({ x: parent.x, y: parent.y });
-                    parent = parent.parent;
-                }
-                path.reverse();
-                var ic = this.instances[0];
-                var ip = path;
-                ic.callback(ip);
+            if (this.haveFoundDestination(instance, searchNode)) {
                 return
             }
 
-            var tilesToSearch = [];
             searchNode.list = CLOSED_LIST;
 
-            if (searchNode.y > 0) {
-                tilesToSearch.push({
-                    instance: this.instances[0], searchNode: searchNode,
-                    x: 0, y: -1, cost: STRAIGHT_COST * this.getTileCost(searchNode.x, searchNode.y - 1)
-                });
-            }
-            if (searchNode.x < this.collisionGrid[0].length - 1) {
-                tilesToSearch.push({
-                    instance: this.instances[0], searchNode: searchNode,
-                    x: 1, y: 0, cost: STRAIGHT_COST * this.getTileCost(searchNode.x + 1, searchNode.y)
-                });
-            }
-            if (searchNode.y < this.collisionGrid.length - 1) {
-                tilesToSearch.push({
-                    instance: this.instances[0], searchNode: searchNode,
-                    x: 0, y: 1, cost: STRAIGHT_COST * this.getTileCost(searchNode.x, searchNode.y + 1)
-                });
-            }
-            if (searchNode.x > 0) {
-                tilesToSearch.push({
-                    instance: this.instances[0], searchNode: searchNode,
-                    x: -1, y: 0, cost: STRAIGHT_COST * this.getTileCost(searchNode.x - 1, searchNode.y)
-                });
-            }
+            this.checkTiles(instance, searchNode, tilesToSearch);
+
             if (this.diagonalsEnabled) {
-                if (searchNode.x > 0 && searchNode.y > 0) {
-                    if (this.allowCornerCutting ||
-                        (
-                            this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1) &&
-                            this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y))) {
-
-                        tilesToSearch.push({
-                            instance: this.instances[0], searchNode: searchNode,
-                            x: -1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y - 1)
-                        });
-                    }
-                }
-                if (searchNode.x < this.collisionGrid[0].length - 1 && searchNode.y < this.collisionGrid.length - 1) {
-
-                    if (this.allowCornerCutting ||
-                        (
-                            this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1) &&
-                            this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y))) {
-
-                        tilesToSearch.push({
-                            instance: this.instances[0], searchNode: searchNode,
-                            x: 1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y + 1)
-                        });
-                    }
-                }
-                if (searchNode.x < this.collisionGrid[0].length - 1 && searchNode.y > 0) {
-
-                    if (this.allowCornerCutting ||
-                        (this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1) &&
-                            this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y))) {
-
-
-                        tilesToSearch.push({
-                            instance: this.instances[0], searchNode: searchNode,
-                            x: 1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y - 1)
-                        });
-                    }
-                }
-                if (searchNode.x > 0 && searchNode.y < this.collisionGrid.length - 1) {
-
-                    if (this.allowCornerCutting ||
-                        (this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1) &&
-                            this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y))) {
-
-
-                        tilesToSearch.push({
-                            instance: this.instances[0], searchNode: searchNode,
-                            x: -1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y + 1)
-                        });
-                    }
-                }
+                this.checkDiagonale(instance, searchNode, tilesToSearch);
             }
 
             var isDoneCalculating = false;
 
             // Search all of the surrounding nodes
-            for (var i = 0; i < tilesToSearch.length; i++) {
-                this.checkAdjacentNode(tilesToSearch[i].instance, tilesToSearch[i].searchNode,
-                    tilesToSearch[i].x, tilesToSearch[i].y, tilesToSearch[i].cost);
-                if (tilesToSearch[i].instance.isDoneCalculating === true) {
-                    isDoneCalculating = true;
-                    break;
+            tilesToSearch.forEach(tile => {
+                if(isDoneCalculating){
+                    return;
                 }
-            }
+                this.checkAdjacentNode(tile);
+                if (tile.instance.isDoneCalculating === true) {
+                    isDoneCalculating = true;
+                }
+            });
 
             if (isDoneCalculating) {
                 this.instances.shift();
@@ -441,16 +487,147 @@ export class EasyStar {
 
     //private
 
+    private haveFoundDestination(instance: Instance, searchNode: Node): boolean {
+        // Handles the case where we have found the destination
+        if (instance.endX === searchNode.x && instance.endY === searchNode.y) {
+            instance.isDoneCalculating = true;
+            var path = [];
+            path.push({ x: searchNode.x, y: searchNode.y });
+            var parent = searchNode.parent;
+            while (parent != null) {
+                path.push({ x: parent.x, y: parent.y });
+                parent = parent.parent;
+            }
+            path.reverse();
+            var ic = instance;
+            var ip = path;
+            ic.callback(ip);
+            return true;
+        }
+        return false;
+    }
+
+    private getNode(instance: Instance): Node {
+
+        if (this.syncEnabled) {
+            // If this is a sync instance, we want to make sure that it calculates synchronously.
+            this.iterationsSoFar = 0;
+        }
+
+        // Couldn't find a path.
+        if (instance.openList.length === 0) {
+            var ic = instance;
+            ic.callback(null);
+            this.instances.shift();
+            return;
+        }
+
+        var searchNode = instance.openList.pop();
+
+        if (searchNode.costSoFar > instance.maxCost) {
+            var ic = instance;
+            ic.callback(null);
+            this.instances.shift();
+            return;
+        }
+        return searchNode;
+    }
+
+    private checkTiles(instance: Instance, searchNode: Node, tilesToSearch: Array<Object>) {
+        if (searchNode.y > 0) {
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: 0, y: -1, cost: STRAIGHT_COST * this.getTileCost(searchNode.x, searchNode.y - 1)
+            });
+        }
+        if (searchNode.x < this.collisionGrid[0].length - 1) {
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: 1, y: 0, cost: STRAIGHT_COST * this.getTileCost(searchNode.x + 1, searchNode.y)
+            });
+        }
+        if (searchNode.y < this.collisionGrid.length - 1) {
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: 0, y: 1, cost: STRAIGHT_COST * this.getTileCost(searchNode.x, searchNode.y + 1)
+            });
+        }
+        if (searchNode.x > 0) {
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: -1, y: 0, cost: STRAIGHT_COST * this.getTileCost(searchNode.x - 1, searchNode.y)
+            });
+        }
+    }
+
+    private checkDiagonale(instance: Instance, searchNode: Node, tilesToSearch: Array<Object>) {
+
+        if (searchNode.x > 0 && searchNode.y > 0) {
+            if (this.allowCornerCutting ||
+                (
+                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1) &&
+                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y))) {
+
+                tilesToSearch.push({
+                    instance: instance, searchNode: searchNode,
+                    x: -1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y - 1)
+                });
+            }
+        }
+        if (searchNode.x < this.collisionGrid[0].length - 1 && searchNode.y < this.collisionGrid.length - 1) {
+
+            if (this.allowCornerCutting ||
+                (
+                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1) &&
+                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y))) {
+
+                tilesToSearch.push({
+                    instance: instance, searchNode: searchNode,
+                    x: 1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y + 1)
+                });
+            }
+        }
+        if (searchNode.x < this.collisionGrid[0].length - 1 && searchNode.y > 0) {
+
+            if (this.allowCornerCutting ||
+                (this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1) &&
+                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y))) {
+
+
+                tilesToSearch.push({
+                    instance: instance, searchNode: searchNode,
+                    x: 1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y - 1)
+                });
+            }
+        }
+        if (searchNode.x > 0 && searchNode.y < this.collisionGrid.length - 1) {
+
+            if (this.allowCornerCutting ||
+                (this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1) &&
+                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y))) {
+
+
+                tilesToSearch.push({
+                    instance: instance, searchNode: searchNode,
+                    x: -1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y + 1)
+                });
+            }
+        }
+    }
 
     // Private methods follow
-    private checkAdjacentNode(instance, searchNode, x, y, cost): void {
-        var adjacentCoordinateX = searchNode.x + x;
-        var adjacentCoordinateY = searchNode.y + y;
+    private checkAdjacentNode(tile): void {
+        let instance = tile.instance,
+            searchNode = tile.searchNode,
+            x = tile.x,
+            y = tile.y,
+            cost = tile.cost,
+            adjacentCoordinateX = searchNode.x + x,
+            adjacentCoordinateY = searchNode.y + y;
 
         if (this.pointsToAvoid[adjacentCoordinateX + "_" + adjacentCoordinateY] === undefined &&
             this.isTileWalkable(this.collisionGrid, this.acceptableTiles, adjacentCoordinateX, adjacentCoordinateY, searchNode)) {
-            var node = this.coordinateToNode(instance, adjacentCoordinateX,
-                adjacentCoordinateY, searchNode, cost);
+            var node = this.coordinateToNode(instance, adjacentCoordinateX, adjacentCoordinateY, searchNode, cost);
 
             if (node.list === undefined) {
                 node.list = OPEN_LIST;
@@ -505,7 +682,7 @@ export class EasyStar {
         return this.pointsToCost[this.getPointsKey(x, y)] || this.costMap.get(this.collisionGrid[y][x])
     };
 
-    private coordinateToNode(instance: Instance, x: number, y: number, parent, cost) {
+    private coordinateToNode(instance: Instance, x: number, y: number, parent, cost): Node {
         if (instance.nodeHash[x + "_" + y] !== undefined) {
             return instance.nodeHash[x + "_" + y];
         }
@@ -547,9 +724,10 @@ class Instance {
     startY: number;
     endX: number;
     endY: number;
+    maxCost?: number;
     callback;
     nodeHash = {};
-    openList;
+    openList: Array<Node>;
 }
 /**
 * A simple Node that represents a single tile on the grid.
@@ -561,6 +739,7 @@ class Instance {
 **/
 class Node {
 
+    public list;
     constructor(public parent, public x: number, public y: number, public costSoFar: number, public simpleDistanceToTarget: number) { }
 
     /**

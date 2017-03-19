@@ -8,6 +8,7 @@ export class Player extends _Entity {
         this.sprite = engine.createHuman(position);
         this.teamId = team;
         this.maxAction = 2;
+        this.mouvementRange = 10;
     }
 
     move(targetPosition:Phaser.Point, callback:()=> void){

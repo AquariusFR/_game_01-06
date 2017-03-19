@@ -11,9 +11,9 @@ export class GameMap {
     private size: MapSize;
     private squares: Map<string, Square> = new Map<string, Square>()
     private engine: Engine;
-    constructor(private name: string ) { }
+    constructor(private name: string) { }
 
-    setEngine(engine: Engine){
+    setEngine(engine: Engine) {
         this.engine = engine;
     }
 
@@ -26,7 +26,6 @@ export class GameMap {
 
         this.grid = new Array();
         _.times(this.size.height, rowIndex => {
-            console.log(rowIndex);
             let row: Array<number> = new Array();
             _.times(this.size.width, columnIndex => {
                 let tilePosition: Phaser.Point = this.getPointAtSquare(columnIndex, rowIndex),
@@ -38,6 +37,7 @@ export class GameMap {
 
         this.easyStar = new EasyStar([0], this.grid);
         this.easyStar.enableCornerCutting();
+        this.easyStar.enableDiagonals();
     }
 
     private getPointKey(point: Phaser.Point): string {
@@ -49,62 +49,87 @@ export class GameMap {
     public putEntityAtPoint(entity: Entity): Square {
 
         let position = new Phaser.Point;
-        position.x =entity.position.x;
-        position.y =entity.position.y + 32;
+        position.x = entity.position.x;
+        position.y = entity.position.y;
         let square = this.getSquareAtPoint(position);
 
         if (square.entity) {
             throw new Error("entity.already.here");
         }
+        this.grid[square.y][square.x] += 10;
 
         square.entity = entity;
         return square;
     }
 
-    public moveEntityAtPoint(entity: Entity, targetPoint: Phaser.Point, callback: () => void, error:(e)=>void): void {
+    public showAccessibleTilesByEntity(entity: Entity) {
+        let position = new Phaser.Point;
+        position.x = entity.position.x;
+        position.y = entity.position.y;
+        let sourceSquare = this.getSquareAtPoint(entity.position);
+        this.easyStar.getTilesInRange(sourceSquare.x, sourceSquare.y, entity.mouvementRange, (pathes) => this.collecteAccessibleTiles(entity, pathes));
+    }
+
+    private collecteAccessibleTiles(entity: Entity, pathes: Map<string, any[]>) {
+        entity.pathes = pathes;
+        let positions: Array<Phaser.Point> = new Array();
+        pathes.forEach((path, key) => {
+
+            let splittedKey = key.split('_'),
+                squareX = Number(splittedKey[0]),
+                squareY = Number(splittedKey[1]);
+            positions.push(this.getPointAtSquare(squareX, squareY));
+        });
+        this.engine.addAccessibleTiles(positions);
+    }
+
+
+    public moveEntityAtPoint(entity: Entity, targetPoint: Phaser.Point, callback: () => void, error: (e) => void): void {
         let sourceSquare = this.getSquareAtPoint(entity.position),
             targetSquare = this.getSquareAtPoint(targetPoint),
             self = this,
             grid = this.grid;
 
-        this.easyStar.findPath(sourceSquare.x, sourceSquare.y, targetSquare.x, targetSquare.y, function (path: Array<any>) {
-            if (path === null) {
-                error('Path was not found.');
-                return;
+
+        let path = entity.pathes.get(targetSquare.x + '_' + targetSquare.y);
+
+        if (path === null) {
+            error('Path was not found.');
+            return;
+        }
+        let currentPositionIndex = 0;
+        move();
+        function move() {
+
+
+
+            let currentPathPoint = path[currentPositionIndex],
+                currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y);
+            if (currentPositionIndex >= path.length - 1) {
+                entity.move(currentPosition, () => {
+                    entity.finishMoving();
+                    sourceSquare.entity = null;
+                    targetSquare.entity = entity;
+
+                    let sourceInfo = grid[sourceSquare.y][sourceSquare.x];
+
+                    if (sourceInfo === 0 || sourceInfo === 1) {
+                        grid[sourceSquare.y][sourceSquare.x] = 0;
+                    } else if (sourceInfo > 9) {
+                        grid[sourceSquare.y][sourceSquare.x] -= 10;
+                    }
+
+                    grid[targetSquare.y][targetSquare.x] += 10;
+                    callback();
+                });
+                self.engine.moveGlowPosition(currentPosition);
+            } else {
+                currentPositionIndex = currentPositionIndex + 1;
+                console.log("moving to ", currentPosition.x + ':' + currentPosition.y, currentPathPoint);
+                entity.move(currentPosition, () => move());
+                self.engine.moveGlowPosition(currentPosition);
             }
-            let currentPositionIndex = 0;
-            move();
-            //add reference of an antity at this point for easyStar
-            function move() {
-                let currentPathPoint = path[currentPositionIndex],
-                    currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y);
-                if (currentPositionIndex >= path.length-1) {
-                    entity.move(currentPosition, ()=> {
-                        entity.finishMoving();
-                        sourceSquare.entity = null;
-                        targetSquare.entity = entity;
-
-                        let sourceInfo = grid[sourceSquare.y][sourceSquare.x];
-
-                        if(sourceInfo === 0 || sourceInfo === 1){
-                            grid[sourceSquare.y][sourceSquare.x] = 0;
-                        } else if(sourceInfo > 9) {
-                            grid[sourceSquare.y][sourceSquare.x] -= 10;
-                        }
-
-                        grid[targetSquare.y][targetSquare.x] += 10;
-                        callback();
-                    });
-                    self.engine.moveGlowPosition(currentPosition);
-                } else {
-                    currentPositionIndex = currentPositionIndex + 1;
-                    console.log("moving to ", currentPosition.x + ':' + currentPosition.y, currentPathPoint);
-                    entity.move(currentPosition, () => move());
-                    self.engine.moveGlowPosition(currentPosition);
-                }
-            }
-        });
-        this.easyStar.calculate();
+        }
     }
 
     public getName(): string {
