@@ -1,10 +1,10 @@
-import { Player } from 'app/game/player';
-import { Ennemy } from 'app/game/ennemy';
-import { Zombie } from 'app/game/zombie';
-import { GameMap } from 'app/game/map';
-import { Entity, EntityType } from 'app/game/entity';
-import { Engine } from 'app/phaser/engine';
-import { GameService } from 'app/loader/game.service';
+import { Player } from 'app/game/player'
+import { Ennemy } from 'app/game/ennemy'
+import { Zombie } from 'app/game/zombie'
+import { GameMap } from 'app/game/map'
+import { Entity, EntityType } from 'app/game/entity'
+import { Engine } from 'app/phaser/engine'
+import { GameService } from 'app/loader/game.service'
 
 export class Game {
     ticking: any;
@@ -78,6 +78,12 @@ export class Game {
         this.currentEntity = this.currentTeam[this.currentIndex];
         this.currentEntity.currentAction = 0;
         this.engine.setGlowPosition(this.currentEntity.position);
+        this.map.showAccessibleTilesByEntity(this.currentEntity, () => {
+            if (this.currentTeamId === this.zombieTeamId) {
+                this.zombieTeam[this.currentIndex].play(this.map, this);
+            }
+        });
+
     }
 
     public nextTeam() {
@@ -151,12 +157,18 @@ export class Game {
         }
     }
 
-    private nextAction() {
+    public nextAction() {
         this.ticking = false;
         this.currentEntity.currentAction++;
         if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
             this.nextCharacter();
         }
-        this.map.showAccessibleTilesByEntity(this.currentEntity);
+        else {
+            this.map.showAccessibleTilesByEntity(this.currentEntity, () => {
+            if (this.currentTeamId === this.zombieTeamId) {
+                this.zombieTeam[this.currentIndex].play(this.map, this);
+            }
+        });
+        }
     }
 }

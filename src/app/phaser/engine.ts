@@ -84,7 +84,7 @@ export class Engine {
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
         let music = game.add.audio('boden', 1, true);
-        let soundeffect = game.add.audio('soundeffect', 1, true);
+        let soundeffect = game.add.audio('soundeffect', 0.5, true);
         this.gamegroup = game.add.group();
         this.rangegroup = game.add.group();
         let gamegroup = this.gamegroup;
@@ -162,7 +162,7 @@ export class Engine {
 
 
     public createHuman(position: Phaser.Point): Phaser.Sprite {
-        let human = this.phaserGame.add.sprite(position.x, position.y-32, 'heroes-sprites');
+        let human = this.phaserGame.add.sprite(position.x, position.y - 32, 'heroes-sprites');
         human.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
         human.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
         human.animations.add("right", ["sprite25", "sprite26", "sprite27"], 5, true);
@@ -177,7 +177,7 @@ export class Engine {
 
 
     public createZombie(position: Phaser.Point): Phaser.Sprite {
-        let zombie = this.phaserGame.add.sprite(position.x, position.y-32, 'zombie-sprites');
+        let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'zombie-sprites');
         zombie.smoothed = false;
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
         zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
@@ -227,7 +227,7 @@ export class Engine {
         if (sprite.animations.currentAnim.name != animationMoving) {
             sprite.play(animationMoving);
         }
-        this.tween = game.add.tween(sprite).to({ x: x, y: y-32 }, 100, Phaser.Easing.Linear.None, true);
+        this.tween = game.add.tween(sprite).to({ x: x, y: y - 32 }, 100, Phaser.Easing.Linear.None, true);
         this.tween.onComplete.add(() => this.onComplete(sprite, callback), this);
     }
 
@@ -267,6 +267,11 @@ export class Engine {
     public isPositionCollidable(position: Phaser.Point): boolean {
         let tile = this.getTileAtPosition(position);
         return (tile && tile.properties.cantGo);
+    }
+
+    public getPositionCover(position: Phaser.Point): number {
+        let tile = this.getTileAtPosition(position);
+        return tile && tile.properties.cover ? tile.properties.cover : 0;
     }
 
     private getTileAtPosition(position: Phaser.Point): Phaser.Tile {

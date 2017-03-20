@@ -1,9 +1,12 @@
 import { Entity, EntityType } from 'app/game/entity'
 import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
+import { Square } from 'app/game/map'
 
 export class _Entity implements Entity {
+
     static idcount:number = 0
+    visionRange: number;
     pathes: Map<string, any[]>;
     id: number;
     engine: Engine;
@@ -20,6 +23,8 @@ export class _Entity implements Entity {
     maxArmor: number;
     maxPv: number;
     mouvementRange: number;
+    square:Square
+    coverDetection:number
 
     constructor(engine: Engine, position: Phaser.Point) {
         this.engine = engine;
