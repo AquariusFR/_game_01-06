@@ -7,6 +7,7 @@ import { Observable } from 'rxjs/Observable';
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
     rangegroup: Phaser.Group;
+    visiongroup: Phaser.Group;
     gamegroup: Phaser.Group;
     private soundeffect: Phaser.Sound;
     private glowTween: Phaser.Tween;
@@ -84,19 +85,22 @@ export class Engine {
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
         let music = game.add.audio('boden', 1, true);
-        let soundeffect = game.add.audio('soundeffect', 0.5, true);
+        let soundeffect = game.add.audio('soundeffect', 0.1, true);
         this.gamegroup = game.add.group();
         this.rangegroup = game.add.group();
+        this.visiongroup = game.add.group();
         let gamegroup = this.gamegroup;
 
         //music.play();
         music.volume = 0.01;
+        soundeffect.volume=0;
+
         //à enlever
         this.phaserGame.camera.setPosition(32, 32);
 
         soundeffect.allowMultiple = true;
         soundeffect.addMarker('shotgun', 10.15, 0.940);
-        soundeffect.addMarker('gun', 109.775, 0.550);
+        soundeffect.addMarker('gun', 109.775, 0.550, 0.5);
         soundeffect.addMarker('grunt', 197.618, 0.570);
         this.soundeffect = soundeffect;
 
@@ -144,7 +148,9 @@ export class Engine {
         //this.gamegroup.scale.x = 2;
         //this.gamegroup.scale.y = 2;
     }
-
+    public removeAllVisibleTiles() {
+        this.visiongroup.removeAll();
+    }
     public removeAllAccessibleTiles() {
         this.rangegroup.removeAll();
     }
@@ -158,6 +164,18 @@ export class Engine {
             tileSprite.play("glow");
         }
         );
+    }
+
+    public addVisibleTiles(tiles: Array<Phaser.Point>) {
+        //console.time('addVisibleTiles');
+        tiles.forEach(tile => {
+            let tileSprite = this.phaserGame.add.sprite(tile.x, tile.y, 'markers');
+            this.visiongroup.add(tileSprite);
+            tileSprite.animations.add("visible", ["marker/visible_tile"], 5, true);
+            tileSprite.play("visible");
+        }
+        );
+        //console.timeEnd("addVisibleTiles");
     }
 
 
@@ -187,6 +205,8 @@ export class Engine {
     }
 
     public playSound(soundName: string) {
+        this.soundeffect.volume=0.5;
+
         this.soundeffect.play(soundName);
     }
 

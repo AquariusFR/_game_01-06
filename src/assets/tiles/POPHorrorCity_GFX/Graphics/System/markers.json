@@ -83,6 +83,27 @@
                 "w": 17,
                 "h": 17
             }
+        },
+        {
+            "filename": "marker/visible_tile",
+            "frame": {
+                "x": 128,
+                "y": 0,
+                "w": 32,
+                "h": 32
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 17,
+                "h": 17
+            },
+            "sourceSize": {
+                "w": 17,
+                "h": 17
+            }
         }
     ],
     "meta": {

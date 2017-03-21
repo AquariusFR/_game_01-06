@@ -9,6 +9,9 @@ export class Player extends _Entity {
         this.teamId = team;
         this.maxAction = 2;
         this.mouvementRange = 10;
+        this.visionRange = 4;
+        this.coverDetection = 10;
+        this.updateAccessibleTiles = true;
     }
 
     move(targetPosition:Phaser.Point, callback:()=> void){

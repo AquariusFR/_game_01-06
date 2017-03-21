@@ -8,6 +8,7 @@
 *   to TypeScript By Fred Nobre (@AquariusFR)
 **/
 import * as _ from 'lodash';
+import { Square } from 'app/game/map'
 
 declare var Heap: any;
 
@@ -54,7 +55,9 @@ export class EasyStar {
     }
 
 
-    public getTilesInRange(startX: number, startY: number, range: number, callback: (pathes: Map<string, Array<any>>) => void) {
+    public filterAccessibleTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
+
+        console.time('getTilesInRange');
 
         let self = this;
         let tilesCalculated = 0;
@@ -64,108 +67,26 @@ export class EasyStar {
 
         //for max range
         // search surrounding nodes
+        squareInRange.forEach(currentSquare => {
+            tilesCalculated++;
+            this.findPath(start.x, start.y, currentSquare.x, currentSquare.y, (path) => collectPath(currentSquare.x, currentSquare.y, path), range);
+            self.calculate();
+        })
 
-        _.times(range, searchInGivenRange);
+
 
         self.calculate();
-        function searchInGivenRange(currentRange: number) {
-
-            searchLeft(currentRange + 1);
-            searchTop(currentRange + 1);
-            searchBottom(currentRange + 1);
-            searchRight(currentRange + 1);
-        }
-        function searchLeft(currentRange: number) {
-
-            let minY = startY - currentRange,
-                x = self.cleanX(startX + currentRange);
-
-            if (x < 0) {
-                return;
-            }
-
-            _.times((currentRange * 2) + 1, stepY => {
-
-                let y = self.cleanY(minY + stepY);
-                if (y < 0) {
-                    return;
-                }
-
-                tilesCalculated++;
-                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
-                self.calculate();
-            });
-
-        }
-        function searchTop(currentRange: number) {
-            let y = self.cleanY(startY - currentRange),
-                minX = startX - currentRange;
-            if (y < 0) {
-                return;
-            }
-
-            _.times((currentRange * 2) + 1, stepX => {
-                let x = self.cleanX(minX + stepX);
-                if (x < 0) {
-                    return;
-                }
-                tilesCalculated++;
-                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
-                self.calculate();
-            });
-
-        }
-        function searchBottom(currentRange: number) {
-            let y = self.cleanY(startY + currentRange),
-                minX = startX - currentRange;
-            if (y < 0) {
-                return;
-            }
-
-            _.times((currentRange * 2) + 1, stepX => {
-                let x = self.cleanX(minX + stepX);
-                if (x < 0) {
-                    return;
-                }
-                tilesCalculated++;
-                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
-                self.calculate();
-            });
-        }
-        function searchRight(currentRange: number) {
-            let minY = startY - currentRange,
-                x = self.cleanX(startX - currentRange);
-
-            if (x < 0) {
-                return;
-            }
-
-            _.times((currentRange * 2) + 1, stepY => {
-                let y = self.cleanY(minY + stepY);
-
-
-                if (y < 0) {
-                    return;
-                }
-
-                tilesCalculated++;
-                self.findPath(startX, startY, x, y, (path) => collectPath(x, y, path), range);
-                self.calculate();
-            });
-        }
         function collectPath(x, y, path) {
             tilesCalculatedFinish++;
             if (path) {
                 pathes.set(self.getPointsKey(x, y), path);
             }
-
-
             if (tilesCalculated === tilesCalculatedFinish) {
+
+                console.timeEnd("getTilesInRange");
                 callback(pathes);
             }
         }
-
-        return null;
     }
 
     private cleanX(x: number) {
@@ -467,7 +388,7 @@ export class EasyStar {
 
             // Search all of the surrounding nodes
             tilesToSearch.forEach(tile => {
-                if(isDoneCalculating){
+                if (isDoneCalculating) {
                     return;
                 }
                 this.checkAdjacentNode(tile);
@@ -480,7 +401,6 @@ export class EasyStar {
                 this.instances.shift();
                 continue;
             }
-
         }
     }
 

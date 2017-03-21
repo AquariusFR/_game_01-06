@@ -25,6 +25,8 @@ export class _Entity implements Entity {
     mouvementRange: number;
     square:Square
     coverDetection:number
+    visibleSquares:Array<Square>
+    updateAccessibleTiles:boolean
 
     constructor(engine: Engine, position: Phaser.Point) {
         this.engine = engine;

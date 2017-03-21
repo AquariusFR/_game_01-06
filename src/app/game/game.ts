@@ -50,23 +50,26 @@ export class Game {
         map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(5, 3), this.playerTeamId, this.playerTeam));
         map.putEntityAtPoint(Player.popPlayer(engine, map.getPointAtSquare(6, 3), this.playerTeamId, this.playerTeam));
 
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(6, 9), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(7, 9), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 9), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 9), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(10, 9), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(5, 10), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(6, 10), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(7, 10), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(8, 10), this.zombieTeamId, this.zombieTeam));
-        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(9, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(21, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(17, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(18, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(19, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(20, 9), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(15, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(16, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(17, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(18, 10), this.zombieTeamId, this.zombieTeam));
+        map.putEntityAtPoint(Zombie.popZombie(engine, map.getPointAtSquare(19, 10), this.zombieTeamId, this.zombieTeam));
+
+        
 
 
         this.currentIndex = -1;
         this.currentTeamId = this.playerTeamId;
         this.currentTeam = this.playerTeam;
+        this.updateAllVisibilities();
         this.nextCharacter();
-        this.map.showAccessibleTilesByEntity(this.currentEntity);
+        this.doAction();
     }
 
     public nextCharacter() {
@@ -78,12 +81,45 @@ export class Game {
         this.currentEntity = this.currentTeam[this.currentIndex];
         this.currentEntity.currentAction = 0;
         this.engine.setGlowPosition(this.currentEntity.position);
-        this.map.showAccessibleTilesByEntity(this.currentEntity, () => {
-            if (this.currentTeamId === this.zombieTeamId) {
-                this.zombieTeam[this.currentIndex].play(this.map, this);
-            }
-        });
+    }
 
+    private updateVisibleSquaresOfEntity(entity: Entity) {
+        //console.time('updateVisibleSquaresOfEntity');
+        
+        this.map.setVisibileSquares(entity);
+
+        if (this.currentTeamId === this.zombieTeamId) {
+            if(!entity.updateAccessibleTiles){
+                return;
+            }
+            let pointMap: Map<string, Phaser.Point> = new Map();
+            let points: Array<Phaser.Point> = new Array();
+            this.engine.removeAllVisibleTiles();
+
+            this.zombieTeam.forEach(z => {
+                z.visibleSquares.forEach(s => pointMap.set(s.x + ':' + s.y, this.map.getPointAtSquare(s.x, s.y)))
+            });
+
+            pointMap.forEach(s => points.push(s));
+
+            this.engine.addVisibleTiles(points);
+        }
+        //console.timeEnd("updateVisibleSquaresOfEntity");
+    }
+
+    // foreach entities, determine what it can see
+    private updateAllVisibilities() {
+        //console.time('updateAllVisibilities');
+        this.playerTeam.forEach(p => {
+            this.map.setVisibileSquares(p, true);
+        })
+        this.engine.removeAllVisibleTiles();
+        this.zombieTeam.forEach(z => {
+            this.map.setVisibileSquares(z, true);
+            let visiblePoints: Array<Phaser.Point> = z.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y))
+            this.engine.addVisibleTiles(visiblePoints);
+        })
+        //console.timeEnd("updateAllVisibilities");
     }
 
     public nextTeam() {
@@ -141,11 +177,13 @@ export class Game {
         let square = this.map.getSquareAtPoint(target);
 
         if (square.entity) {
+            this.currentEntity.updateAccessibleTiles = false;
             this.targeted(square.entity);
             this.ticking = true;
             this.nextAction();
         }
         else {
+            this.currentEntity.updateAccessibleTiles = true;
             this.map.moveEntityAtPoint(this.currentEntity, target,
                 () => this.nextAction(),
                 (error) => {
@@ -158,17 +196,33 @@ export class Game {
     }
 
     public nextAction() {
+        console.time('nextAction');
         this.ticking = false;
         this.currentEntity.currentAction++;
+        this.updateVisibleSquaresOfEntity(this.currentEntity);
         if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
             this.nextCharacter();
         }
-        else {
-            this.map.showAccessibleTilesByEntity(this.currentEntity, () => {
+        this.doAction();
+    }
+    private doAction() {
+        this.map.setAccessibleTilesByEntity(this.currentEntity, () => {
+            console.timeEnd("nextAction");
             if (this.currentTeamId === this.zombieTeamId) {
                 this.zombieTeam[this.currentIndex].play(this.map, this);
+            } else {
+                this.showAccessibleTiles();
             }
         });
-        }
+    }
+    private showAccessibleTiles() {
+        let positions: Array<Phaser.Point> = new Array();
+        this.currentEntity.pathes.forEach((path, key) => {
+            let splittedKey = key.split('_'),
+                squareX = Number(splittedKey[0]),
+                squareY = Number(splittedKey[1]);
+            positions.push(this.map.getPointAtSquare(squareX, squareY));
+        });
+        this.engine.addAccessibleTiles(positions);
     }
 }

@@ -20,10 +20,11 @@ export class Zombie extends _Entity {
         this.sprite = engine.createZombie(position);
         this.teamId = team;
         this.maxAction = 2;
-        this.mouvementRange = 8;
+        this.mouvementRange = 6;
         this.currentStatus = status.IDDLE;
-        this.visionRange = 10;
-        this.coverDetection = 0;
+        this.visionRange = 12;
+        this.coverDetection = 10;
+        this.updateAccessibleTiles = true;
     }
 
 
@@ -36,7 +37,8 @@ export class Zombie extends _Entity {
 
     public play(map: GameMap, game:Game): void {
 
-        let entities: Array<Entity> = map.getVisibleEntitiedByEntity(this);
+        let entities: Array<Entity> = this.visibleSquares.filter(square=> square.entity).map(s=>s.entity);
+        // map.getVisibleEntitiedByEntity(this);
 
         if (this.lookForHumaaaans(entities, map, game)) {
             console.log('fresh meat ...')
@@ -65,7 +67,6 @@ export class Zombie extends _Entity {
             let targetSquare = h.square;
 
             //check les 8 cases adjacentes à la cible
-
             checkPath(targetSquare.x - 1, targetSquare.y - 1);
             checkPath(targetSquare.x, targetSquare.y - 1);
             checkPath(targetSquare.x + 1, targetSquare.y - 1);
@@ -77,16 +78,21 @@ export class Zombie extends _Entity {
 
             function checkPath(x, y) {
                 let path = pathes.get(x + '_' +y);
-                if (path && path.length < actualDistanceFromHuman) {
-                    closerHuman = h;
-                    actualDistanceFromHuman = path.length;
-                    pathToGo = path;
-                }
                 if(actualSquare.x === x && actualSquare.y ===y){
                     actualDistanceFromHuman = 0;
                     closerHuman = h;
                     pathToGo = [];
+                    return;
                 }
+                if (path && path.length < actualDistanceFromHuman) {
+                    closerHuman = h;
+                    actualDistanceFromHuman = path.length;
+                    pathToGo = path;
+                    return
+                }
+
+                // on récupère le chemin le amenant au plus pret
+               // map.easyStar.findPath(x, y)
             }
         });
 
@@ -99,8 +105,10 @@ export class Zombie extends _Entity {
             game.attack(closerHuman);
             game.nextAction();
             console.log('attack');
+            this.updateAccessibleTiles = false;
         } else {
             map.moveEntityFollowingPath(this, pathToGo, () => game.nextAction(), () => console.error('oh ...'));
+            this.updateAccessibleTiles = true;
         }
 
         return true;

@@ -25,6 +25,8 @@ export interface Entity {
     id:number
     square:Square
     coverDetection:number
+    visibleSquares:Array<Square>
+    updateAccessibleTiles:boolean
 }
 export enum EntityType {
     human,

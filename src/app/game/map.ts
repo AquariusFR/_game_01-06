@@ -8,7 +8,7 @@ const tilesize = 32;
 export class GameMap {
     private entities: Array<Entity> = new Array();
     private grid: Array<Array<number>>;
-    private easyStar: EasyStar;
+    public easyStar: EasyStar;
     private size: MapSize;
     private squares: Map<string, Square> = new Map<string, Square>()
     private engine: Engine;
@@ -18,6 +18,102 @@ export class GameMap {
         this.engine = engine;
     }
 
+    public setVisibileSquares(entity: Entity, force?: boolean) {
+        if (!entity.updateAccessibleTiles && !force) {
+            return;
+        }
+        //console.time('setVisibileSquares');
+        let square = entity.square,
+            x: number = square.x,
+            y: number = square.y,
+            perimetre: Array<Square> = this.getSquareInRange(x, y, entity.visionRange),
+            visibleSquares: Array<Square> = new Array();
+
+        perimetre.forEach(currentSquare => {
+            let line = this.BresenhamLine(square, currentSquare),
+                squareJustBefore = line.length > 2 ? line[line.length - 2] : null;
+
+            // si la case justeavant masque la case, on ne l'ajoute pas
+            if (squareJustBefore && entity.coverDetection < squareJustBefore.cover) {
+                return;
+            }
+
+            let canSeeSquare = line.reduce((canSee, currentSquare) => {
+                // si l'entité ne peut pas voir au dela de l case, elle ne pourra pas voir plus loin
+                if (currentSquare.cover === 100) {
+                    return false;
+                }
+                return canSee;
+            }, true);
+            if (canSeeSquare) {
+                visibleSquares.push(currentSquare);
+            }
+        });
+        entity.visibleSquares = visibleSquares;
+        //console.timeEnd("setVisibileSquares");
+    }
+
+    private getSquareInRange(xm, ym, r): Array<Square> {
+        //console.time('getSquareInRange');
+        /* bottom left to top right */
+        let x = -r, y = 0, err = 2 - 2 * r,
+            perimetre: Array<Square> = new Array(),
+            squaresMap: Map<string, Square> = new Map(),
+            squaresInRange: Array<Square> = new Array(),
+            size = this.size,
+            isBetween = this.isBetween,
+            squares = this.squares;
+
+        do {
+            /*   I. Quadrant +x +y */
+            addToSquares((xm - x), (ym + y));
+            /*  II. Quadrant -x +y */
+            addToSquares((xm - y), (ym - x));
+            /* III. Quadrant -x -y */
+            addToSquares((xm + x), (ym - y));
+            /*  IV. Quadrant +x -y */
+            addToSquares((xm + y), (ym + x));
+
+            r = err;
+            if (r <= y) {
+                /* y step */
+                err += ++y * 2 + 1;
+            }
+            if (r > x || err > y) {
+                /* x step */
+                err += ++x * 2 + 1;
+            }
+        } while (x < 0);
+
+        squaresMap.forEach(s => squaresInRange.push(s));
+        //console.timeEnd("getSquareInRange");
+        return squaresInRange;
+
+        function addToSquares(x, y) {
+            let step = x
+
+            if (x < xm) {
+                for (step; step <= xm; step++) {
+                    let key = step + ':' + y;
+                    if (isBetween(step, 0, size.width) && isBetween(y, 0, size.height)) {
+                        squaresMap.set(key, squares.get(key));
+                    }
+                }
+            } else {
+                for (step; step >= xm; step--) {
+                    let key = step + ':' + y;
+                    if (isBetween(step, 0, size.width) && isBetween(y, 0, size.height)) {
+                        squaresMap.set(key, squares.get(key));
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    // si derrière une case à 50% de cover il est invisible.
+    // si il se trouve
     public getVisibleEntitiedByEntity(entity: Entity): Array<Entity> {
         let square = entity.square,
             x: number = square.x,
@@ -31,10 +127,7 @@ export class GameMap {
             };
 
         let visibleEntities = this.entities.filter(filter).filter(e => this.isEntityCanSeeEntityB(entity, e));
-
-
         return visibleEntities;
-
     }
 
     private isBetween(value, min, max) {
@@ -45,7 +138,7 @@ export class GameMap {
         let squares = this.BresenhamLine(a.square, b.square);
 
         return squares.reduce((canSee, currentSquare) => {
-            
+
             // si l'entité ne peut pas voir au dela de al case, elle ne pourra pas voir plus loin
             if (a.coverDetection < currentSquare.cover) {
                 return false;
@@ -130,16 +223,16 @@ export class GameMap {
             _.times(this.size.width, columnIndex => {
                 let tilePosition: Phaser.Point = this.getPointAtSquare(columnIndex, rowIndex),
                     gridStatus: number = this.engine.isPositionCollidable(tilePosition) ? 1 : 0,
-                    tileCover:number = this.engine.getPositionCover(tilePosition);
+                    tileCover: number = this.engine.getPositionCover(tilePosition);
                 row.push(gridStatus);
 
-                let key= columnIndex+ ':' +rowIndex;
+                let key = columnIndex + ':' + rowIndex;
                 if (!this.squares.has(key)) {
                     this.squares.set(key, {
                         entity: null,
                         x: columnIndex,
                         y: rowIndex,
-                        cover:tileCover
+                        cover: tileCover
                     })
                 }
             });
@@ -177,14 +270,16 @@ export class GameMap {
         return square;
     }
 
-    public showAccessibleTilesByEntity(entity: Entity, callback?:()=>void) {
-        let position = new Phaser.Point;
-        position.x = entity.position.x;
-        position.y = entity.position.y;
-        let sourceSquare = this.getSquareAtPoint(entity.position);
-        this.easyStar.getTilesInRange(sourceSquare.x, sourceSquare.y, entity.mouvementRange, pathes => {
+    public setAccessibleTilesByEntity(entity: Entity, callback?: () => void) {
+        if (!entity.updateAccessibleTiles) {
+            callback();
+            return;
+        }
+        let squareInRange: Array<Square> = this.getSquareInRange(entity.square.x, entity.square.y, entity.mouvementRange);
+
+        this.easyStar.filterAccessibleTiles(entity.square, squareInRange, entity.mouvementRange, pathes => {
             this.collecteAccessibleTiles(entity, pathes);
-            if(callback){
+            if (callback) {
                 callback();
             }
         });
@@ -192,24 +287,15 @@ export class GameMap {
 
     private collecteAccessibleTiles(entity: Entity, pathes: Map<string, any[]>) {
         entity.pathes = pathes;
-        let positions: Array<Phaser.Point> = new Array();
-        pathes.forEach((path, key) => {
-
-            let splittedKey = key.split('_'),
-                squareX = Number(splittedKey[0]),
-                squareY = Number(splittedKey[1]);
-            positions.push(this.getPointAtSquare(squareX, squareY));
-        });
-        this.engine.addAccessibleTiles(positions);
     }
 
 
-    public moveEntityFollowingPath(entity: Entity, path:Array<any>, callback: () => void, error: (e) => void): void {
-    
+    public moveEntityFollowingPath(entity: Entity, path: Array<any>, callback: () => void, error: (e) => void): void {
+
         let self = this,
             grid = this.grid,
             sourceSquare = this.getSquareAtPoint(entity.position);
-        
+
         if (path === null) {
             error('Path was not found.');
             return;
@@ -219,7 +305,7 @@ export class GameMap {
         function move() {
             let currentPathPoint = path[currentPositionIndex],
                 currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y);
-                let square = self.getSquareAtPoint(currentPosition);
+            let square = self.getSquareAtPoint(currentPosition);
             entity.square = square;
             if (currentPositionIndex >= path.length - 1) {
                 entity.move(currentPosition, () => {
@@ -275,7 +361,7 @@ export class GameMap {
             let currentPathPoint = path[currentPositionIndex],
                 currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y),
                 square = self.getSquareAtPoint(currentPosition);
-                entity.square = square;
+            entity.square = square;
             if (currentPositionIndex >= path.length - 1) {
                 entity.move(currentPosition, () => {
                     entity.finishMoving();
@@ -328,7 +414,7 @@ export class GameMap {
                 entity: null,
                 x: squareX,
                 y: squareY,
-                cover:0
+                cover: 0
             })
         }
 
