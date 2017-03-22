@@ -35,23 +35,23 @@ export class Zombie extends _Entity {
     }
 
 
-    public play(map: GameMap, game:Game): void {
+    public play(map: GameMap, attack:(Entity)=>void, callback:()=>void): void {
 
         let entities: Array<Entity> = this.visibleSquares.filter(square=> square.entity).map(s=>s.entity);
         // map.getVisibleEntitiedByEntity(this);
 
-        if (this.lookForHumaaaans(entities, map, game)) {
+        if (this.lookForHumaaaans(entities, map, attack, callback)) {
             console.log('fresh meat ...')
         } else {
-            this.goForCloserZombie(entities, game);
+            this.goForCloserZombie(entities, callback);
         }
 
     }
-    private goForCloserZombie(entities: Array<Entity>, game:Game): boolean {
-            game.nextAction();
+    private goForCloserZombie(entities: Array<Entity>, callback:()=>void): boolean {
+            callback();
         return false;
     }
-    private lookForHumaaaans(entities: Array<Entity>, map: GameMap, game:Game): boolean {
+    private lookForHumaaaans(entities: Array<Entity>, map: GameMap, attack:(Entity)=>void, callback:()=>void): boolean {
 
         let humans = entities.filter(e => e.teamId !== this.teamId);
 
@@ -67,14 +67,14 @@ export class Zombie extends _Entity {
             let targetSquare = h.square;
 
             //check les 8 cases adjacentes à la cible
-            checkPath(targetSquare.x - 1, targetSquare.y - 1);
+            //checkPath(targetSquare.x - 1, targetSquare.y - 1);
             checkPath(targetSquare.x, targetSquare.y - 1);
-            checkPath(targetSquare.x + 1, targetSquare.y - 1);
+            //checkPath(targetSquare.x + 1, targetSquare.y - 1);
             checkPath(targetSquare.x - 1, targetSquare.y);
             checkPath(targetSquare.x + 1, targetSquare.y);
-            checkPath(targetSquare.x - 1, targetSquare.y + 1);
+            //checkPath(targetSquare.x - 1, targetSquare.y + 1);
             checkPath(targetSquare.x, targetSquare.y + 1);
-            checkPath(targetSquare.x + 1, targetSquare.y + 1);
+            //checkPath(targetSquare.x + 1, targetSquare.y + 1);
 
             function checkPath(x, y) {
                 let path = pathes.get(x + '_' +y);
@@ -102,12 +102,12 @@ export class Zombie extends _Entity {
 
         if (actualDistanceFromHuman === 0) {
             //attack
-            game.attack(closerHuman);
-            game.nextAction();
+            attack(closerHuman);
+            callback();
             console.log('attack');
             this.updateAccessibleTiles = false;
         } else {
-            map.moveEntityFollowingPath(this, pathToGo, () => game.nextAction(), () => console.error('oh ...'));
+            map.moveEntityFollowingPath(this, pathToGo, () => callback(), () => console.error('oh ...'));
             this.updateAccessibleTiles = true;
         }
 

@@ -28,6 +28,7 @@ export class _Entity implements Entity {
     coverDetection:number
     visibleSquares:Array<Square>
     updateAccessibleTiles:boolean
+    mapLastUpdate:number
 
     constructor(engine: Engine, position: Phaser.Point) {
         this.engine = engine;

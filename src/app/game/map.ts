@@ -246,8 +246,8 @@ export class GameMap {
         })
 
         this.easyStar = new EasyStar([0], this.grid);
-        this.easyStar.enableCornerCutting();
-        this.easyStar.enableDiagonals();
+       // this.easyStar.enableCornerCutting();
+        //this.easyStar.enableDiagonals();
     }
 
     private getPointKey(point: Phaser.Point): string {
@@ -270,6 +270,7 @@ export class GameMap {
 
         square.entity = entity;
         entity.square = square;
+        entity.targetSquare = square;
 
         this.entities.push(entity)
 
@@ -281,6 +282,8 @@ export class GameMap {
             callback();
             return;
         }
+        //mapLastUpdate
+        entity.mapLastUpdate = this.mapLastUpdate;
         let squareInRange: Array<Square> = this.getSquareInRange(entity.targetSquare.x, entity.targetSquare.y, entity.mouvementRange);
 
         this.easyStar.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange, pathes => {
@@ -295,6 +298,7 @@ export class GameMap {
         entity.pathMap = pathes;
     }
 
+    public mapLastUpdate:number= new Date().getTime();
 
     public moveEntityFollowingPath(entity: Entity, path: Array<any>, callback: () => void, error: (e) => void): void {
 
@@ -332,6 +336,9 @@ export class GameMap {
                     callback();
                 });
                 self.engine.moveGlowPosition(currentPosition);
+
+                self.mapLastUpdate = new Date().getTime();
+
             } else {
                 currentPositionIndex = currentPositionIndex + 1;
                 console.log("moving to ", currentPosition.x + ':' + currentPosition.y, currentPathPoint);

@@ -22,7 +22,8 @@
         "styles.css"
       ],
       "scripts": [
-        "../node_modules/heap/lib/heap.js"
+        "../node_modules/heap/lib/heap.js",
+        "../node_modules/javascript-astar/astar.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {

@@ -26,6 +26,7 @@ export interface Entity {
     coverDetection:number
     visibleSquares:Array<Square>
     updateAccessibleTiles:boolean
+    mapLastUpdate:number
 
     move(targetPosition:Phaser.Point, callback:()=> void)
     finishMoving()

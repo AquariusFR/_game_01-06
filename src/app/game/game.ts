@@ -6,6 +6,7 @@ import { Entity, EntityType } from 'app/game/entity'
 import { Engine } from 'app/phaser/engine'
 import { GameService } from 'app/loader/game.service'
 
+// a faire des zombie cadavres !!
 
 export class Game {
     private ticking: boolean;
@@ -68,25 +69,23 @@ export class Game {
     }
 
     private addZombieAt(x, y) {
-        this.map.putEntityAtPoint(Zombie.popZombie(this.engine, this.map.getPointAtSquare(x, y), this.zombieTeamId, this.zombieTeam));
+        let zombie = Zombie.popZombie(this.engine, this.map.getPointAtSquare(x, y), this.zombieTeamId, this.zombieTeam);
+        this.map.putEntityAtPoint(zombie);
     }
     private addPlayer(x, y) {
         let player = Player.popPlayer(this.engine, this.map.getPointAtSquare(x, y), this.playerTeamId, this.playerTeam);
         this.map.putEntityAtPoint(player);
-
-        player.targetSquare = this.map.squares.get(x + ':' + y);
     }
 
 
     public nextAction() {
         console.time('nextAction');
-        this.ticking = false;
         this.currentEntity.currentAction++;
         this.updateVisibleSquaresOfEntity(this.currentEntity);
         if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
             this.nextCharacter();
         }
-        this.doAction();
+        this.prepareAction();
     }
     public nextCharacter() {
         if (this.currentIndex >= this.currentTeam.length - 1) {
@@ -187,7 +186,8 @@ export class Game {
 
 
     private clickOn(target: Phaser.Point) {
-        if (this.ticking) {
+
+        if (this.currentTeamId !== this.playerTeamId || this.ticking) {
             return
         }
         let square = this.map.getSquareAtPoint(target);
@@ -198,6 +198,7 @@ export class Game {
             this.targeted(square.entity);
             this.ticking = true;
             this.nextAction();
+            this.ticking = false;
         }
         else {
             // moving to
@@ -211,8 +212,10 @@ export class Game {
             this.showAccessibleTilesByPlayer();
 
             this.map.moveEntityAtPoint(this.currentEntity, target,
-                () => this.nextAction(),
-                (error) => {
+                () => {
+                    this.nextAction()
+                    this.ticking = false;
+                }, (error) => {
                     console.log('sorry', error);
                     this.ticking = false;
                 });
@@ -221,16 +224,14 @@ export class Game {
         }
     }
 
-    private doAction() {
-
-        if (!this.currentEntity.targetSquare) {
-            this.currentEntity.targetSquare = this.currentEntity.square;
-        }
+    private prepareAction() {
 
         if (this.currentTeamId === this.zombieTeamId) {
             this.map.setAccessibleTilesByEntity(this.currentEntity, () => {
                 console.timeEnd("nextAction");
-                this.zombieTeam[this.currentIndex].play(this.map, this);
+
+                this.zombieTeam[this.currentIndex].play(this.map, (e) => this.attack(e), () => this.nextAction());
+
             });
         } else {
             if (this.currentEntity.currentAction === 0) {

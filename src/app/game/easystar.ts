@@ -12,6 +12,8 @@ import { Square } from 'app/game/map'
 import { PathFind } from 'app/game/pathFind'
 
 declare let Heap: any;
+declare let Graph: any;
+declare let astar: any;
 
 const STRAIGHT_COST: number = 1.0;
 const DIAGONAL_COST: number = 1.4;
@@ -32,6 +34,7 @@ export class EasyStar {
     private syncEnabled = false;
     private pointsToAvoid: Map<string, number> = new Map();
     private collisionGrid: Array<Array<number>>;
+    private negativeCollisionGrid: Array<Array<number>>;
     private costMap: Map<number, number> = new Map();
     private pointsToCost: Map<string, number> = new Map();
     private directionalConditions: Map<string, Array<string>> = new Map();
@@ -71,8 +74,24 @@ export class EasyStar {
         //for max range
         // search surrounding nodes
         console.time('findPath');
+        let graph = new Graph(this.negativeCollisionGrid);
+
+
         squareInRange.forEach(currentSquare => {
             tilesCalculated++;
+
+
+            var startTile = graph.grid[start.x][start.y];
+            var endTile = graph.grid[currentSquare.x][currentSquare.y];
+            var result = astar.search(graph, startTile, endTile);
+        });
+
+
+        squareInRange.forEach(currentSquare => {
+            tilesCalculated++;
+
+
+
             this.findPath(start.x, start.y, currentSquare.x, currentSquare.y, (path) => collectPath(currentSquare.x, currentSquare.y, path), range);
         });
 
@@ -139,8 +158,19 @@ export class EasyStar {
         * @param {Array} grid The collision grid that this EasyStar instance will read from.
         * This should be a 2D Array of Numbers.
         **/
-    public setGrid(grid): void {
+    public setGrid(grid:Array<Array<number>>): void {
         this.collisionGrid = grid;
+
+        this.negativeCollisionGrid = new Array();
+        grid.map(
+            (line, rowIndex) =>{
+                this.negativeCollisionGrid.push([]);
+                line.forEach(
+                    (tile, columnIndex) => 
+                        this.negativeCollisionGrid[rowIndex][columnIndex] = tile > 0 ? 0 : 1
+                );
+            }
+        )
 
         //Setup cost map
         this.collisionGrid.forEach(cg =>
