@@ -9,8 +9,9 @@
 **/
 import * as _ from 'lodash';
 import { Square } from 'app/game/map'
+import { PathFind } from 'app/game/pathFind'
 
-declare var Heap: any;
+declare let Heap: any;
 
 const STRAIGHT_COST: number = 1.0;
 const DIAGONAL_COST: number = 1.4;
@@ -54,36 +55,36 @@ export class EasyStar {
         }
     }
 
+    public getWalkableTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
 
-    public filterAccessibleTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
+        ///  a faire, voir les cases qui sont directements accessibles, tracer les chemins pour les autres cas
 
-        console.time('getTilesInRange');
+        console.time('getWalkableTiles');
 
         let self = this;
         let tilesCalculated = 0;
         let tilesCalculatedFinish = 0;
 
         let pathes = new Map<string, Array<any>>();
+        this.reset();
 
         //for max range
         // search surrounding nodes
+        console.time('findPath');
         squareInRange.forEach(currentSquare => {
             tilesCalculated++;
             this.findPath(start.x, start.y, currentSquare.x, currentSquare.y, (path) => collectPath(currentSquare.x, currentSquare.y, path), range);
-            self.calculate();
-        })
+        });
 
-
-
-        self.calculate();
+        self.calculate('1');
         function collectPath(x, y, path) {
             tilesCalculatedFinish++;
             if (path) {
                 pathes.set(self.getPointsKey(x, y), path);
             }
             if (tilesCalculated === tilesCalculatedFinish) {
-
-                console.timeEnd("getTilesInRange");
+                console.timeEnd('findPath');
+                console.timeEnd("getWalkableTiles");
                 callback(pathes);
             }
         }
@@ -314,9 +315,9 @@ export class EasyStar {
         }
 
         // End point is not an acceptable tile.
-        var endTile = this.collisionGrid[endY][endX];
-        var isAcceptable = false;
-        for (var i = 0; i < this.acceptableTiles.length; i++) {
+        let endTile = this.collisionGrid[endY][endX];
+        let isAcceptable = false;
+        for (let i = 0; i < this.acceptableTiles.length; i++) {
             if (endTile === this.acceptableTiles[i]) {
                 isAcceptable = true;
                 break;
@@ -329,7 +330,7 @@ export class EasyStar {
         }
 
         // Create the instance
-        var instance = new Instance();
+        let instance = new Instance();
         instance.openList = new Heap(function (nodeA, nodeB) {
             return nodeA.bestGuessDistance() - nodeB.bestGuessDistance();
         });
@@ -348,18 +349,28 @@ export class EasyStar {
 
         this.instances.push(instance);
     }
+
+    public reset(){
+        this.pathFoundMap  = new Map<string, Array<any>>();
+    }
+
+    pathFoundMap : Map<string, Array<any>>;
+
     /**
     * This method steps through the A* Algorithm in an attempt to
     * find your path(s). It will search 4-8 tiles (depending on diagonals) for every calculation.
     * You can change the number of calculations done in a call by using
     * easystar.setIteratonsPerCalculation().
     **/
-    calculate(): void {
+    calculate(PID: string): void {
         if (this.instances.length === 0 || this.collisionGrid === undefined || this.acceptableTiles === undefined) {
             return;
         }
+
+        console.time('calculate' + PID);
         for (this.iterationsSoFar = 0; this.iterationsSoFar < this.iterationsPerCalculation; this.iterationsSoFar++) {
             if (this.instances.length === 0) {
+                console.timeEnd('calculate' + PID);
                 return;
             }
 
@@ -373,18 +384,15 @@ export class EasyStar {
 
             // Handles the case where we have found the destination
             if (this.haveFoundDestination(instance, searchNode)) {
-                return
+                continue;
             }
 
             searchNode.list = CLOSED_LIST;
 
             this.checkTiles(instance, searchNode, tilesToSearch);
 
-            if (this.diagonalsEnabled) {
-                this.checkDiagonale(instance, searchNode, tilesToSearch);
-            }
 
-            var isDoneCalculating = false;
+            let isDoneCalculating = false;
 
             // Search all of the surrounding nodes
             tilesToSearch.forEach(tile => {
@@ -409,19 +417,39 @@ export class EasyStar {
 
     private haveFoundDestination(instance: Instance, searchNode: Node): boolean {
         // Handles the case where we have found the destination
+
+        let alreadyCalculated = this.pathFoundMap.get(this.getPointsKey(instance.endX, instance.endY));
+
+        if (alreadyCalculated && alreadyCalculated.length <= instance.maxCost) {
+            instance.callback(alreadyCalculated);
+            this.instances.shift();
+            return true;
+        }
+
         if (instance.endX === searchNode.x && instance.endY === searchNode.y) {
             instance.isDoneCalculating = true;
-            var path = [];
+            let path = [];
             path.push({ x: searchNode.x, y: searchNode.y });
-            var parent = searchNode.parent;
+            let parent = searchNode.parent;
             while (parent != null) {
                 path.push({ x: parent.x, y: parent.y });
                 parent = parent.parent;
             }
             path.reverse();
-            var ic = instance;
-            var ip = path;
-            ic.callback(ip);
+            instance.callback(path);
+
+            let length = path.length;
+            //on déroule le chemin, et on remplis les chemin vers les cases
+            path.forEach((square, index) => {
+                if (index == 0) {
+                    return;
+                }
+                let pathToSquare = _.dropRight(path, length - 1 - index);
+                this.pathFoundMap.set(this.getPointsKey(square.x, square.y), pathToSquare);
+            }
+            );
+
+            this.instances.shift();
             return true;
         }
         return false;
@@ -436,17 +464,15 @@ export class EasyStar {
 
         // Couldn't find a path.
         if (instance.openList.length === 0) {
-            var ic = instance;
-            ic.callback(null);
+            instance.callback(null);
             this.instances.shift();
             return;
         }
 
-        var searchNode = instance.openList.pop();
+        let searchNode = instance.openList.pop();
 
         if (searchNode.costSoFar > instance.maxCost) {
-            var ic = instance;
-            ic.callback(null);
+            instance.callback(null);
             this.instances.shift();
             return;
         }
@@ -478,60 +504,56 @@ export class EasyStar {
                 x: -1, y: 0, cost: STRAIGHT_COST * this.getTileCost(searchNode.x - 1, searchNode.y)
             });
         }
+        if (this.diagonalsEnabled) {
+            this.checkDiagonale(instance, searchNode, tilesToSearch);
+        }
     }
 
     private checkDiagonale(instance: Instance, searchNode: Node, tilesToSearch: Array<Object>) {
 
-        if (searchNode.x > 0 && searchNode.y > 0) {
-            if (this.allowCornerCutting ||
-                (
-                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1) &&
-                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y))) {
-
-                tilesToSearch.push({
-                    instance: instance, searchNode: searchNode,
-                    x: -1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y - 1)
-                });
-            }
+        if (!this.allowCornerCutting) {
+            return;
         }
-        if (searchNode.x < this.collisionGrid[0].length - 1 && searchNode.y < this.collisionGrid.length - 1) {
 
-            if (this.allowCornerCutting ||
-                (
-                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1) &&
-                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y))) {
+        if (searchNode.x > 0 && searchNode.y > 0
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1)
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y)) {
 
-                tilesToSearch.push({
-                    instance: instance, searchNode: searchNode,
-                    x: 1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y + 1)
-                });
-            }
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: -1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y - 1)
+            });
+
         }
-        if (searchNode.x < this.collisionGrid[0].length - 1 && searchNode.y > 0) {
+        if (searchNode.x < this.collisionGrid[0].length - 1
+            && searchNode.y < this.collisionGrid.length - 1
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1)
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y)) {
 
-            if (this.allowCornerCutting ||
-                (this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1) &&
-                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y))) {
-
-
-                tilesToSearch.push({
-                    instance: instance, searchNode: searchNode,
-                    x: 1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y - 1)
-                });
-            }
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: 1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y + 1)
+            });
         }
-        if (searchNode.x > 0 && searchNode.y < this.collisionGrid.length - 1) {
+        if (searchNode.x < this.collisionGrid[0].length - 1
+            && searchNode.y > 0
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y - 1)
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x + 1, searchNode.y)) {
 
-            if (this.allowCornerCutting ||
-                (this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1) &&
-                    this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y))) {
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: 1, y: -1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x + 1, searchNode.y - 1)
+            });
+        }
+        if (searchNode.x > 0
+            && searchNode.y < (this.collisionGrid.length - 1)
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x, searchNode.y + 1)
+            && this.isTileWalkable(this.collisionGrid, this.acceptableTiles, searchNode.x - 1, searchNode.y)) {
+            tilesToSearch.push({
+                instance: instance, searchNode: searchNode,
+                x: -1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y + 1)
+            });
 
-
-                tilesToSearch.push({
-                    instance: instance, searchNode: searchNode,
-                    x: -1, y: 1, cost: DIAGONAL_COST * this.getTileCost(searchNode.x - 1, searchNode.y + 1)
-                });
-            }
         }
     }
 
@@ -547,7 +569,7 @@ export class EasyStar {
 
         if (this.pointsToAvoid[adjacentCoordinateX + "_" + adjacentCoordinateY] === undefined &&
             this.isTileWalkable(this.collisionGrid, this.acceptableTiles, adjacentCoordinateX, adjacentCoordinateY, searchNode)) {
-            var node = this.coordinateToNode(instance, adjacentCoordinateX, adjacentCoordinateY, searchNode, cost);
+            let node = this.coordinateToNode(instance, adjacentCoordinateX, adjacentCoordinateY, searchNode, cost);
 
             if (node.list === undefined) {
                 node.list = OPEN_LIST;
@@ -563,16 +585,16 @@ export class EasyStar {
     // Helpers
     private isTileWalkable(collisionGrid, acceptableTiles, x, y, sourceNode?): boolean {
         if (this.directionalConditions[x + "_" + y]) {
-            var direction = this.calculateDirection(sourceNode.x - x, sourceNode.y - y)
-            var directionIncluded = function () {
-                for (var i = 0; i < this.directionalConditions[x + "_" + y].length; i++) {
+            let direction = this.calculateDirection(sourceNode.x - x, sourceNode.y - y)
+            let directionIncluded = function () {
+                for (let i = 0; i < this.directionalConditions[x + "_" + y].length; i++) {
                     if (this.directionalConditions[x + "_" + y][i] === direction) return true
                 }
                 return false
             }
             if (!directionIncluded()) return false
         }
-        for (var i = 0; i < acceptableTiles.length; i++) {
+        for (let i = 0; i < acceptableTiles.length; i++) {
             if (collisionGrid[y][x] === acceptableTiles[i]) {
                 return true;
             }
@@ -606,13 +628,12 @@ export class EasyStar {
         if (instance.nodeHash[x + "_" + y] !== undefined) {
             return instance.nodeHash[x + "_" + y];
         }
-        var simpleDistanceToTarget = this.getDistance(x, y, instance.endX, instance.endY);
+        let simpleDistanceToTarget = this.getDistance(x, y, instance.endX, instance.endY);
+        let costSoFar = 0
         if (parent !== null) {
-            var costSoFar = parent.costSoFar + cost;
-        } else {
-            costSoFar = 0;
+            costSoFar = parent.costSoFar + cost;
         }
-        var node = new Node(parent, x, y, costSoFar, simpleDistanceToTarget);
+        let node = new Node(parent, x, y, costSoFar, simpleDistanceToTarget);
         instance.nodeHash[x + "_" + y] = node;
         return node;
     };
@@ -620,8 +641,8 @@ export class EasyStar {
     private getDistance(x1, y1, x2, y2) {
         if (this.diagonalsEnabled) {
             // Octile distance
-            var dx = Math.abs(x1 - x2);
-            var dy = Math.abs(y1 - y2);
+            let dx = Math.abs(x1 - x2);
+            let dy = Math.abs(y1 - y2);
             if (dx < dy) {
                 return DIAGONAL_COST * dx + dy;
             } else {
@@ -629,8 +650,8 @@ export class EasyStar {
             }
         } else {
             // Manhattan distance
-            var dx = Math.abs(x1 - x2);
-            var dy = Math.abs(y1 - y2);
+            let dx = Math.abs(x1 - x2);
+            let dy = Math.abs(y1 - y2);
             return (dx + dy);
         }
     };

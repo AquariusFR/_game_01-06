@@ -10,7 +10,7 @@ export class GameMap {
     private grid: Array<Array<number>>;
     public easyStar: EasyStar;
     private size: MapSize;
-    private squares: Map<string, Square> = new Map<string, Square>()
+    public squares: Map<string, Square> = new Map<string, Square>()
     private engine: Engine;
     constructor(private name: string) { }
 
@@ -94,15 +94,20 @@ export class GameMap {
 
             if (x < xm) {
                 for (step; step <= xm; step++) {
-                    let key = step + ':' + y;
-                    if (isBetween(step, 0, size.width) && isBetween(y, 0, size.height)) {
+                    let key = step + ':' + y,
+                        square = squares.get(key);
+                    if (square) {
+                        square.data.distanceFrom = step;
                         squaresMap.set(key, squares.get(key));
                     }
                 }
             } else {
                 for (step; step >= xm; step--) {
-                    let key = step + ':' + y;
-                    if (isBetween(step, 0, size.width) && isBetween(y, 0, size.height)) {
+                    let key = step + ':' + y,
+                    square = squares.get(key);
+
+                    if (square) {
+                        square.data.distanceFrom = step;
                         squaresMap.set(key, squares.get(key));
                     }
                 }
@@ -232,7 +237,8 @@ export class GameMap {
                         entity: null,
                         x: columnIndex,
                         y: rowIndex,
-                        cover: tileCover
+                        cover: tileCover,
+                        data: {}
                     })
                 }
             });
@@ -275,9 +281,9 @@ export class GameMap {
             callback();
             return;
         }
-        let squareInRange: Array<Square> = this.getSquareInRange(entity.square.x, entity.square.y, entity.mouvementRange);
+        let squareInRange: Array<Square> = this.getSquareInRange(entity.targetSquare.x, entity.targetSquare.y, entity.mouvementRange);
 
-        this.easyStar.filterAccessibleTiles(entity.square, squareInRange, entity.mouvementRange, pathes => {
+        this.easyStar.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange, pathes => {
             this.collecteAccessibleTiles(entity, pathes);
             if (callback) {
                 callback();
@@ -286,7 +292,7 @@ export class GameMap {
     }
 
     private collecteAccessibleTiles(entity: Entity, pathes: Map<string, any[]>) {
-        entity.pathes = pathes;
+        entity.pathMap = pathes;
     }
 
 
@@ -339,14 +345,18 @@ export class GameMap {
     }
 
 
+    public canEntityGoToTarget(entity: Entity, targetPoint: Phaser.Point){
+        let targetSquare = this.getSquareAtPoint(targetPoint);
+        return entity.pathMap.get(targetSquare.x + '_' + targetSquare.y) != null;
+    }
+
     public moveEntityAtPoint(entity: Entity, targetPoint: Phaser.Point, callback: () => void, error: (e) => void): void {
         let sourceSquare = this.getSquareAtPoint(entity.position),
             targetSquare = this.getSquareAtPoint(targetPoint),
-            self = this,
             grid = this.grid;
 
 
-        let path = entity.pathes.get(targetSquare.x + '_' + targetSquare.y);
+        let path = entity.pathMap.get(targetSquare.x + '_' + targetSquare.y);
 
         if (path === null) {
             error('Path was not found.');
@@ -354,13 +364,10 @@ export class GameMap {
         }
         let currentPositionIndex = 0;
 
-
-
-        move();
-        function move() {
+        let move = () => {
             let currentPathPoint = path[currentPositionIndex],
-                currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y),
-                square = self.getSquareAtPoint(currentPosition);
+                currentPosition = this.getPointAtSquare(currentPathPoint.x, currentPathPoint.y),
+                square = this.getSquareAtPoint(currentPosition);
             entity.square = square;
             if (currentPositionIndex >= path.length - 1) {
                 entity.move(currentPosition, () => {
@@ -379,16 +386,17 @@ export class GameMap {
                     grid[targetSquare.y][targetSquare.x] += 10;
                     callback();
                 });
-                self.engine.moveGlowPosition(currentPosition);
+                this.engine.moveGlowPosition(currentPosition);
             } else {
                 currentPositionIndex = currentPositionIndex + 1;
                 console.log("moving to ", currentPosition.x + ':' + currentPosition.y, currentPathPoint);
                 entity.move(currentPosition, () => move());
 
 
-                self.engine.moveGlowPosition(currentPosition);
+                this.engine.moveGlowPosition(currentPosition);
             }
         }
+        move();
     }
 
     public getName(): string {
@@ -414,7 +422,8 @@ export class GameMap {
                 entity: null,
                 x: squareX,
                 y: squareY,
-                cover: 0
+                cover: 0,
+                data: {}
             })
         }
 
@@ -431,5 +440,6 @@ export interface Square {
     x: number,
     y: number,
     entity: Entity,
-    cover: number
+    cover: number,
+    data: any
 }

@@ -7,7 +7,7 @@ export class _Entity implements Entity {
 
     static idcount:number = 0
     visionRange: number;
-    pathes: Map<string, any[]>;
+    pathMap: Map<string, any[]>;
     id: number;
     engine: Engine;
     teamId: number;
@@ -24,6 +24,7 @@ export class _Entity implements Entity {
     maxPv: number;
     mouvementRange: number;
     square:Square
+    targetSquare:Square
     coverDetection:number
     visibleSquares:Array<Square>
     updateAccessibleTiles:boolean

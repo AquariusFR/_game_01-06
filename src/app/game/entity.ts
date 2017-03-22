@@ -17,16 +17,18 @@ export interface Entity {
     position:Phaser.Point
     type:EntityType
     sprite: Phaser.Sprite
-    move(targetPosition:Phaser.Point, callback:()=> void)
-    pathes:Map<string, any[]>
-    finishMoving()
+    pathMap:Map<string, any[]>
     teamId:number
     engine:Engine
     id:number
     square:Square
+    targetSquare:Square
     coverDetection:number
     visibleSquares:Array<Square>
     updateAccessibleTiles:boolean
+
+    move(targetPosition:Phaser.Point, callback:()=> void)
+    finishMoving()
 }
 export enum EntityType {
     human,

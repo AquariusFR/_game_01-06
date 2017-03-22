@@ -1,11 +1,14 @@
 import { Entity } from 'app/game/entity'
 import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
 import { Observable } from 'rxjs/Observable';
+import { Pool } from 'app/phaser/pool'
+import { VisibilitySprite } from 'app/game/visibilitySprite'
 
 //http://rpgmaker.su/downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
 //https://forums.rpgmakerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
+    visibleMarkerPool: Pool;
     rangegroup: Phaser.Group;
     visiongroup: Phaser.Group;
     gamegroup: Phaser.Group;
@@ -21,7 +24,7 @@ export class Engine {
     private verticalScroll = true;
     private kineticMovement = true;
     private scroller;
-    private phaserGame: Phaser.Game;
+    public phaserGame: Phaser.Game;
     private cursors: Phaser.CursorKeys;
     //private player: Phaser.Sprite;
     private wasd: any;
@@ -33,8 +36,10 @@ export class Engine {
     public observable: Observable<string>;
     private status: (string) => void;
     private o;
+    private moveActiveSpriteTo: (point: Phaser.Point) => void;
 
-    constructor(mapName: string, private gameService: GameService, private moveActiveSpriteTo: (point: Phaser.Point) => void) {
+
+    constructor(mapName: string, private gameService: GameService) {
         this.observable = Observable.create(o => {
             this.o = o;
             this.status = o.next;
@@ -58,6 +63,10 @@ export class Engine {
         function update() {
             self.update();
         }
+    }
+
+    public bindClick(moveActiveSpriteTo: (point: Phaser.Point) => void) {
+        this.moveActiveSpriteTo = moveActiveSpriteTo;
     }
 
     public shake() {
@@ -93,10 +102,10 @@ export class Engine {
 
         //music.play();
         music.volume = 0.01;
-        soundeffect.volume=0;
+        soundeffect.volume = 0;
 
         //à enlever
-        this.phaserGame.camera.setPosition(32, 32);
+        game.camera.setPosition(32, 32);
 
         soundeffect.allowMultiple = true;
         soundeffect.addMarker('shotgun', 10.15, 0.940);
@@ -126,6 +135,7 @@ export class Engine {
             topTown: game.input.keyboard.addKey(Phaser.Keyboard.END)
         };
 
+        this.visibleMarkerPool = new Pool(game, VisibilitySprite, 200, 'visibleMarker');
         this.marker = game.add.sprite(0, 0, 'markers');
         gamegroup.add(this.marker);
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
@@ -149,7 +159,8 @@ export class Engine {
         //this.gamegroup.scale.y = 2;
     }
     public removeAllVisibleTiles() {
-        this.visiongroup.removeAll();
+        this.visibleMarkerPool.sprites.forEach(sprite => sprite.alive = false);
+        //this.visiongroup.removeAll();
     }
     public removeAllAccessibleTiles() {
         this.rangegroup.removeAll();
@@ -169,10 +180,7 @@ export class Engine {
     public addVisibleTiles(tiles: Array<Phaser.Point>) {
         //console.time('addVisibleTiles');
         tiles.forEach(tile => {
-            let tileSprite = this.phaserGame.add.sprite(tile.x, tile.y, 'markers');
-            this.visiongroup.add(tileSprite);
-            tileSprite.animations.add("visible", ["marker/visible_tile"], 5, true);
-            tileSprite.play("visible");
+            this.visibleMarkerPool.createNew(tile.x, tile.y, {});
         }
         );
         //console.timeEnd("addVisibleTiles");
@@ -205,7 +213,7 @@ export class Engine {
     }
 
     public playSound(soundName: string) {
-        this.soundeffect.volume=0.5;
+        this.soundeffect.volume = 0.5;
 
         this.soundeffect.play(soundName);
     }

@@ -61,7 +61,7 @@ export class Zombie extends _Entity {
             actualDistanceFromHuman = 999,
             pathToGo = null,
             actualSquare = this.square,
-            pathes = this.pathes;
+            pathes = this.pathMap;
 
         humans.forEach(h => {
             let targetSquare = h.square;
