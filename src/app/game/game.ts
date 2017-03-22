@@ -7,7 +7,8 @@ import { Engine } from 'app/phaser/engine'
 import { GameService } from 'app/loader/game.service'
 
 // a faire des zombie cadavres !!
-
+// compétence S-link
+// pendant le tour de l'IA, on désactive le clic
 export class Game {
     private ticking: boolean;
     private engine: Engine;
@@ -48,16 +49,17 @@ export class Game {
         this.addPlayer(5, 3);
         this.addPlayer(6, 3);
 
-        this.addZombieAt(21, 9);
         this.addZombieAt(17, 9);
-        this.addZombieAt(18, 9);
-        this.addZombieAt(19, 9);
-        this.addZombieAt(20, 9);
-        this.addZombieAt(15, 10);
-        this.addZombieAt(16, 10);
-        this.addZombieAt(17, 10);
-        this.addZombieAt(18, 10);
-        this.addZombieAt(19, 10);
+        
+        this.addZombieAt(28, 17);
+        this.addZombieAt(29, 17);
+        this.addZombieAt(30, 17);
+        this.addZombieAt(31, 17);
+        this.addZombieAt(36, 12);
+        this.addZombieAt(36, 10);
+        this.addZombieAt(37, 10);
+        this.addZombieAt(38, 10);
+        this.addZombieAt(43, 10);
 
         this.currentIndex = -1;
         this.currentTeamId = this.playerTeamId;
@@ -206,13 +208,12 @@ export class Game {
                 return;
             }
 
-            this.currentEntity.updateAccessibleTiles = true;
-
-            this.currentEntity.targetSquare = this.map.getSquareAtPoint(target);
-            this.showAccessibleTilesByPlayer();
 
             this.map.moveEntityAtPoint(this.currentEntity, target,
                 () => {
+                    this.currentEntity.updateAccessibleTiles = true;
+                    this.currentEntity.targetSquare = this.map.getSquareAtPoint(target);
+                    this.showAccessibleTilesByPlayer();
                     this.nextAction()
                     this.ticking = false;
                 }, (error) => {

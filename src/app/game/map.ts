@@ -1,14 +1,14 @@
 import { Entity, EntityType } from 'app/game/entity';
-import { EasyStar } from 'app/game/easystar';
 import { Engine } from 'app/phaser/engine';
 import * as _ from 'lodash';
+declare let Graph: any;
+declare let astar: any;
 
 const tilesize = 32;
 
 export class GameMap {
     private entities: Array<Entity> = new Array();
     private grid: Array<Array<number>>;
-    public easyStar: EasyStar;
     private size: MapSize;
     public squares: Map<string, Square> = new Map<string, Square>()
     private engine: Engine;
@@ -104,7 +104,7 @@ export class GameMap {
             } else {
                 for (step; step >= xm; step--) {
                     let key = step + ':' + y,
-                    square = squares.get(key);
+                        square = squares.get(key);
 
                     if (square) {
                         square.data.distanceFrom = step;
@@ -244,16 +244,8 @@ export class GameMap {
             });
             this.grid.push(row);
         })
-
-        this.easyStar = new EasyStar([0], this.grid);
-       // this.easyStar.enableCornerCutting();
+        // this.easyStar.enableCornerCutting();
         //this.easyStar.enableDiagonals();
-    }
-
-    private getPointKey(point: Phaser.Point): string {
-        let squareX = Math.min(point.x / 32, this.size.width),
-            squareY = Math.min(point.y / 32, this.size.width);
-        return squareX + ':' + squareY;
     }
 
     public putEntityAtPoint(entity: Entity): Square {
@@ -286,7 +278,7 @@ export class GameMap {
         entity.mapLastUpdate = this.mapLastUpdate;
         let squareInRange: Array<Square> = this.getSquareInRange(entity.targetSquare.x, entity.targetSquare.y, entity.mouvementRange);
 
-        this.easyStar.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange, pathes => {
+        this.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange, pathes => {
             this.collecteAccessibleTiles(entity, pathes);
             if (callback) {
                 callback();
@@ -298,7 +290,7 @@ export class GameMap {
         entity.pathMap = pathes;
     }
 
-    public mapLastUpdate:number= new Date().getTime();
+    public mapLastUpdate: number = new Date().getTime();
 
     public moveEntityFollowingPath(entity: Entity, path: Array<any>, callback: () => void, error: (e) => void): void {
 
@@ -352,7 +344,7 @@ export class GameMap {
     }
 
 
-    public canEntityGoToTarget(entity: Entity, targetPoint: Phaser.Point){
+    public canEntityGoToTarget(entity: Entity, targetPoint: Phaser.Point) {
         let targetSquare = this.getSquareAtPoint(targetPoint);
         return entity.pathMap.get(targetSquare.x + '_' + targetSquare.y) != null;
     }
@@ -365,7 +357,7 @@ export class GameMap {
 
         let path = entity.pathMap.get(targetSquare.x + '_' + targetSquare.y);
 
-        if (path === null) {
+        if (!path) {
             error('Path was not found.');
             return;
         }
@@ -436,6 +428,110 @@ export class GameMap {
 
         return this.squares.get(key);
     }
+
+    private getPointKey(point: Phaser.Point): string {
+        let squareX = Math.min(point.x / 32, this.size.width),
+            squareY = Math.min(point.y / 32, this.size.width);
+        return squareX + ':' + squareY;
+    }
+    private getCoordinatesKey(x: number, y: number): string {
+        return x + '_' + y;
+    }
+
+    private getWalkableTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
+
+        ///  a faire, voir les cases qui sont directements accessibles, tracer les chemins pour les autres cas
+
+        console.time('getWalkableTiles');
+
+        let self = this,
+            tilesCalculated = 0,
+            tilesCalculatedFinish = 0,
+            currentDistance: number = 999,
+            currentGroupIndex = -1,
+            grid = this.grid,
+            filteredPathes = new Map<string, Array<any>>(),
+            pathes = new Map<string, Array<any>>(),
+            graph = new Graph(getFlippedGrid()),
+            squaresGroupedByDistance: Array<Array<Square>>,
+            processedGroupIndex;
+
+        //for max range
+        // search surrounding nodes
+
+        squaresGroupedByDistance = squareInRange
+            .sort((s1, s2) => s1.data.distanceFrom - s2.data.distanceFrom)
+            .reverse()
+            .reduce((groupedByDistance, currentSquare) => {
+                if (currentSquare.data.distanceFrom != currentDistance) {
+                    currentDistance = currentSquare.data.distanceFrom;
+                    currentGroupIndex++;
+                    groupedByDistance.push([]);
+                }
+                currentSquare.data.process = true;
+                groupedByDistance[currentGroupIndex].push(currentSquare);
+                return groupedByDistance;
+            }
+            , new Array<Array<Square>>());
+        processedGroupIndex = 0;
+
+
+        let startTile = graph.grid[start.x][start.y];
+
+        console.time('astar.search');
+        squaresGroupedByDistance.forEach(squares => {
+            squares.forEach(currentSquare => {
+                let endTile = graph.grid[currentSquare.x][currentSquare.y],
+                    pathKey = this.getCoordinatesKey(currentSquare.x, currentSquare.y);
+
+                if (pathes.has(pathKey)) {
+                    return;
+                }
+
+                let rawPath: Array<GridNode> = astar.search(graph, startTile, endTile);
+
+                //on déroule le chemin, et on remplis les chemin vers les cases
+                if (_.isEmpty(rawPath) || rawPath.length > range) {
+                    pathes.set(pathKey, null);
+                    return;
+                }
+                let path = rawPath.map(p => { return { x: p.x, y: p.y } });
+                let length = path.length;
+                path.forEach((square, index) => {
+                    let pathToSquare = _.dropRight(path, length - 1 - index);
+                    pathes.set(this.getCoordinatesKey(square.x, square.y), pathToSquare);
+                }
+                );
+            });
+        });
+        console.timeEnd('astar.search');
+        pathes.forEach((pathTo, key) => {
+            if (pathTo) {
+                filteredPathes.set(key, pathTo);
+            }
+        }
+        );
+
+        console.timeEnd("getWalkableTiles");
+        callback(filteredPathes);
+
+
+        function getFlippedGrid() {
+
+            let negativeCollisionGrid = _.range(50).map(x => _.range(50).map(y => -1));
+
+            grid.map(
+                (line, rowIndex) => {
+                    line.forEach(
+                        (tile, columnIndex) =>
+                            negativeCollisionGrid[columnIndex][rowIndex] = tile > 0 ? 0 : 1
+                    );
+                }
+            )
+            return negativeCollisionGrid;
+        }
+    }
+
 }
 
 interface MapSize {
@@ -449,4 +545,8 @@ export interface Square {
     entity: Entity,
     cover: number,
     data: any
+}
+interface GridNode {
+    x: number
+    y: number
 }

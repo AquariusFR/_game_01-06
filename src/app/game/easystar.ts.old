@@ -28,6 +28,10 @@ const EasyStar_BOTTOM_LEFT = 'BOTTOM_LEFT'
 const EasyStar_LEFT = 'LEFT'
 const EasyStar_TOP_LEFT = 'TOP_LEFT'
 
+interface GridNode {
+    x: number
+    y: number
+}
 
 export class EasyStar {
 
@@ -58,55 +62,185 @@ export class EasyStar {
         }
     }
 
+    /*
+    
+    
+    
+        public filterAccessibleTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
+    
+            //TODO calculer les chemins les plus éloignés en premier pour filtrer ceux qui sont déjà sur un chemin
+            console.time('filterAccessibleTiles');
+    
+            let currentDistance: number = 999,
+                currentGroupIndex = -1,
+                pathes = new Map<string, Array<any>>();
+            console.time('reverse, groupebyDistance');
+            let squaresGroupedByDistance: Array<Array<Square>> = squareInRange
+                .sort((s1, s2) => s1.data.distanceFrom - s2.data.distanceFrom)
+                .reverse()
+                .reduce((groupedByDistance, currentSquare) => {
+                    if (currentSquare.data.distanceFrom != currentDistance) {
+                        currentDistance = currentSquare.data.distanceFrom;
+                        currentGroupIndex++;
+                        groupedByDistance.push([]);
+                    }
+                    currentSquare.data.process = true;
+                    groupedByDistance[currentGroupIndex].push(currentSquare);
+                    return groupedByDistance;
+                }
+                , new Array<Array<Square>>());
+    
+            console.timeEnd('reverse, groupebyDistance');
+    
+    
+            let processedGroupIndex = 0;
+    
+    
+            let processDistance = () => {
+                console.time('processDistance-'+processedGroupIndex);
+                let squaresToProcess = squaresGroupedByDistance[processedGroupIndex],
+                    groupTilesCalculated = 0,
+                    groupTilesCalculatedFinish = 0,
+                    collectPathForDistance = (x, y, path: Array<any>) => {
+                        groupTilesCalculatedFinish++;
+                        if (path) {
+                            let length = path.length;
+                            //on déroule le chemin, et on remplis les chemin vers les cases
+                            path.forEach((square, index) => {
+                                if (index == 0) {
+                                    return;
+                                }
+                                let pathToSquare = _.dropRight(path, length - 1 - index);
+                                pathes.set(this.getPointsKey(square.x, square.y), pathToSquare);
+                            }
+                            );
+                        }
+                        if (groupTilesCalculated === groupTilesCalculatedFinish) {
+                            processedGroupIndex++;
+                            if (processedGroupIndex >= squaresGroupedByDistance.length) {
+                                console.timeEnd('filterAccessibleTiles');
+                                callback(pathes);
+                            }
+                            else {
+                                processDistance();
+                            }
+                        }
+                    };
+                let filteredSquaresToProcess = squaresToProcess.filter(s => !pathes.has(this.getPointsKey(s.x, s.y)));
+                filteredSquaresToProcess
+                    .forEach(square => {
+                        groupTilesCalculated++;
+                        this.findPath(
+                            start.x,
+                            start.y,
+                            square.x,
+                            square.y,
+                            (path) => collectPathForDistance(square.x, square.y, path),
+                            range);
+                    });
+                console.timeEnd('processDistance-'+processedGroupIndex);
+                this.calculate(processedGroupIndex.toString());
+            }
+            processDistance();
+        }*/
+
+
     public getWalkableTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
 
         ///  a faire, voir les cases qui sont directements accessibles, tracer les chemins pour les autres cas
 
         console.time('getWalkableTiles');
 
-        let self = this;
-        let tilesCalculated = 0;
-        let tilesCalculatedFinish = 0;
-
-        let pathes = new Map<string, Array<any>>();
+        let self = this,
+            tilesCalculated = 0,
+            tilesCalculatedFinish = 0,
+            currentDistance: number = 999,
+            currentGroupIndex = -1,
+            filteredPathes = new Map<string, Array<any>>(),
+            pathes = new Map<string, Array<any>>(),
+            graph = new Graph(this.negativeCollisionGrid),
+            squaresGroupedByDistance: Array<Array<Square>>,
+            processedGroupIndex;
         this.reset();
 
         //for max range
         // search surrounding nodes
-        console.time('findPath');
-        let graph = new Graph(this.negativeCollisionGrid);
 
-
-        squareInRange.forEach(currentSquare => {
-            tilesCalculated++;
-
-
-            var startTile = graph.grid[start.x][start.y];
-            var endTile = graph.grid[currentSquare.x][currentSquare.y];
-            var result = astar.search(graph, startTile, endTile);
-        });
-
-
-        squareInRange.forEach(currentSquare => {
-            tilesCalculated++;
-
-
-
-            this.findPath(start.x, start.y, currentSquare.x, currentSquare.y, (path) => collectPath(currentSquare.x, currentSquare.y, path), range);
-        });
-
-        self.calculate('1');
-        function collectPath(x, y, path) {
-            tilesCalculatedFinish++;
-            if (path) {
-                pathes.set(self.getPointsKey(x, y), path);
+        squaresGroupedByDistance = squareInRange
+            .sort((s1, s2) => s1.data.distanceFrom - s2.data.distanceFrom)
+            .reverse()
+            .reduce((groupedByDistance, currentSquare) => {
+                if (currentSquare.data.distanceFrom != currentDistance) {
+                    currentDistance = currentSquare.data.distanceFrom;
+                    currentGroupIndex++;
+                    groupedByDistance.push([]);
+                }
+                currentSquare.data.process = true;
+                groupedByDistance[currentGroupIndex].push(currentSquare);
+                return groupedByDistance;
             }
-            if (tilesCalculated === tilesCalculatedFinish) {
-                console.timeEnd('findPath');
-                console.timeEnd("getWalkableTiles");
-                callback(pathes);
+            , new Array<Array<Square>>());
+        processedGroupIndex = 0;
+
+
+        let startTile = graph.grid[start.x][start.y];
+
+        console.time('astar.search');
+        squaresGroupedByDistance.forEach(squares => {
+            squares.forEach(currentSquare => {
+                let endTile = graph.grid[currentSquare.x][currentSquare.y],
+                    pathKey = this.getPointsKey(currentSquare.x, currentSquare.y);
+
+                if (pathes.has(pathKey)) {
+                    return;
+                }
+
+
+                let rawPath: Array<GridNode> = astar.search(graph, startTile, endTile);
+
+                //on déroule le chemin, et on remplis les chemin vers les cases
+                if (_.isEmpty(rawPath)) {
+                    pathes.set(pathKey, null);
+                    return;
+                }
+                let path = rawPath.map(p => { return { x: p.x, y: p.y } });
+                let length = path.length;
+                path.forEach((square, index) => {
+                    let pathToSquare = _.dropRight(path, length - 1 - index);
+                    pathes.set(this.getPointsKey(square.x, square.y), pathToSquare);
+                }
+                );
+            });
+        });
+        console.timeEnd('astar.search');
+        pathes.forEach((pathTo, key) => {
+            if (pathTo) {
+                filteredPathes.set(key, pathTo);
             }
         }
+        );
+
+        console.timeEnd("getWalkableTiles");
+        callback(filteredPathes);
+        /*
+                console.time('findPath');
+                squareInRange.forEach(currentSquare => {
+                    tilesCalculated++;
+                    this.findPath(start.x, start.y, currentSquare.x, currentSquare.y, (path) => collectPath(currentSquare.x, currentSquare.y, path), range);
+                });
+        
+                self.calculate('1');
+                function collectPath(x, y, path) {
+                    tilesCalculatedFinish++;
+                    if (path) {
+                        pathes.set(self.getPointsKey(x, y), path);
+                    }
+                    if (tilesCalculated === tilesCalculatedFinish) {
+                        console.timeEnd('findPath');
+                        console.timeEnd("getWalkableTiles");
+                        //callback(pathes);
+                    }
+                }*/
     }
 
     private cleanX(x: number) {
@@ -158,15 +292,15 @@ export class EasyStar {
         * @param {Array} grid The collision grid that this EasyStar instance will read from.
         * This should be a 2D Array of Numbers.
         **/
-    public setGrid(grid:Array<Array<number>>): void {
+    public setGrid(grid: Array<Array<number>>): void {
         this.collisionGrid = grid;
 
         this.negativeCollisionGrid = new Array();
         grid.map(
-            (line, rowIndex) =>{
+            (line, rowIndex) => {
                 this.negativeCollisionGrid.push([]);
                 line.forEach(
-                    (tile, columnIndex) => 
+                    (tile, columnIndex) =>
                         this.negativeCollisionGrid[rowIndex][columnIndex] = tile > 0 ? 0 : 1
                 );
             }
@@ -380,11 +514,11 @@ export class EasyStar {
         this.instances.push(instance);
     }
 
-    public reset(){
-        this.pathFoundMap  = new Map<string, Array<any>>();
+    public reset() {
+        this.pathFoundMap = new Map<string, Array<any>>();
     }
 
-    pathFoundMap : Map<string, Array<any>>;
+    pathFoundMap: Map<string, Array<any>>;
 
     /**
     * This method steps through the A* Algorithm in an attempt to
