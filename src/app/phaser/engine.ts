@@ -37,6 +37,7 @@ export class Engine {
     private status: (string) => void;
     private o;
     private moveActiveSpriteTo: (point: Phaser.Point) => void;
+    debug: boolean = true;
 
 
     constructor(mapName: string, private gameService: GameService) {
@@ -153,6 +154,10 @@ export class Engine {
         let lastLayer = createdMap.layers.get('example sprite');
         lastLayer.inputEnabled = true;
         lastLayer.events.onInputDown.add(this.listener, this);
+
+        if (this.debug) {
+            this.text = this.phaserGame.add.text(-100, -100, '', null);
+        }
 
         this.o.next('ok');
         //this.gamegroup.scale.x = 2;
@@ -315,6 +320,14 @@ export class Engine {
         } else {
             marker.x = tilePointBelowPointer.x;
             marker.y = tilePointBelowPointer.y;
+
+            if (this.debug) {
+                this.text.destroy();
+                this.text = this.phaserGame.add.text(marker.x, marker.y, (marker.x / 32) + ':' + (marker.y / 32), null);
+
+                this.text.font = 'Roboto';
+                this.text.fontSize = 12;
+            }
         }
     }
 
