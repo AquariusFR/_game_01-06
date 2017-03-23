@@ -9,6 +9,7 @@ import { GameService } from 'app/loader/game.service'
 // a faire des zombie cadavres !!
 // compétence S-link
 // pendant le tour de l'IA, on désactive le clic
+//pousser des trucs pour se cacher des zomblards
 export class Game {
     private ticking: boolean;
     private engine: Engine;
