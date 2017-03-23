@@ -61,7 +61,9 @@ export class Zombie extends _Entity {
             actualDistanceFromHuman = 999,
             pathToGo = null,
             actualSquare = this.square,
-            pathes = this.pathMap;
+            pathes = this.pathMap,
+            moveTargetSquare,
+            self = this;
 
         humans.forEach(h => {
             let targetSquare = h.square;
@@ -82,12 +84,14 @@ export class Zombie extends _Entity {
                     actualDistanceFromHuman = 0;
                     closerHuman = h;
                     pathToGo = [];
+                    moveTargetSquare = self.square;
                     return;
                 }
                 if (path && path.length < actualDistanceFromHuman) {
                     closerHuman = h;
                     actualDistanceFromHuman = path.length;
                     pathToGo = path;
+                    moveTargetSquare = targetSquare;
                     return
                 }
 
@@ -108,6 +112,7 @@ export class Zombie extends _Entity {
             this.updateAccessibleTiles = false;
         } else {
             map.moveEntityFollowingPath(this, pathToGo, () => callback(), () => console.error('oh ...'));
+            this.targetSquare = moveTargetSquare;
             this.updateAccessibleTiles = true;
         }
 

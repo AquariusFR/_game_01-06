@@ -22,12 +22,14 @@ export class GameMap {
         if (!entity.updateAccessibleTiles && !force) {
             return;
         }
-        console.time(entity.id + 'setVisibileSquares');
+        console.time(entity.id + '=>setVisibileSquares');
         let square = entity.square,
             x: number = square.x,
             y: number = square.y,
             perimetre: Array<Square> = this.getSquareInRange(x, y, entity.visionRange),
             visibleSquares: Array<Square> = new Array();
+
+        // TODO comme pour les déplacements, mettre en cache les case déja visibles.
 
         perimetre.forEach(currentSquare => {
             let line = this.BresenhamLine(square, currentSquare),
@@ -52,7 +54,7 @@ export class GameMap {
             }
         });
         entity.visibleSquares = visibleSquares;
-        console.timeEnd(entity.id + 'setVisibileSquares');
+        console.timeEnd(entity.id + '=>setVisibileSquares');
     }
 
     private getSquareInRange(xm, ym, r): Array<Square> {

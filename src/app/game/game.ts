@@ -51,7 +51,7 @@ export class Game {
         this.addPlayer(6, 3);
 
         this.addZombieAt(17, 9);
-        
+
         this.addZombieAt(28, 17);
         this.addZombieAt(29, 17);
         this.addZombieAt(30, 17);
@@ -69,6 +69,8 @@ export class Game {
         this.nextCharacter();
         this.showAccessibleTilesByPlayer();
         engine.bindClick(point => this.clickOn(point));
+        engine.bindOver(point => this.overOn(point), point => this.overOff(point));
+
     }
 
     private addZombieAt(x, y) {
@@ -130,26 +132,23 @@ export class Game {
     }
 
     private updateVisibleSquaresOfEntity(entity: Entity) {
+        let displayVisibleSquares = (this.currentTeamId === this.zombieTeamId),
+            oldVisibleTiles = entity.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y));
+
         console.time('updateVisibleSquaresOfEntity');
 
         this.map.setVisibileSquares(entity);
 
-        if (this.currentTeamId === this.zombieTeamId) {
-            if (!entity.updateAccessibleTiles) {
-                return;
-            }
-            let pointMap: Map<string, Phaser.Point> = new Map();
-            let points: Array<Phaser.Point> = new Array();
-            this.engine.removeAllVisibleTiles();
-
-            this.zombieTeam.forEach(z => {
-                z.visibleSquares.forEach(s => pointMap.set(s.x + ':' + s.y, this.map.getPointAtSquare(s.x, s.y)))
-            });
-
-            pointMap.forEach(s => points.push(s));
-
-            this.engine.addVisibleTiles(points);
-        }
+        /*        if (displayVisibleSquares) {
+                    if (!entity.updateAccessibleTiles) {
+                        return;
+                    }
+                    let points: Array<Phaser.Point> = entity.visibleSquares.map(s=>this.map.getPointAtSquare(s.x, s.y));
+                    console.time('addVisibleTiles');
+                    this.engine.addVisibleTiles(oldVisibleTiles, points);
+        
+                    console.timeEnd('addVisibleTiles');
+                }*/
         console.timeEnd("updateVisibleSquaresOfEntity");
     }
 
@@ -159,11 +158,11 @@ export class Game {
         this.playerTeam.forEach(p => {
             this.map.setVisibileSquares(p, true);
         })
-        this.engine.removeAllVisibleTiles();
+        //this.engine.removeAllVisibleTiles();
         this.zombieTeam.forEach(z => {
             this.map.setVisibileSquares(z, true);
-            let visiblePoints: Array<Phaser.Point> = z.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y))
-            this.engine.addVisibleTiles(visiblePoints);
+            //let visiblePoints: Array<Phaser.Point> = z.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y))
+            //this.engine.addVisibleTiles([], visiblePoints);
         })
         //console.timeEnd("updateAllVisibilities");
     }
@@ -185,6 +184,39 @@ export class Game {
 
         this.engine.shake();
         console.log(this.currentEntity + ' attacks ' + target);
+    }
+
+
+    private overOff(target: Phaser.Point) {
+        if (this.currentTeamId !== this.playerTeamId || this.ticking) {
+            return
+        }
+
+        // clean visibletiles
+        if(this.entityFocused){
+            let points= this.entityFocused.visibleSquares.map(s=>this.map.getPointAtSquare(s.x, s.y)).map(tile=>tile.x + ':' + tile.y);
+            this.engine.removeVisibleTiles(points);
+        }
+        this.entityFocused = null;
+    }
+
+    private entityFocused:Entity
+
+    private overOn(target: Phaser.Point) {
+        if (this.currentTeamId !== this.playerTeamId || this.ticking) {
+            return
+        }
+        let square = this.map.getSquareAtPoint(target);
+        console.log('over', square);
+
+        if (square.entity) {
+            this.entityFocused = square.entity;
+            let points: Array<Phaser.Point> = square.entity.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y));
+            console.time('addVisibleTiles');
+            this.engine.addVisibleTiles([], points);
+
+            console.timeEnd('addVisibleTiles');
+        }
     }
 
 

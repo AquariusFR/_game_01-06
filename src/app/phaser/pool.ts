@@ -24,9 +24,11 @@ export class Pool extends Phaser.Group {
     public createNew(x, y, data) {
         let obj = this.getFirstDead(false);
         if (!obj) {
+            console.log('createNew');
             obj = new this.spriteType(this.game);
             this.add(obj, true);
         }
-        return obj.spawn(x, y, data);
+        obj.spawn(x, y, data);
+        return obj;
     }
 }

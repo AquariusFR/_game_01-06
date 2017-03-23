@@ -36,7 +36,9 @@ export class Engine {
     public observable: Observable<string>;
     private status: (string) => void;
     private o;
-    private moveActiveSpriteTo: (point: Phaser.Point) => void;
+    private click: (point: Phaser.Point) => void;
+    private over: (point: Phaser.Point) => void;
+    private overOff: (point: Phaser.Point) => void;
     debug: boolean = true;
 
 
@@ -66,10 +68,13 @@ export class Engine {
         }
     }
 
-    public bindClick(moveActiveSpriteTo: (point: Phaser.Point) => void) {
-        this.moveActiveSpriteTo = moveActiveSpriteTo;
+    public bindClick(click: (point: Phaser.Point) => void) {
+        this.click = click;
     }
-
+    public bindOver(over: (point: Phaser.Point) => void, overOff: (point: Phaser.Point) => void) {
+        this.over = over;
+        this.overOff = overOff;
+    }
     public shake() {
         this.phaserGame.camera.resetFX();
         this.phaserGame.camera.shake(0.004, 100, true, Phaser.Camera.SHAKE_BOTH, true);
@@ -153,7 +158,7 @@ export class Engine {
 
         let lastLayer = createdMap.layers.get('example sprite');
         lastLayer.inputEnabled = true;
-        lastLayer.events.onInputDown.add(this.listener, this);
+        lastLayer.events.onInputDown.add(this.clickListener, this);
 
         if (this.debug) {
             this.text = this.phaserGame.add.text(-100, -100, '', null);
@@ -162,10 +167,6 @@ export class Engine {
         this.o.next('ok');
         //this.gamegroup.scale.x = 2;
         //this.gamegroup.scale.y = 2;
-    }
-    public removeAllVisibleTiles() {
-        this.visibleMarkerPool.sprites.forEach(sprite => sprite.alive = false);
-        //this.visiongroup.removeAll();
     }
     public removeAllAccessibleTiles() {
         this.rangegroup.removeAll();
@@ -182,10 +183,60 @@ export class Engine {
         );
     }
 
-    public addVisibleTiles(tiles: Array<Phaser.Point>) {
+
+    mapVisibleTileCount: Map<string, number> = new Map();
+    mapVisibleTile: Map<string, Phaser.Sprite> = new Map();
+
+    public removeVisibleTiles(tilesKey: Array<string>) {
+        tilesKey.forEach(tileKey => {
+            if (this.mapVisibleTileCount.has(tileKey)) {
+                let count = this.mapVisibleTileCount.get(tileKey) - 1;
+                this.mapVisibleTileCount.set(tileKey, count);
+                if (count <= 0) {
+                    this.mapVisibleTile.get(tileKey).alive = false;
+                    this.mapVisibleTile.get(tileKey).visible = false;
+                }
+            }
+        });
+    }
+    public removeAllVisibleTiles() {
+
+        this.mapVisibleTileCount = new Map();
+        this.mapVisibleTile = new Map();
+        this.visibleMarkerPool.sprites.forEach(sprite => sprite.alive = false);
+    }
+    public addVisibleTiles(oldTiles: Array<Phaser.Point>, tiles: Array<Phaser.Point>) {
         //console.time('addVisibleTiles');
+
+        let oldKeysToDelete: Set<string> = new Set(),
+            newKeys: Set<string> = new Set();
+
+        tiles.forEach(tile => newKeys.add(tile.x + ':' + tile.y));
+        oldTiles.forEach(tile => {
+            if (!newKeys.has(tile.x + ':' + tile.y)) {
+                oldKeysToDelete.add(tile.x + ':' + tile.y)
+            }
+        });
+
+        this.removeVisibleTiles(Array.from(oldKeysToDelete));
+
         tiles.forEach(tile => {
-            this.visibleMarkerPool.createNew(tile.x, tile.y, {});
+            let tileKey = tile.x + ':' + tile.y;
+            if (!this.mapVisibleTileCount.has(tileKey)) {
+                this.mapVisibleTileCount.set(tileKey, 0);
+            }
+
+            let count = this.mapVisibleTileCount.get(tileKey);
+
+            if (count < 1) {
+                this.mapVisibleTile.set(tileKey, this.visibleMarkerPool.createNew(tile.x, tile.y, {}));
+            }
+
+
+            if (!oldKeysToDelete.has(tileKey)) {
+                this.mapVisibleTileCount.set(tileKey, count + 1);
+            }
+
         }
         );
         //console.timeEnd("addVisibleTiles");
@@ -223,14 +274,32 @@ export class Engine {
         this.soundeffect.play(soundName);
     }
 
-    private listener() {
+    private clickListener() {
         let marker = this.marker,
             targetPoint: Phaser.Point = new Phaser.Point();
 
         targetPoint.x = marker.x;
         targetPoint.y = marker.y;
 
-        this.moveActiveSpriteTo(targetPoint);
+        this.click(targetPoint);
+    }
+
+    private overOffListener() {
+        let marker = this.marker,
+            targetPoint: Phaser.Point = new Phaser.Point();
+
+        targetPoint.x = marker.x;
+        targetPoint.y = marker.y;
+        this.overOff(targetPoint);
+    }
+    private overListener() {
+        let marker = this.marker,
+            targetPoint: Phaser.Point = new Phaser.Point();
+
+        targetPoint.x = marker.x;
+        targetPoint.y = marker.y;
+
+        this.over(targetPoint);
     }
 
     public setGlowPosition(position: Phaser.Point) {
@@ -311,6 +380,13 @@ export class Engine {
         return this.map.getTileWorldXY(position.x, position.y, 16, 16, this.collisionLayer);
     }
 
+    private overTimer: eventTimer = {
+        key: '',
+        time: -1,
+        tick: false,
+        wasOver: false
+    }
+
     private setMarker() {
         let marker: Phaser.Sprite = this.marker,
             tilePointBelowPointer: Phaser.Point = this.pointToTilePosition(); // get tile coordinate below activePointer
@@ -320,15 +396,44 @@ export class Engine {
         } else {
             marker.x = tilePointBelowPointer.x;
             marker.y = tilePointBelowPointer.y;
+            let key = (marker.x / 32) + ':' + (marker.y / 32),
+                timestamp = new Date().getTime();
+            let duration = timestamp - this.overTimer.time;
 
             if (this.debug) {
                 this.text.destroy();
-                this.text = this.phaserGame.add.text(marker.x, marker.y, (marker.x / 32) + ':' + (marker.y / 32), null);
+                this.text = this.phaserGame.add.text(marker.x, marker.y, key
+                    + '<br>' + this.overTimer.key
+                    + '<br>' + duration, null);
 
                 this.text.font = 'Roboto';
                 this.text.fontSize = 12;
             }
+
+
+
+            if (this.overTimer.key == key) {
+                if (duration > 300) {
+                    if (!this.overTimer.tick) {
+                        this.overListener();
+                        this.overTimer.tick = true;
+                        this.overTimer.wasOver = true;
+                    }
+                } else {
+                    this.overTimer.tick = false;
+                }
+            } else {
+                this.overTimer.key = key;
+                this.overTimer.time = timestamp;
+                this.overTimer.tick = false;
+                if (this.overTimer.wasOver) {
+                    this.overOffListener();
+                    this.overTimer.wasOver = false;
+                }
+            }
+
         }
+
     }
 
     private pointToTilePosition(): Phaser.Point {
@@ -379,3 +484,10 @@ export class Engine {
         this.handlerKeyBoard();
     }
 }
+
+interface eventTimer {
+    key: string
+    time: number
+    tick: boolean
+    wasOver: boolean
+} 
