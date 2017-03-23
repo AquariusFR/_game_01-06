@@ -22,7 +22,7 @@ export class GameMap {
         if (!entity.updateAccessibleTiles && !force) {
             return;
         }
-        //console.time('setVisibileSquares');
+        console.time(entity.id + 'setVisibileSquares');
         let square = entity.square,
             x: number = square.x,
             y: number = square.y,
@@ -31,7 +31,7 @@ export class GameMap {
 
         perimetre.forEach(currentSquare => {
             let line = this.BresenhamLine(square, currentSquare),
-                squareJustBefore = line.length > 2 ? line[line.length - 2] : null;
+                squareJustBefore = line.length > 2 ? line[1] : null;
 
             // si la case justeavant masque la case, on ne l'ajoute pas
             if (squareJustBefore && entity.coverDetection < squareJustBefore.cover) {
@@ -43,6 +43,8 @@ export class GameMap {
                 if (currentSquare.cover === 100) {
                     return false;
                 }
+
+
                 return canSee;
             }, true);
             if (canSeeSquare) {
@@ -50,7 +52,7 @@ export class GameMap {
             }
         });
         entity.visibleSquares = visibleSquares;
-        //console.timeEnd("setVisibileSquares");
+        console.timeEnd(entity.id + 'setVisibileSquares');
     }
 
     private getSquareInRange(xm, ym, r): Array<Square> {
