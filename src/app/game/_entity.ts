@@ -85,6 +85,9 @@ export class _Entity implements Entity {
         let angle = Math.atan2(targetPosition.y - sourcePosition.y, targetPosition.x - sourcePosition.x) * (180 / Math.PI);
 
         this.angle = angle;
+
+        this.isMasked = this.square.mask;
+
         this.setAnimation();
     }
 

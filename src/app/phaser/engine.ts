@@ -7,6 +7,36 @@ import { VisibilitySprite } from 'app/game/visibilitySprite'
 //http://rpgmaker.su-downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
 //https://forums.rpg-akerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
+
+
+/*
+<div class="frame ctooltip">
+  
+    <div style="background: #225378"></div>
+  
+    <div style="background: #1695A3"></div>
+  
+    <div style="background: #ACF0F2"></div>
+  
+    <div style="background: #F3FFE2"></div>
+  
+    <div style="background: #EB7F00"></div>
+  
+  
+</div>
+<div class="frame ctooltip">
+  
+    <div style="background: #DC3522"></div>
+  
+    <div style="background: #D9CB9E"></div>
+  
+    <div style="background: #374140"></div>
+  
+    <div style="background: #2A2C2B"></div>
+  
+    <div style="background: #1E1E20"></div>
+  </div>
+ */
 export class Engine {
     visibleMarkerPool: Pool;
     rangegroup: Phaser.Group;
@@ -379,6 +409,10 @@ export class Engine {
     public getPositionCover(position: Phaser.Point): number {
         let tile = this.getTileAtPosition(position);
         return tile && tile.properties.cover ? tile.properties.cover : 0;
+    }
+    public getPositionMask(position: Phaser.Point): boolean {
+        let tile = this.getTileAtPosition(position);
+        return tile && tile.properties.mask ? true : false;
     }
 
     private getTileAtPosition(position: Phaser.Point): Phaser.Tile {

@@ -60,7 +60,7 @@ export class Game {
         this.addZombieAt(36, 10);
         this.addZombieAt(37, 10);
         this.addZombieAt(38, 10);
-        this.addZombieAt(21, 21).maskEntity();
+        this.addZombieAt(21, 21);
 
 
         this.currentIndex = -1;

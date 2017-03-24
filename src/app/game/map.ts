@@ -232,7 +232,8 @@ export class GameMap {
             _.times(this.size.width, columnIndex => {
                 let tilePosition: Phaser.Point = this.getPointAtSquare(columnIndex, rowIndex),
                     gridStatus: number = this.engine.isPositionCollidable(tilePosition) ? 1 : 0,
-                    tileCover: number = this.engine.getPositionCover(tilePosition);
+                    tileCover: number = this.engine.getPositionCover(tilePosition),
+                    mask: boolean = this.engine.getPositionMask(tilePosition);
                 row.push(gridStatus);
 
                 let key = columnIndex + ':' + rowIndex;
@@ -242,7 +243,8 @@ export class GameMap {
                         x: columnIndex,
                         y: rowIndex,
                         cover: tileCover,
-                        data: {}
+                        data: {},
+                        mask : mask
                     })
                 }
             });
@@ -267,6 +269,8 @@ export class GameMap {
         square.entity = entity;
         entity.square = square;
         entity.targetSquare = square;
+
+        square.mask ? entity.maskEntity() : entity.unmaskEntity();
 
         this.entities.push(entity)
 
@@ -427,7 +431,8 @@ export class GameMap {
                 x: squareX,
                 y: squareY,
                 cover: 0,
-                data: {}
+                data: {},
+                mask:false
             })
         }
 
@@ -569,7 +574,8 @@ export interface Square {
     y: number,
     entity: Entity,
     cover: number,
-    data: any
+    data: any,
+    mask:boolean
 }
 interface GridNode {
     x: number
