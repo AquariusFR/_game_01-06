@@ -27,11 +27,14 @@ export interface Entity {
     visibleSquares:Array<Square>
     updateAccessibleTiles:boolean
     mapLastUpdate:number
+    isMasked:boolean
 
-    touched():void
-    attack(target: Entity):void
-    move(targetPosition:Phaser.Point, callback:()=> void):void
-    finishMoving()
+    touched():Entity
+    attack(target: Entity):Entity
+    move(targetPosition:Phaser.Point, callback:()=> void):Entity
+    finishMoving():Entity
+    maskEntity():Entity
+    unmaskEntity():Entity
 }
 export enum EntityType {
     human,

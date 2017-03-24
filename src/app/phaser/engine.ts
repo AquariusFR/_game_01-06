@@ -190,12 +190,10 @@ export class Engine {
     public removeVisibleTiles(tilesKey: Array<string>) {
         tilesKey.forEach(tileKey => {
             if (this.mapVisibleTileCount.has(tileKey)) {
-                let count = this.mapVisibleTileCount.get(tileKey) - 1;
+                let count = 0;
                 this.mapVisibleTileCount.set(tileKey, count);
-                if (count <= 0) {
-                    this.mapVisibleTile.get(tileKey).alive = false;
-                    this.mapVisibleTile.get(tileKey).visible = false;
-                }
+                this.mapVisibleTile.get(tileKey).alive = false;
+                this.mapVisibleTile.get(tileKey).visible = false;
             }
         });
     }
@@ -265,11 +263,14 @@ export class Engine {
         zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], 3, true);
         zombie.animations.add("right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], 3, true);
         zombie.animations.add("up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], 3, true);
+        zombie.animations.add("masked-down", ["00-down-1", "00-down-2", "00-down-3"], 3, true);
+        zombie.animations.add("masked-left", ["00-left-1", "00-left-2", "00-left-3"], 3, true);
+        zombie.animations.add("masked-right", ["00-right-1", "00-right-2", "00-right-3"], 3, true);
+        zombie.animations.add("masked-up", ["00-up-1", "00-up-2", "00-up-3"], 3, true);
         zombie.play("down");
         this.gamegroup.add(zombie);
         return zombie;
     }
-
 
     public playSound(soundName: string) {
         this.soundeffect.volume = 0.5;
@@ -322,15 +323,12 @@ export class Engine {
         this.glowTween = game.add.tween(this.glow).to({ x: position.x, y: position.y }, 100, Phaser.Easing.Linear.None, true);
         this.glowTween.onComplete.add(() => this.glowTween.stop(), this);
     }
-    public moveTo(sprite: Phaser.Sprite, x: number, y: number, animationMoving: string, callback: () => void) {
+    public moveTo(sprite: Phaser.Sprite, x: number, y: number, callback: () => void) {
 
         let game = this.phaserGame;
 
         if (this.tween && this.tween.isRunning) {
             this.tween.stop();
-        }
-        if (sprite.animations.currentAnim.name != animationMoving) {
-            sprite.play(animationMoving);
         }
         this.tween = game.add.tween(sprite).to({ x: x, y: y - 32 }, 100, Phaser.Easing.Linear.None, true);
         this.tween.onComplete.add(() => this.onComplete(sprite, callback), this);
@@ -407,29 +405,26 @@ export class Engine {
                 timestamp = new Date().getTime();
             let duration = timestamp - this.overTimer.time;
 
-            if (this.debug) {
-                this.text.destroy();
-                this.text = this.phaserGame.add.text(marker.x, marker.y, key
-                    + '<br>' + this.overTimer.key
-                    + '<br>' + duration, null);
-
-                this.text.font = 'Roboto';
-                this.text.fontSize = 12;
-            }
-
-
-
             if (this.overTimer.key == key) {
                 if (duration > 300) {
                     if (!this.overTimer.tick) {
                         this.overListener();
                         this.overTimer.tick = true;
                         this.overTimer.wasOver = true;
+                        if (this.debug) {
+                            this.text.destroy();
+                            this.text = this.phaserGame.add.text(marker.x, marker.y, key, null);
+
+                            this.text.font = 'Roboto';
+                            this.text.fontSize = 12;
+                        }
                     }
                 } else {
+                    this.text.destroy();
                     this.overTimer.tick = false;
                 }
             } else {
+                this.text.destroy();
                 this.overTimer.key = key;
                 this.overTimer.time = timestamp;
                 this.overTimer.tick = false;
@@ -477,12 +472,6 @@ export class Engine {
         if (noDirectionPressedflag) {
             //this.player.body.velocity.set(0);
         }
-        /*if (this.phaserGame.physics.arcade.collide(this.player, this.collisionLayer)) {
-            console.log('boom');
-        }*/
-        /*if (this.phaserGame.physics.arcade.collide(this.marker, this.collisionLayer)) {
-            console.log('hey, cursor is over collide area !!');
-        }*/
     }
 
     update() {

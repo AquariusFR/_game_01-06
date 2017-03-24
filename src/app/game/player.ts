@@ -4,7 +4,7 @@ import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 
 export class Player extends _Entity {
-    constructor(engine: Engine, position:Phaser.Point,  team:number) {
+    constructor(engine: Engine, position: Phaser.Point, team: number) {
         super(engine, position);
         this.sprite = engine.createHuman(position);
         this.teamId = team;
@@ -15,21 +15,23 @@ export class Player extends _Entity {
         this.updateAccessibleTiles = true;
     }
 
-    move(targetPosition:Phaser.Point, callback:()=> void){
+    public move(targetPosition: Phaser.Point, callback: () => void): Player {
         super.move(targetPosition, callback);
+        return this;
     }
 
-    static popPlayer(engine: Engine, position:Phaser.Point, teamId:number, team:Array<Player>):Player{
+    static popPlayer(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Player>): Player {
         let newPlayer = new Player(engine, position, teamId);
         team.push(newPlayer);
         return newPlayer;
     }
-    public attack(target: Entity){
+    public attack(target: Entity): Player {
         super.attack(target);
         this.engine.playSound('gun');
         this.engine.shake();
 
 
         console.log('zombie attacks ' + target.id + target.teamId);
+        return this;
     }
 }
