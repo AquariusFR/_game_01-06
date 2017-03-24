@@ -1,4 +1,5 @@
 import { _Entity } from 'app/game/_entity'
+import { Entity } from 'app/game/entity'
 import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 
@@ -22,5 +23,13 @@ export class Player extends _Entity {
         let newPlayer = new Player(engine, position, teamId);
         team.push(newPlayer);
         return newPlayer;
+    }
+    public attack(target: Entity){
+        super.attack(target);
+        this.engine.playSound('gun');
+        this.engine.shake();
+
+
+        console.log('zombie attacks ' + target.id + target.teamId);
     }
 }

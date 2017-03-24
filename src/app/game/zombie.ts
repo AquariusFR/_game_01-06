@@ -4,12 +4,14 @@ import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 import { GameMap } from 'app/game/map'
 import { Game } from 'app/game/game'
+import * as _ from 'lodash'
 
 enum status {
     ALERT,
     IDDLE,
     SEARCHING
 }
+const zombieTypes = ['01','02','03','04','05','06','07','08']
 
 export class Zombie extends _Entity {
 
@@ -17,7 +19,7 @@ export class Zombie extends _Entity {
 
     constructor(engine: Engine, position: Phaser.Point, team: number) {
         super(engine, position);
-        this.sprite = engine.createZombie(position);
+        this.sprite = engine.createZombie(position, zombieTypes[_.random(0, zombieTypes.length-1)]);
         this.teamId = team;
         this.maxAction = 2;
         this.mouvementRange = 6;
@@ -35,12 +37,12 @@ export class Zombie extends _Entity {
     }
 
 
-    public play(map: GameMap, attack:(Entity)=>void, callback:()=>void): void {
+    public play(map: GameMap, callback:()=>void): void {
 
         let entities: Array<Entity> = this.visibleSquares.filter(square=> square.entity).map(s=>s.entity);
         // map.getVisibleEntitiedByEntity(this);
 
-        if (this.lookForHumaaaans(entities, map, attack, callback)) {
+        if (this.lookForHumaaaans(entities, map, callback)) {
             console.log('fresh meat ...')
         } else {
             this.goForCloserZombie(entities, callback);
@@ -51,7 +53,7 @@ export class Zombie extends _Entity {
             callback();
         return false;
     }
-    private lookForHumaaaans(entities: Array<Entity>, map: GameMap, attack:(Entity)=>void, callback:()=>void): boolean {
+    private lookForHumaaaans(entities: Array<Entity>, map: GameMap, callback:()=>void): boolean {
 
         let humans = entities.filter(e => e.teamId !== this.teamId);
 
@@ -69,17 +71,30 @@ export class Zombie extends _Entity {
             let targetSquare = h.square;
 
             //check les 8 cases adjacentes à la cible
-            //checkPath(targetSquare.x - 1, targetSquare.y - 1);
+            checkPath(targetSquare.x - 1, targetSquare.y - 1);
             checkPath(targetSquare.x, targetSquare.y - 1);
-            //checkPath(targetSquare.x + 1, targetSquare.y - 1);
+            checkPath(targetSquare.x + 1, targetSquare.y - 1);
             checkPath(targetSquare.x - 1, targetSquare.y);
             checkPath(targetSquare.x + 1, targetSquare.y);
-            //checkPath(targetSquare.x - 1, targetSquare.y + 1);
+            checkPath(targetSquare.x - 1, targetSquare.y + 1);
             checkPath(targetSquare.x, targetSquare.y + 1);
-            //checkPath(targetSquare.x + 1, targetSquare.y + 1);
+            checkPath(targetSquare.x + 1, targetSquare.y + 1);
+
+            if(!pathToGo){
+                let path = map.getPathTo(actualSquare, targetSquare, this.mouvementRange);
+                console.log('path to humaaaans', pathToGo);
+                if (path && path.length < actualDistanceFromHuman) {
+                    closerHuman = h;
+                    actualDistanceFromHuman = path.length;
+                    pathToGo = path;
+                    moveTargetSquare = targetSquare;
+                    return
+                }
+            }
 
             function checkPath(x, y) {
                 let path = pathes.get(x + '_' +y);
+
                 if(actualSquare.x === x && actualSquare.y ===y){
                     actualDistanceFromHuman = 0;
                     closerHuman = h;
@@ -96,7 +111,6 @@ export class Zombie extends _Entity {
                 }
 
                 // on récupère le chemin le amenant au plus pret
-               // map.easyStar.findPath(x, y)
             }
         });
 
@@ -105,18 +119,28 @@ export class Zombie extends _Entity {
         }
 
         if (actualDistanceFromHuman === 0) {
+            this.attack(closerHuman);
             //attack
-            attack(closerHuman);
-            callback();
-            console.log('attack');
             this.updateAccessibleTiles = false;
+            callback();
         } else {
-            map.moveEntityFollowingPath(this, pathToGo, () => callback(), () => console.error('oh ...'));
             this.targetSquare = moveTargetSquare;
             this.updateAccessibleTiles = true;
+            map.moveEntityFollowingPath(this, pathToGo, () => callback(), () => console.error('oh ...'));
         }
 
         return true;
     }
 
+
+    public attack(target: Entity){
+        super.attack(target);
+        this.engine.playSound('grunt');
+        this.engine.shake();
+        console.log('zombie attacks ' + target.id + target.teamId);
+    }
+
+    public touched(){
+        this.engine.playSound('grunt');
+    }
 }

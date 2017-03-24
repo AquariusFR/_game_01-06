@@ -28,7 +28,9 @@ export interface Entity {
     updateAccessibleTiles:boolean
     mapLastUpdate:number
 
-    move(targetPosition:Phaser.Point, callback:()=> void)
+    touched():void
+    attack(target: Entity):void
+    move(targetPosition:Phaser.Point, callback:()=> void):void
     finishMoving()
 }
 export enum EntityType {

@@ -30,6 +30,7 @@ export class _Entity implements Entity {
     updateAccessibleTiles:boolean
     mapLastUpdate:number
 
+
     constructor(engine: Engine, position: Phaser.Point) {
         this.engine = engine;
         this.position = position;
@@ -40,7 +41,7 @@ export class _Entity implements Entity {
         //this.targeted(this);
     }
 
-    private getDirection(sourcePosition: Phaser.Point, targetPosition: Phaser.Point): string {
+    protected getDirection(sourcePosition: Phaser.Point, targetPosition: Phaser.Point): string {
         let angle = Math.atan2(targetPosition.y - sourcePosition.y, targetPosition.x - sourcePosition.x) * (180 / Math.PI);
 
 
@@ -68,6 +69,16 @@ export class _Entity implements Entity {
         this.sprite.play('stand-down');
     }
 
+    public touched(){
+    }
+
+    public attack(target: Entity){
+        
+        let direction = this.getDirection(this.position, target.position);
+        this.engine.lookTo(this.sprite, direction);
+
+        target.touched();
+    }
     public move(targetPosition: Phaser.Point, callback:()=> void) {
 
         let direction: string = this.getDirection(this.position, targetPosition);

@@ -10,6 +10,7 @@ import { GameService } from 'app/loader/game.service'
 // compétence S-link
 // pendant le tour de l'IA, on désactive le clic
 //pousser des trucs pour se cacher des zomblards
+//le vent pour l'odeur ...
 export class Game {
     private ticking: boolean;
     private engine: Engine;
@@ -50,17 +51,17 @@ export class Game {
         this.addPlayer(5, 3);
         this.addPlayer(6, 3);
 
-        this.addZombieAt(17, 9);
-
-        this.addZombieAt(28, 17);
-        this.addZombieAt(29, 17);
-        this.addZombieAt(30, 17);
-        this.addZombieAt(31, 17);
-        this.addZombieAt(36, 12);
-        this.addZombieAt(36, 10);
-        this.addZombieAt(37, 10);
-        this.addZombieAt(38, 10);
-        this.addZombieAt(43, 10);
+        this.addZombieAt(17, 12);
+        /*
+                this.addZombieAt(28, 17);
+                this.addZombieAt(29, 17);
+                this.addZombieAt(30, 17);
+                this.addZombieAt(31, 17);
+                this.addZombieAt(36, 12);
+                this.addZombieAt(36, 10);
+                this.addZombieAt(37, 10);
+                this.addZombieAt(38, 10);
+                this.addZombieAt(43, 10);*/
 
         this.currentIndex = -1;
         this.currentTeamId = this.playerTeamId;
@@ -127,7 +128,7 @@ export class Game {
         if (this.IsEntityInCurrentTeam(target)) {
             this.helpTeamMate(target);
         } else {
-            this.attack(target);
+            this.currentEntity.attack(target);
         }
     }
 
@@ -173,34 +174,20 @@ export class Game {
     public helpTeamMate(target: Entity) {
         console.log(this.currentEntity + ' helps ' + target);
     }
-
-    public attack(target: Entity) {
-        if (this.currentTeamId === this.zombieTeamId) {
-            this.engine.playSound('grunt');
-
-        } else {
-            this.engine.playSound('gun');
-        }
-
-        this.engine.shake();
-        console.log(this.currentEntity + ' attacks ' + target);
-    }
-
-
     private overOff(target: Phaser.Point) {
         if (this.currentTeamId !== this.playerTeamId || this.ticking) {
             return
         }
 
         // clean visibletiles
-        if(this.entityFocused){
-            let points= this.entityFocused.visibleSquares.map(s=>this.map.getPointAtSquare(s.x, s.y)).map(tile=>tile.x + ':' + tile.y);
+        if (this.entityFocused) {
+            let points = this.entityFocused.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y)).map(tile => tile.x + ':' + tile.y);
             this.engine.removeVisibleTiles(points);
         }
         this.entityFocused = null;
     }
 
-    private entityFocused:Entity
+    private entityFocused: Entity
 
     private overOn(target: Phaser.Point) {
         if (this.currentTeamId !== this.playerTeamId || this.ticking) {
@@ -264,7 +251,9 @@ export class Game {
             this.map.setAccessibleTilesByEntity(this.currentEntity, () => {
                 console.timeEnd("nextAction");
 
-                this.zombieTeam[this.currentIndex].play(this.map, (e) => this.attack(e), () => this.nextAction());
+                this.zombieTeam[this.currentIndex].play(this.map, () =>
+                    setTimeout(() => this.nextAction(), 300)
+                );
 
             });
         } else {

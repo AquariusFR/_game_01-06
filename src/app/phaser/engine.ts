@@ -4,8 +4,8 @@ import { Observable } from 'rxjs/Observable';
 import { Pool } from 'app/phaser/pool'
 import { VisibilitySprite } from 'app/game/visibilitySprite'
 
-//http://rpgmaker.su/downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
-//https://forums.rpgmakerweb.com/index.php?threads/pop-freebies.45329/
+//http://rpgmaker.su-downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
+//https://forums.rpg-akerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 export class Engine {
     visibleMarkerPool: Pool;
@@ -88,7 +88,7 @@ export class Engine {
         //this.phaserGame.scale.setUserScale(2, 2);
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.atlas('zombie-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.atlas('Male-Zombies-Gore', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('markers', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
         this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
@@ -251,22 +251,24 @@ export class Engine {
         human.animations.add("up", ["sprite37", "sprite38", "sprite39"], 5, true);
         human.animations.add("stand-down", ["sprite2"], 5, true);
         human.play("stand-down");
-        this.phaserGame.physics.enable(human, Phaser.Physics.ARCADE);
-        human.body.collideWorldBounds = true;
         this.gamegroup.add(human);
         return human;
     }
 
 
-    public createZombie(position: Phaser.Point): Phaser.Sprite {
-        let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'zombie-sprites');
+    public createZombie(position: Phaser.Point, zombieType: string): Phaser.Sprite {
+        let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'Male-Zombies-Gore');
         zombie.smoothed = false;
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
-        zombie.animations.add("z-down", ["sprite132", "sprite133", "sprite134"], 3, true);
-        zombie.play("z-down");
+        zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], 3, true);
+        zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], 3, true);
+        zombie.animations.add("right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], 3, true);
+        zombie.animations.add("up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], 3, true);
+        zombie.play("down");
         this.gamegroup.add(zombie);
         return zombie;
     }
+
 
     public playSound(soundName: string) {
         this.soundeffect.volume = 0.5;
@@ -331,6 +333,10 @@ export class Engine {
         }
         this.tween = game.add.tween(sprite).to({ x: x, y: y - 32 }, 100, Phaser.Easing.Linear.None, true);
         this.tween.onComplete.add(() => this.onComplete(sprite, callback), this);
+    }
+
+    public lookTo(sprite: Phaser.Sprite, animationLooking: string): void {
+        sprite.play(animationLooking);
     }
 
     private onComplete(sprite: Phaser.Sprite, callback: () => void) {

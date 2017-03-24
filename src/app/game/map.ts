@@ -96,25 +96,25 @@ export class GameMap {
         function addToSquares(x, y) {
             let step = x
 
+
             if (x < xm) {
                 for (step; step <= xm; step++) {
-                    let key = step + ':' + y,
-                        square = squares.get(key);
-                    if (square) {
-                        square.data.distanceFrom = step;
-                        squaresMap.set(key, squares.get(key));
-                    }
+                    addSquareToRange();
                 }
             } else {
                 for (step; step >= xm; step--) {
+                    addSquareToRange();
+                }
+            }
+
+            function addSquareToRange(){
                     let key = step + ':' + y,
                         square = squares.get(key);
 
-                    if (square) {
+                    if (square && (step >= 0 && y >= 0)) {
                         square.data.distanceFrom = step;
                         squaresMap.set(key, squares.get(key));
                     }
-                }
             }
         }
     }
@@ -282,12 +282,11 @@ export class GameMap {
         entity.mapLastUpdate = this.mapLastUpdate;
         let squareInRange: Array<Square> = this.getSquareInRange(entity.targetSquare.x, entity.targetSquare.y, entity.mouvementRange);
 
-        this.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange, pathes => {
-            this.collecteAccessibleTiles(entity, pathes);
-            if (callback) {
-                callback();
-            }
-        });
+        let pathes = this.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange);
+        this.collecteAccessibleTiles(entity, pathes);
+        if (callback) {
+            callback();
+        }
     }
 
     private collecteAccessibleTiles(entity: Entity, pathes: Map<string, any[]>) {
@@ -442,7 +441,21 @@ export class GameMap {
         return x + '_' + y;
     }
 
-    private getWalkableTiles(start: Square, squareInRange: Array<Square>, range: number, callback: (pathes: Map<string, Array<any>>) => void): void {
+    public getPathTo(start: Square, end: Square, range: number): Array<any> {
+        let graph = this.buildNewGraph(end),
+            startTile = graph.grid[start.x][start.y],
+            endTile = graph.grid[end.x][end.y],
+            pathes = new Map<string, Array<any>>(),
+            rawPath: Array<GridNode> = astar.search(graph, startTile, endTile),
+            length = rawPath.length;
+
+        //on coupe le chemin pour n'avoir que la partie la plus courte
+        let path = _.dropRight(rawPath.map(p => { return { x: p.x, y: p.y } }), length - 1 - range);
+
+        return path;
+    }
+
+    private getWalkableTiles(start: Square, squareInRange: Array<Square>, range: number): Map<string, Array<any>> {
 
         ///  a faire, voir les cases qui sont directements accessibles, tracer les chemins pour les autres cas
 
@@ -456,7 +469,7 @@ export class GameMap {
             grid = this.grid,
             filteredPathes = new Map<string, Array<any>>(),
             pathes = new Map<string, Array<any>>(),
-            graph = new Graph(getFlippedGrid()),
+            graph = this.buildNewGraph(),
             squaresGroupedByDistance: Array<Array<Square>>,
             processedGroupIndex;
 
@@ -517,23 +530,28 @@ export class GameMap {
         );
 
         console.timeEnd("getWalkableTiles");
-        callback(filteredPathes);
+        return filteredPathes;
+    }
 
 
-        function getFlippedGrid() {
+    private buildNewGraph(square?:Square): any {
 
-            let negativeCollisionGrid = _.range(50).map(x => _.range(50).map(y => -1));
+        let negativeCollisionGrid = _.range(50).map(x => _.range(50).map(y => -1));
 
-            grid.map(
-                (line, rowIndex) => {
-                    line.forEach(
-                        (tile, columnIndex) =>
-                            negativeCollisionGrid[columnIndex][rowIndex] = tile > 0 ? 0 : 1
-                    );
-                }
-            )
-            return negativeCollisionGrid;
+        this.grid.map(
+            (line, rowIndex) => {
+                line.forEach(
+                    (tile, columnIndex) =>
+                        negativeCollisionGrid[columnIndex][rowIndex] = tile > 0 ? 0 : 1
+                );
+            }
+        )
+
+        if(square){
+            negativeCollisionGrid[square.x][square.y] = 1;
         }
+
+        return new Graph(negativeCollisionGrid);
     }
 
 }
