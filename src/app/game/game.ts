@@ -52,16 +52,15 @@ export class Game {
         this.addPlayer(6, 3);
 
         this.addZombieAt(17, 12);
-        /*
-                this.addZombieAt(28, 17);
-                this.addZombieAt(29, 17);
-                this.addZombieAt(30, 17);
-                this.addZombieAt(31, 17);
-                this.addZombieAt(36, 12);
-                this.addZombieAt(36, 10);
-                this.addZombieAt(37, 10);
-                this.addZombieAt(38, 10);
-                this.addZombieAt(43, 10);*/
+        this.addZombieAt(28, 17);
+        this.addZombieAt(29, 17);
+        this.addZombieAt(30, 17);
+        this.addZombieAt(31, 17);
+        this.addZombieAt(36, 12);
+        this.addZombieAt(36, 10);
+        this.addZombieAt(37, 10);
+        this.addZombieAt(38, 10);
+        this.addZombieAt(43, 10);
 
         this.currentIndex = -1;
         this.currentTeamId = this.playerTeamId;
@@ -133,39 +132,19 @@ export class Game {
     }
 
     private updateVisibleSquaresOfEntity(entity: Entity) {
-        let displayVisibleSquares = (this.currentTeamId === this.zombieTeamId),
-            oldVisibleTiles = entity.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y));
 
         console.time('updateVisibleSquaresOfEntity');
-
         this.map.setVisibileSquares(entity);
-
-        /*        if (displayVisibleSquares) {
-                    if (!entity.updateAccessibleTiles) {
-                        return;
-                    }
-                    let points: Array<Phaser.Point> = entity.visibleSquares.map(s=>this.map.getPointAtSquare(s.x, s.y));
-                    console.time('addVisibleTiles');
-                    this.engine.addVisibleTiles(oldVisibleTiles, points);
-        
-                    console.timeEnd('addVisibleTiles');
-                }*/
         console.timeEnd("updateVisibleSquaresOfEntity");
     }
 
-    // foreach entities, determine what it can see
     private updateAllVisibilities() {
-        //console.time('updateAllVisibilities');
         this.playerTeam.forEach(p => {
             this.map.setVisibileSquares(p, true);
         })
-        //this.engine.removeAllVisibleTiles();
         this.zombieTeam.forEach(z => {
             this.map.setVisibileSquares(z, true);
-            //let visiblePoints: Array<Phaser.Point> = z.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y))
-            //this.engine.addVisibleTiles([], visiblePoints);
         })
-        //console.timeEnd("updateAllVisibilities");
     }
     public IsEntityInCurrentTeam(target: Entity) {
         return target.teamId === this.currentTeamId;
@@ -248,14 +227,10 @@ export class Game {
     private prepareAction() {
 
         if (this.currentTeamId === this.zombieTeamId) {
-            this.map.setAccessibleTilesByEntity(this.currentEntity, () => {
-                console.timeEnd("nextAction");
-
-                this.zombieTeam[this.currentIndex].play(this.map, () =>
-                    setTimeout(() => this.nextAction(), 300)
-                );
-
-            });
+            console.timeEnd("nextAction");
+            this.zombieTeam[this.currentIndex].play(this.map, () =>
+                setTimeout(() => this.nextAction(), 300)
+            );
         } else {
             if (this.currentEntity.currentAction === 0) {
                 this.showAccessibleTilesByPlayer();
@@ -264,10 +239,10 @@ export class Game {
     }
 
     private showAccessibleTilesByPlayer() {
-        this.map.setAccessibleTilesByEntity(this.currentEntity, () => {
-            this.currentEntity.updateAccessibleTiles = false;
-            this.showAccessibleTiles(this.currentEntity);
-        });
+        this.currentEntity.updateAccessibleTiles = true;
+        this.map.setAccessibleTilesByEntity(this.currentEntity);
+        this.currentEntity.updateAccessibleTiles = false;
+        this.showAccessibleTiles(this.currentEntity);
     }
 
     /**

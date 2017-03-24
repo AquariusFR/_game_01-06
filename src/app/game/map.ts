@@ -273,20 +273,13 @@ export class GameMap {
         return square;
     }
 
-    public setAccessibleTilesByEntity(entity: Entity, callback?: () => void) {
-        if (!entity.updateAccessibleTiles) {
-            callback();
-            return;
-        }
+    public setAccessibleTilesByEntity(entity: Entity) {
         //mapLastUpdate
         entity.mapLastUpdate = this.mapLastUpdate;
         let squareInRange: Array<Square> = this.getSquareInRange(entity.targetSquare.x, entity.targetSquare.y, entity.mouvementRange);
 
         let pathes = this.getWalkableTiles(entity.targetSquare, squareInRange, entity.mouvementRange);
         this.collecteAccessibleTiles(entity, pathes);
-        if (callback) {
-            callback();
-        }
     }
 
     private collecteAccessibleTiles(entity: Entity, pathes: Map<string, any[]>) {
@@ -300,19 +293,22 @@ export class GameMap {
         let self = this,
             grid = this.grid,
             sourceSquare = this.getSquareAtPoint(entity.position);
+        let shortestPath = this.getPathTo(sourceSquare, _.last(path), entity.mouvementRange, true);
 
-        if (path === null) {
+        if (shortestPath === null) {
             error('Path was not found.');
             return;
         }
         let currentPositionIndex = 0;
         move();
         function move() {
-            let currentPathPoint = path[currentPositionIndex],
+            let currentPathPoint = shortestPath[currentPositionIndex],
                 currentPosition = self.getPointAtSquare(currentPathPoint.x, currentPathPoint.y);
             let square = self.getSquareAtPoint(currentPosition);
             entity.square = square;
-            if (currentPositionIndex >= path.length - 1) {
+
+            //at last position
+            if (currentPositionIndex >= shortestPath.length - 1) {
                 entity.move(currentPosition, () => {
                     let targetSquare = self.getSquareAtPoint(currentPosition);
                     entity.finishMoving();
@@ -358,20 +354,26 @@ export class GameMap {
             grid = this.grid;
 
 
-        let path = entity.pathMap.get(targetSquare.x + '_' + targetSquare.y);
+        // on recalcule le chemin en activant les diagonales pour un chemin plus fluide
+        //originalPath = entity.pathMap.get(targetSquare.x + '_' + targetSquare.y),
+        let shortestPath = this.getPathTo(sourceSquare, targetSquare, entity.mouvementRange, true);
 
-        if (!path) {
+
+
+
+        if (!shortestPath) {
             error('Path was not found.');
             return;
         }
         let currentPositionIndex = 0;
 
+        
         let move = () => {
-            let currentPathPoint = path[currentPositionIndex],
+            let currentPathPoint = shortestPath[currentPositionIndex],
                 currentPosition = this.getPointAtSquare(currentPathPoint.x, currentPathPoint.y),
                 square = this.getSquareAtPoint(currentPosition);
             entity.square = square;
-            if (currentPositionIndex >= path.length - 1) {
+            if (currentPositionIndex >= shortestPath.length - 1) {
                 entity.move(currentPosition, () => {
                     entity.finishMoving();
                     sourceSquare.entity = null;
@@ -441,8 +443,8 @@ export class GameMap {
         return x + '_' + y;
     }
 
-    public getPathTo(start: Square, end: Square, range: number): Array<any> {
-        let graph = this.buildNewGraph(end),
+    public getPathTo(start: Square, end: Square, range: number, useDiagonal?:boolean): Array<any> {
+        let graph = this.buildNewGraph(end, useDiagonal),
             startTile = graph.grid[start.x][start.y],
             endTile = graph.grid[end.x][end.y],
             pathes = new Map<string, Array<any>>(),
@@ -534,7 +536,7 @@ export class GameMap {
     }
 
 
-    private buildNewGraph(square?:Square): any {
+    private buildNewGraph(square?:Square, useDiagonal?:boolean): any {
 
         let negativeCollisionGrid = _.range(50).map(x => _.range(50).map(y => -1));
 
@@ -551,7 +553,8 @@ export class GameMap {
             negativeCollisionGrid[square.x][square.y] = 1;
         }
 
-        return new Graph(negativeCollisionGrid);
+        //return new Graph(negativeCollisionGrid);
+        return new Graph(negativeCollisionGrid, { diagonal: useDiagonal });
     }
 
 }

@@ -200,10 +200,12 @@ export class Engine {
         });
     }
     public removeAllVisibleTiles() {
-
         this.mapVisibleTileCount = new Map();
         this.mapVisibleTile = new Map();
-        this.visibleMarkerPool.sprites.forEach(sprite => sprite.alive = false);
+        this.visibleMarkerPool.sprites.forEach(sprite => {
+            sprite.alive = false;
+            sprite.visible = false;
+        });
     }
     public addVisibleTiles(oldTiles: Array<Phaser.Point>, tiles: Array<Phaser.Point>) {
         //console.time('addVisibleTiles');
@@ -236,7 +238,6 @@ export class Engine {
             if (!oldKeysToDelete.has(tileKey)) {
                 this.mapVisibleTileCount.set(tileKey, count + 1);
             }
-
         }
         );
         //console.timeEnd("addVisibleTiles");
