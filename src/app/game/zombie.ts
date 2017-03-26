@@ -40,14 +40,13 @@ export class Zombie extends _Entity {
 
     public play(map: GameMap, callback: () => void): void {
 
-        let entities: Array<Entity> = this.visibleSquares.filter(square => square.entity).map(s => s.entity);
+        let visibleEntities: Array<Entity> = this.visibleSquares.filter(square => square.entity).map(s => s.entity);
 
-        if (this.lookForHumaaaans(entities, map, callback)) {
+        if (this.lookForHumaaaans(visibleEntities, map, callback)) {
             console.log('fresh meat ...')
         } else {
-            this.goForCloserZombie(entities, map, callback);
+            this.goForCloserZombie(visibleEntities, map, callback);
         }
-
     }
 
     private pathToClosestEntity(entitiesGroup: Array<Entity>, map: GameMap): closestEntityReturn {
@@ -57,7 +56,7 @@ export class Zombie extends _Entity {
             pathToGo: Array<any> = null,
             actualSquare = this.square,
             pathes = this.pathMap,
-            moveTargetSquare,
+            moveTargetSquare: Square,
             self = this;
         entitiesGroup.forEach(h => {
             let targetSquare = h.square;
@@ -74,40 +73,41 @@ export class Zombie extends _Entity {
 
 
             if (!pathToGo) {
-                let path = map.getPathTo(actualSquare, targetSquare, mouvementRange);
+                let path = map.getPathTo(actualSquare, targetSquare, mouvementRange),
+                    lastStep = _.last(path),
+                    lastSquare = lastStep ? map.getSquare(lastStep.x, lastStep.y) : null;
                 console.log('path to humaaaans', pathToGo);
                 if (path) {
-                    closerHuman = h;
-                    actualDistanceFromHuman = path.length;
-                    pathToGo = path;
-                    moveTargetSquare = _.last(pathToGo);
+                    setClosestPath(path, lastSquare);
                     return
                 }
             }
 
-
-            function checkPath(x:number, y:number) {
+            function checkPath(x: number, y: number) {
                 if (actualSquare.x === x && actualSquare.y === y) {
-                    actualDistanceFromHuman = 0;
-                    closerHuman = h;
-                    pathToGo = [];
-                    moveTargetSquare = actualSquare;
+                    setClosestPath([], actualSquare);
                     return;
                 }
 
                 let square: Square = map.getSquare(x, y);
-                let path = map.getPathTo(actualSquare, square, mouvementRange);
+                let path = map.getPathTo(actualSquare, square, mouvementRange),
+                    lastStep = _.last(path),
+                    lastSquare = lastStep ? map.getSquare(lastStep.x, lastStep.y) : null;
 
-                if (path && path.length > 0 && path.length < actualDistanceFromHuman && pathStepEqualsToSquare(_.last(path), square) ) {
-                    closerHuman = h;
-                    actualDistanceFromHuman = path.length;
-                    pathToGo = path;
-                    moveTargetSquare = square;
+                if (path && path.length > 0 && path.length < actualDistanceFromHuman && lastSquare === square) {
+                    setClosestPath(path, lastSquare);
                     return
                 }
             }
-            function pathStepEqualsToSquare(pathStep:any, square:Square){
+            function pathStepEqualsToSquare(pathStep: any, square: Square) {
                 return pathStep.x === square.x && pathStep.y === square.y;
+            }
+
+            function setClosestPath(path: Array<any>, square: Square) {
+                closerHuman = h;
+                actualDistanceFromHuman = path.length;
+                pathToGo = path;
+                moveTargetSquare = square;
             }
         })
 
@@ -122,9 +122,7 @@ export class Zombie extends _Entity {
 
     private goForCloserZombie(entities: Array<Entity>, map: GameMap, callback: () => void): boolean {
         let zombie = entities.filter(e => e.teamId === this.teamId && e.id != this.id);
-
         let pathToClosest = this.pathToClosestEntity(zombie, map);
-
 
         if (!pathToClosest.entity) {
             callback();
