@@ -40,9 +40,7 @@ export class Zombie extends _Entity {
 
     public play(map: GameMap, callback: () => void): void {
 
-        map.setAccessibleTilesByEntity(this);
         let entities: Array<Entity> = this.visibleSquares.filter(square => square.entity).map(s => s.entity);
-        // map.getVisibleEntitiedByEntity(this);
 
         if (this.lookForHumaaaans(entities, map, callback)) {
             console.log('fresh meat ...')
@@ -55,6 +53,7 @@ export class Zombie extends _Entity {
     private pathToClosestEntity(entitiesGroup: Array<Entity>, map: GameMap): closestEntityReturn {
         let closerHuman = null,
             actualDistanceFromHuman = 999,
+            mouvementRange = this.mouvementRange,
             pathToGo: Array<any> = null,
             actualSquare = this.square,
             pathes = this.pathMap,
@@ -75,9 +74,9 @@ export class Zombie extends _Entity {
 
 
             if (!pathToGo) {
-                let path = map.getPathTo(actualSquare, targetSquare, this.mouvementRange);
+                let path = map.getPathTo(actualSquare, targetSquare, mouvementRange);
                 console.log('path to humaaaans', pathToGo);
-                if (path && path.length < actualDistanceFromHuman) {
+                if (path) {
                     closerHuman = h;
                     actualDistanceFromHuman = path.length;
                     pathToGo = path;
@@ -87,9 +86,7 @@ export class Zombie extends _Entity {
             }
 
 
-            function checkPath(x, y) {
-                let path = pathes.get(x + '_' + y);
-
+            function checkPath(x:number, y:number) {
                 if (actualSquare.x === x && actualSquare.y === y) {
                     actualDistanceFromHuman = 0;
                     closerHuman = h;
@@ -97,13 +94,20 @@ export class Zombie extends _Entity {
                     moveTargetSquare = actualSquare;
                     return;
                 }
-                if (path && path.length < actualDistanceFromHuman) {
+
+                let square: Square = map.getSquare(x, y);
+                let path = map.getPathTo(actualSquare, square, mouvementRange);
+
+                if (path && path.length > 0 && path.length < actualDistanceFromHuman && pathStepEqualsToSquare(_.last(path), square) ) {
                     closerHuman = h;
                     actualDistanceFromHuman = path.length;
                     pathToGo = path;
-                    moveTargetSquare = targetSquare;
+                    moveTargetSquare = square;
                     return
                 }
+            }
+            function pathStepEqualsToSquare(pathStep:any, square:Square){
+                return pathStep.x === square.x && pathStep.y === square.y;
             }
         })
 
@@ -111,7 +115,7 @@ export class Zombie extends _Entity {
             distance: actualDistanceFromHuman,
             entity: closerHuman,
             path: pathToGo,
-            target : moveTargetSquare
+            target: moveTargetSquare
         }
     }
 
@@ -136,7 +140,7 @@ export class Zombie extends _Entity {
             this.targetSquare = pathToClosest.target;
             this.updateAccessibleTiles = true;
 
-            map.moveEntityFollowingPath(this, pathToClosest.path , () => callback(), () => console.error('oh ...'));
+            map.moveEntityFollowingPath(this, pathToClosest.path, () => callback(), () => console.error('oh ...'));
         }
 
         return false;

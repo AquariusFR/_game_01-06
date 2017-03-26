@@ -348,8 +348,9 @@ export class GameMap {
 
 
     public canEntityGoToTarget(entity: Entity, targetPoint: Phaser.Point) {
-        let targetSquare = this.getSquareAtPoint(targetPoint);
-        return entity.pathMap.get(targetSquare.x + '_' + targetSquare.y) != null;
+        let targetSquare = this.getSquareAtPoint(targetPoint),
+            key = this.getCoordinatesKey(targetSquare.x, targetSquare.y);
+        return entity.pathMap.get(key) != null;
     }
 
     public moveEntityAtPoint(entity: Entity, targetPoint: Phaser.Point, callback: () => void, error: (e) => void): void {
@@ -359,11 +360,7 @@ export class GameMap {
 
 
         // on recalcule le chemin en activant les diagonales pour un chemin plus fluide
-        //originalPath = entity.pathMap.get(targetSquare.x + '_' + targetSquare.y),
         let shortestPath = this.getPathTo(sourceSquare, targetSquare, entity.mouvementRange, true);
-
-
-
 
         if (!shortestPath) {
             error('Path was not found.');
@@ -419,6 +416,11 @@ export class GameMap {
         point.y = Math.min(squareY * 32, this.size.width * 32);
         return point;
     }
+    public getSquare(x:number, y:number): Square {
+        let key = this.getCoordinatesKey(x, y);
+        return this.squares.get(key);
+
+    }
     public getSquareAtPoint(point: Phaser.Point): Square {
 
         let key = this.getPointKey(point),
@@ -442,10 +444,10 @@ export class GameMap {
     private getPointKey(point: Phaser.Point): string {
         let squareX = Math.min(point.x / 32, this.size.width),
             squareY = Math.min(point.y / 32, this.size.width);
-        return squareX + ':' + squareY;
+        return this.getCoordinatesKey(squareX, squareY);
     }
     private getCoordinatesKey(x: number, y: number): string {
-        return x + '_' + y;
+        return x + ':' + y;
     }
 
     public getPathTo(start: Square, end: Square, range: number, useDiagonal?:boolean): Array<any> {

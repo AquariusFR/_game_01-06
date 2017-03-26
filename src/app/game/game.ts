@@ -254,7 +254,7 @@ export class Game {
     private showAccessibleTiles(entity: Entity) {
         let positions: Array<Phaser.Point> = new Array();
         entity.pathMap.forEach((path, key) => {
-            let splittedKey = key.split('_'),
+            let splittedKey = key.split(':'),
                 squareX = Number(splittedKey[0]),
                 squareY = Number(splittedKey[1]);
             positions.push(this.map.getPointAtSquare(squareX, squareY));
