@@ -74,12 +74,12 @@ export class Game {
 
     }
 
-    private addZombieAt(x, y):Zombie{
+    private addZombieAt(x, y): Zombie {
         let zombie = Zombie.popZombie(this.engine, this.map.getPointAtSquare(x, y), this.zombieTeamId, this.zombieTeam);
         this.map.putEntityAtPoint(zombie);
         return zombie;
     }
-    private addPlayer(x, y):Player {
+    private addPlayer(x, y): Player {
         let player = Player.popPlayer(this.engine, this.map.getPointAtSquare(x, y), this.playerTeamId, this.playerTeam);
         this.map.putEntityAtPoint(player);
         return player;
@@ -87,12 +87,12 @@ export class Game {
 
 
     public nextAction() {
-        console.time('nextAction');
         this.currentEntity.currentAction++;
-        this.updateVisibleSquaresOfEntity(this.currentEntity);
         if (this.currentEntity.currentAction >= this.currentEntity.maxAction) {
             this.nextCharacter();
         }
+        console.time(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
+        this.updateVisibleSquaresOfEntity(this.currentEntity);
         this.prepareAction();
     }
     public nextCharacter() {
@@ -230,13 +230,23 @@ export class Game {
     private prepareAction() {
 
         if (this.currentTeamId === this.zombieTeamId) {
-            console.timeEnd("nextAction");
-            this.zombieTeam[this.currentIndex].play(this.map, () =>
-                setTimeout(() => this.nextAction(), 300)
+            console.time(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
+            this.zombieTeam[this.currentIndex].play(this.map,
+                () => {
+                    console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
+                    console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
+                    console.time(this.currentTeamId + '/' + this.currentEntity.id + ' timeout');
+                    setTimeout(
+                        () => {
+                            console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' timeout');
+                            this.nextAction();
+                        }, 300);
+                }
             );
         } else {
             if (this.currentEntity.currentAction === 0) {
                 this.showAccessibleTilesByPlayer();
+                console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
             }
         }
     }
