@@ -18,7 +18,7 @@ export class _Entity implements Entity {
     position: Phaser.Point
     maxAction: number
     currentAction: number
-    weapons: Weapon[]
+    weapons: Array<Weapon> = []
     armor: number
     pv: number
     maxArmor: number
@@ -39,12 +39,12 @@ export class _Entity implements Entity {
         this.id = _Entity.idcount++;
     }
 
-    public maskEntity() :_Entity{
+    public maskEntity(): _Entity {
         this.isMasked = true;
         this.setAnimation();
         return this;
     }
-    public unmaskEntity():_Entity {
+    public unmaskEntity(): _Entity {
         this.isMasked = false;
         this.setAnimation();
         return this;
@@ -91,23 +91,22 @@ export class _Entity implements Entity {
         this.setAnimation();
     }
 
-    public finishMoving() :_Entity{
+    public finishMoving(): _Entity {
         this.sprite.play('stand-down');
         return this;
     }
 
-    public touched() :_Entity{
+    public touched(sourceEntity: Entity, damage: number): _Entity {
         return this;
     }
 
-    public attack(target: Entity):_Entity {
+    public attack(target: Entity): _Entity {
 
         this.updateDirection(this.position, target.position);
 
-        target.touched();
         return this;
     }
-    public move(targetPosition: Phaser.Point, callback: () => void):_Entity {
+    public move(targetPosition: Phaser.Point, callback: () => void): _Entity {
 
         this.updateDirection(this.position, targetPosition);
 

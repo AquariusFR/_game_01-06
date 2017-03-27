@@ -29,7 +29,7 @@ export interface Entity {
     mapLastUpdate:number
     isMasked:boolean
 
-    touched():Entity
+    touched(sourceEntity: Entity, damage:number):Entity
     attack(target: Entity):Entity
     move(targetPosition:Phaser.Point, callback:()=> void):Entity
     finishMoving():Entity

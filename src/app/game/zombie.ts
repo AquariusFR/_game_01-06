@@ -17,13 +17,16 @@ const zombieTypes = ['01', '02', '03', '04', '05', '06', '07', '08']
 export class Zombie extends _Entity {
 
     currentStatus: status;
+    team: Array<Zombie>
 
-    constructor(engine: Engine, position: Phaser.Point, team: number) {
+    constructor(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Zombie>) {
         super(engine, position);
         this.sprite = engine.createZombie(position, zombieTypes[_.random(0, zombieTypes.length - 1)]);
-        this.teamId = team;
+        this.teamId = teamId;
+        this.team = team;
         this.maxAction = 2;
         this.mouvementRange = 6;
+        this.pv = 6;
         this.currentStatus = status.IDDLE;
         this.visionRange = 12;
         this.coverDetection = 10;
@@ -32,7 +35,7 @@ export class Zombie extends _Entity {
 
 
     static popZombie(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Zombie>): Zombie {
-        let newZombie = new Zombie(engine, position, teamId);
+        let newZombie = new Zombie(engine, position, teamId, team);
         team.push(newZombie);
         return newZombie;
     }
@@ -70,8 +73,6 @@ export class Zombie extends _Entity {
             checkPath(targetSquare.x - 1, targetSquare.y + 1);
             checkPath(targetSquare.x, targetSquare.y + 1);
             checkPath(targetSquare.x + 1, targetSquare.y + 1);
-
-
             if (!pathToGo) {
                 let path = map.getPathTo(actualSquare, targetSquare, mouvementRange),
                     lastStep = _.last(path),
@@ -179,8 +180,23 @@ export class Zombie extends _Entity {
         return this;
     }
 
-    public touched(): Zombie {
+    public touched(sourceEntity: Entity, damage:number): Zombie {
+        console.log('aaaargh', sourceEntity, 'hit me for', damage);
         this.engine.playSound('grunt');
+
+        this.pv = this.pv - damage;
+
+        if(this.pv<=0){
+            console.log('aaaargh, i am really dead');
+
+            this.sprite.alive = false
+            this.sprite.visible = false
+            this.sprite.animations.stop()
+            this.square.entity = null
+            let index = _(this.team).remove(['id', this.id]).value();
+
+        }
+
         return this;
     }
 }

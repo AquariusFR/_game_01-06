@@ -12,10 +12,12 @@ export class GameMap {
     private size: MapSize;
     public squares: Map<string, Square> = new Map<string, Square>()
     private engine: Engine;
+    public rnd:Phaser.RandomDataGenerator;
     constructor(private name: string) { }
 
     setEngine(engine: Engine) {
         this.engine = engine;
+        this.rnd = engine.phaserGame.rnd;
     }
 
     public setVisibileSquares(entity: Entity, force?: boolean) {
@@ -158,7 +160,7 @@ export class GameMap {
     }
 
     // Returns the list of points from (x0, y0) to (x1, y1)
-    private BresenhamLine(start: Square, end: Square): Array<Square> {
+    public BresenhamLine(start: Square, end: Square): Array<Square> {
         let x0: number = start.x,
             y0: number = start.y,
             x1: number = end.x,

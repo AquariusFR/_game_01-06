@@ -51,7 +51,11 @@ export class Game {
         this.addPlayer(5, 3);
         this.addPlayer(6, 3);
 
-        this.addZombieAt(17, 12);
+        this.addZombieAt(5, 7);
+        this.addZombieAt(4, 8);
+        this.addZombieAt(6, 8);
+        this.addZombieAt(5, 8);
+
         this.addZombieAt(28, 17);
         this.addZombieAt(29, 17);
         this.addZombieAt(30, 17);
@@ -80,11 +84,10 @@ export class Game {
         return zombie;
     }
     private addPlayer(x, y): Player {
-        let player = Player.popPlayer(this.engine, this.map.getPointAtSquare(x, y), this.playerTeamId, this.playerTeam);
+        let player = Player.popPlayer(this.engine, this.map.getPointAtSquare(x, y), this.playerTeamId, this.playerTeam, this.map);
         this.map.putEntityAtPoint(player);
         return player;
     }
-
 
     public nextAction() {
         this.currentEntity.currentAction++;
