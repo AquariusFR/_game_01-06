@@ -3,6 +3,7 @@ import { GameService, MapResponse, CreatedMap } from 'app/loader/game.service';
 import { Observable } from 'rxjs/Observable';
 import { Pool } from 'app/phaser/pool'
 import { VisibilitySprite } from 'app/game/visibilitySprite'
+import DelayedAnimation from 'app/phaser/delayedAnimation'
 
 //http://rpgmaker.su-downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
 //https://forums.rpg-akerweb.com/index.php?threads/pop-freebies.45329/
@@ -286,18 +287,33 @@ export class Engine {
 
 
     public createZombie(position: Phaser.Point, zombieType: string): Phaser.Sprite {
-        let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'Male-Zombies-Gore');
+        let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'Male-Zombies-Gore'),
+            framerate = 3;
         zombie.smoothed = false;
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
-        zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], 3, true);
-        zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], 3, true);
-        zombie.animations.add("right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], 3, true);
-        zombie.animations.add("up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], 3, true);
-        zombie.animations.add("masked-down", ["00-down-1", "00-down-2", "00-down-3"], 3, true);
-        zombie.animations.add("masked-left", ["00-left-1", "00-left-2", "00-left-3"], 3, true);
-        zombie.animations.add("masked-right", ["00-right-1", "00-right-2", "00-right-3"], 3, true);
-        zombie.animations.add("masked-up", ["00-up-1", "00-up-2", "00-up-3"], 3, true);
+        let delay = this.phaserGame.rnd.integerInRange(0, 50);
+
+        //zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
+        
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
+
+        zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], framerate, true);
+        zombie.animations.add("right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], framerate, true);
+        zombie.animations.add("up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], framerate, true);
+        zombie.animations.add("masked-down", ["00-down-1", "00-down-2", "00-down-3"], framerate, true);
+        zombie.animations.add("masked-left", ["00-left-1", "00-left-2", "00-left-3"], framerate, true);
+        zombie.animations.add("masked-right", ["00-right-1", "00-right-2", "00-right-3"], framerate, true);
+        zombie.animations.add("masked-up", ["00-up-1", "00-up-2", "00-up-3"], framerate, true);
+
+
         zombie.play("down");
+        
+        let frameIndex = this.phaserGame.rnd.integerInRange(0,zombie.animations.currentAnim.frameTotal);
+
+
+
+        zombie.animations.currentAnim.setFrame(frameIndex);
+
         this.gamegroup.add(zombie);
         return zombie;
     }
@@ -512,6 +528,8 @@ export class Engine {
         this.setMarker();
         this.updateCamera();
         this.handlerKeyBoard();
+
+
     }
 }
 
