@@ -319,6 +319,8 @@ export class GameMap {
                     let targetSquare = self.getSquareAtPoint(currentPosition);
                     entity.finishMoving();
                     sourceSquare.entity = null;
+
+                    // un probleme ici ? cliquer sur 9:9 les zombies vont s'entasser
                     targetSquare.entity = entity;
 
                     let sourceInfo = grid[sourceSquare.y][sourceSquare.x];
