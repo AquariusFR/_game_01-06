@@ -91,6 +91,9 @@ export class Zombie extends _Entity {
                 }
 
                 let square: Square = map.getSquare(x, y);
+                if(square.entity){
+                    return
+                }
                 let path = map.getPathTo(actualSquare, square, mouvementRange),
                     lastStep = _.last(path),
                     lastSquare = lastStep ? map.getSquare(lastStep.x, lastStep.y) : null;
