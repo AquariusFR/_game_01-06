@@ -261,7 +261,7 @@ export class Engine {
             let count = this.mapVisibleTileCount.get(tileKey);
 
             if (count < 1) {
-                this.mapVisibleTile.set(tileKey, this.visibleMarkerPool.createNew(tile.x, tile.y, {}));
+                this.mapVisibleTile.set(tileKey, this.visibleMarkerPool.createNew(tile.x, tile.y));
             }
 
 
