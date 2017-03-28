@@ -11,6 +11,7 @@ import { GameService } from 'app/loader/game.service'
 // pendant le tour de l'IA, on désactive le clic
 //pousser des trucs pour se cacher des zomblards
 //le vent pour l'odeur ...
+// faire des packs de zombies (à agreger par rapport à la distance)
 export class Game {
     private ticking: boolean;
     private engine: Engine;
