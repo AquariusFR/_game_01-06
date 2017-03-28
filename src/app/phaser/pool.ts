@@ -2,7 +2,7 @@ import { Spawnable } from 'app/phaser/spawnable'
 
 export class Pool extends Phaser.Group {
 
-    public sprites:Array<Phaser.Sprite>;
+    public sprites: Array<Phaser.Sprite>;
 
     constructor(game: Phaser.Game, private spriteType: typeof Spawnable, instances: number, name: string) {
         super(game, game.world, name, false, true, Phaser.Physics.ARCADE);
@@ -21,8 +21,8 @@ export class Pool extends Phaser.Group {
         }
     }
 
-    public createNew(x, y, data) {
-        let obj = this.getFirstDead(false);
+    public createNew(x: number, y: number, data?: Object) {
+        let obj: Spawnable = this.getFirstDead(false);
         if (!obj) {
             console.log('createNew');
             obj = new this.spriteType(this.game);

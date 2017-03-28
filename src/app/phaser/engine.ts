@@ -123,6 +123,7 @@ export class Engine {
         this.phaserGame.load.atlas('markers', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
         this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
+        this.phaserGame.load.audio('MechDrone1', ['assets/sounds/MechDrone1.mp3']);
         this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect.ogg']);
         this.phaserGame.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
@@ -130,15 +131,15 @@ export class Engine {
 
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
-        let music = game.add.audio('boden', 1, true);
+        let MechDrone1 = game.add.audio('MechDrone1', 1, true);
         let soundeffect = game.add.audio('soundeffect', 0.1, true);
         this.gamegroup = game.add.group();
         this.rangegroup = game.add.group();
         this.visiongroup = game.add.group();
         let gamegroup = this.gamegroup;
 
-        //music.play();
-        music.volume = 0.01;
+        MechDrone1.play();
+        MechDrone1.volume = 0.5;
         soundeffect.volume = 0;
 
         //à enlever
