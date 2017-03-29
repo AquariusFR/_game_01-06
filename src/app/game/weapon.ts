@@ -2,6 +2,7 @@ import { Entity } from 'app/game/entity'
 import { GameMap } from 'app/game/map'
 import { Engine } from 'app/phaser/engine'
 import { Square } from 'app/game/map'
+import { Bullet } from 'app/game/bullet'
 import * as _ from 'lodash';
 
 // prevoir une compétence pour utiliser les machines guns debout
@@ -27,6 +28,7 @@ export interface fireReturn {
 }
 
 export interface WeaponData {
+    name: string
     minRange: number
     maxRange: number
     minDamage: number
@@ -56,16 +58,24 @@ export interface Weapon {
 }
 
 class WeaponImpl implements Weapon {
+    bulletSpeed: number;
 
     private rnd: Phaser.RandomDataGenerator;
     private isJammed: boolean = false;
+    private bulletGroup: Phaser.Group;
 
-    constructor(public data: WeaponData, public map: GameMap) {
+    constructor(public data: WeaponData, public map: GameMap, key) {
         this.rnd = map.rnd;
+        this.bulletGroup = this.map.engine.addGroup(data.name);
+
+        for (var i = 0; i < 64; i++) {
+            this.bulletGroup.add(new Bullet(this.map.engine.phaserGame, 'bullet6'), true);
+        }
     }
 
     public fire(sourceEntity: Entity, targetEntity: Entity): void {
 
+        this.bulletSpeed = 700;
         if (this.isJammed) {
             return;
         }
@@ -90,6 +100,8 @@ class WeaponImpl implements Weapon {
 
             this.shootMultyBullet(sourceEntity, targetEntity);
         }
+
+
     }
 
     private shootSingleBullet(sourceEntity: Entity, targetEntity: Entity) {
@@ -119,7 +131,7 @@ class WeaponImpl implements Weapon {
 
 
         _.times(this.data.projectileByShot, index => {
-            this.processSingleBullet(sourceEntity ,sourceSquare, startAngle - (index * angleStep));
+            this.processSingleBullet(sourceEntity, sourceSquare, startAngle - (index * angleStep));
         });
     }
 
@@ -130,8 +142,8 @@ class WeaponImpl implements Weapon {
     }
 
 
-        //todo enregistrer tous les dommages d'une action et résoudre ça à la fin.
-    private processSingleBullet(sourceEntity: Entity,sourceSquare, currentAngle: number) {
+    //todo enregistrer tous les dommages d'une action et résoudre ça à la fin.
+    private processSingleBullet(sourceEntity: Entity, sourceSquare, currentAngle: number) {
         let targetX = Math.round(Math.cos(this.toRadians(currentAngle)) * this.data.maxRange) + sourceSquare.x,
             targetY = -Math.round(Math.sin(this.toRadians(currentAngle)) * this.data.maxRange) + sourceSquare.y,
             targetSquare = this.map.getSquare(targetX, targetY),
@@ -140,6 +152,7 @@ class WeaponImpl implements Weapon {
                 .tail()
                 .filter((square) => square.entity).map(square => square.entity)
                 .value(),
+            lastPositionTouched: Phaser.Point = null,
             entityTouched = 0;
 
         console.log('bullet', currentAngle, targetX, targetY);
@@ -160,7 +173,25 @@ class WeaponImpl implements Weapon {
             }
             let damage = damageModifier * this.getDamage();
             entity.touched(sourceEntity, damage);
+            lastPositionTouched = entity.position
         });
+
+
+        console.log('fire bullet ', currentAngle);
+        var x = sourceEntity.position.x + 10;
+        var y = sourceEntity.position.y + 10;
+        let currentDistance = 0;
+
+
+        if (!lastPositionTouched) {
+            currentDistance = this.data.maxRange * 32;
+        } else {
+            let dx = Math.abs(x - lastPositionTouched.x);
+            let dy = Math.abs(y - lastPositionTouched.y);
+            currentDistance = (dx + dy);
+        }
+
+        this.bulletGroup.getFirstExists(false).fire(x, y, -currentAngle, this.bulletSpeed, 0, 0, currentDistance);
     }
 
     public reload(): void {
@@ -197,7 +228,9 @@ export class WeaponPool {
     static add(weapons: WEAPONS, map: GameMap): Weapon {
         switch (weapons) {
             case WEAPONS.NINEMM:
+
                 return new WeaponImpl({
+                    name: 'NINEMM',
                     minRange: 0,
                     maxRange: 9,
                     minDamage: 1,
@@ -212,10 +245,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.SHOOTGUN:
 
                 return new WeaponImpl({
+                    name: 'SHOOTGUN',
                     minRange: 0,
                     maxRange: 5,
                     minDamage: 1,
@@ -230,10 +264,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 6,
                     isRanged: false
-                }, map);
+                }, map, 'bullet8');
             case WEAPONS.PIPE:
 
                 return new WeaponImpl({
+                    name: 'PIPE',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -248,10 +283,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.AXE:
 
                 return new WeaponImpl({
+                    name: 'AXE',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -266,10 +302,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.PUNCH:
 
                 return new WeaponImpl({
+                    name: 'PUNCH',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -284,10 +321,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.BAT:
 
                 return new WeaponImpl({
+                    name: 'BAT',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -302,10 +340,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.NAILBAT:
 
                 return new WeaponImpl({
+                    name: 'NAILBAT',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -320,10 +359,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.KNIFE:
 
                 return new WeaponImpl({
+                    name: 'KNIFE',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -338,10 +378,11 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
             case WEAPONS.KATANA:
 
                 return new WeaponImpl({
+                    name: 'KATANA',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -356,7 +397,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map);
+                }, map, 'bullet6');
 
             default:
                 break;

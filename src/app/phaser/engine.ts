@@ -127,6 +127,8 @@ export class Engine {
         this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect.ogg']);
         this.phaserGame.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
+        this.phaserGame.load.image('bullet8', 'assets/sprites/bullet8.png');
+        this.phaserGame.load.image('bullet6', 'assets/sprites/bullet6.png');
     }
 
     create(mapResponse: MapResponse) {
@@ -393,6 +395,10 @@ export class Engine {
         let game = this.phaserGame,
             camera = game.camera;
         return (camera.bounds.bottom) - (camera.height / 2)
+    }
+
+    public addGroup(groupName){
+        return this.phaserGame.add.group(this.phaserGame.world, groupName, false, true, Phaser.Physics.ARCADE);
     }
 
     private updateCamera() {

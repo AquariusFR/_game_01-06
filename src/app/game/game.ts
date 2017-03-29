@@ -12,6 +12,7 @@ import { GameService } from 'app/loader/game.service'
 //pousser des trucs pour se cacher des zomblards
 //le vent pour l'odeur ...
 // faire des packs de zombies (à agreger par rapport à la distance)
+//global revolver
 export class Game {
     private ticking: boolean;
     private engine: Engine;

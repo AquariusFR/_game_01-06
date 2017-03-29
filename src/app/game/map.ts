@@ -11,7 +11,7 @@ export class GameMap {
     private grid: Array<Array<number>>;
     private size: MapSize;
     public squares: Map<string, Square> = new Map<string, Square>()
-    private engine: Engine;
+    public engine: Engine;
     public rnd:Phaser.RandomDataGenerator;
     constructor(private name: string) { }
 
