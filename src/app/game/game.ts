@@ -294,7 +294,6 @@ export class Game {
     }
 
     public setDead(dead:Entity, by:Entity){
-        dead.square.entity = null;
-
+        this.map.setDead(dead);
     }
 }

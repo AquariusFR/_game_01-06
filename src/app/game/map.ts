@@ -107,14 +107,14 @@ export class GameMap {
                 }
             }
 
-            function addSquareToRange(){
-                    let key = step + ':' + y,
-                        square = squares.get(key);
+            function addSquareToRange() {
+                let key = step + ':' + y,
+                    square = squares.get(key);
 
-                    if (square && (step >= 0 && y >= 0)) {
-                        square.data.distanceFrom = step;
-                        squaresMap.set(key, squares.get(key));
-                    }
+                if (square && (step >= 0 && y >= 0)) {
+                    square.data.distanceFrom = step;
+                    squaresMap.set(key, squares.get(key));
+                }
             }
         }
     }
@@ -244,7 +244,7 @@ export class GameMap {
                         y: rowIndex,
                         cover: tileCover,
                         data: {},
-                        mask : mask
+                        mask: mask
                     })
                 }
             });
@@ -370,7 +370,7 @@ export class GameMap {
         }
         let currentPositionIndex = 0;
 
-        
+
         let move = () => {
             let currentPathPoint = shortestPath[currentPositionIndex],
                 currentPosition = this.getPointAtSquare(currentPathPoint.x, currentPathPoint.y),
@@ -406,6 +406,19 @@ export class GameMap {
         move();
     }
 
+    public setDead(dead: Entity) {
+        dead.square.entity = null;
+        let grid = this.grid,
+            sourceSquare = dead.square,
+            sourceInfo = grid[sourceSquare.y][sourceSquare.x];
+
+        if (sourceInfo <= 1) {
+            grid[sourceSquare.y][sourceSquare.x] = 0;
+        } else if (sourceInfo > 9) {
+            grid[sourceSquare.y][sourceSquare.x] -= 10;
+        }
+    }
+
     public getName(): string {
         return this.name;
     }
@@ -418,7 +431,7 @@ export class GameMap {
         point.y = Math.min(squareY * 32, this.size.width * 32);
         return point;
     }
-    public getSquare(x:number, y:number): Square {
+    public getSquare(x: number, y: number): Square {
         let key = this.getCoordinatesKey(x, y);
         return this.squares.get(key);
 
@@ -436,7 +449,7 @@ export class GameMap {
                 y: squareY,
                 cover: 0,
                 data: {},
-                mask:false
+                mask: false
             })
         }
 
@@ -452,7 +465,7 @@ export class GameMap {
         return x + ':' + y;
     }
 
-    public getPathTo(start: Square, end: Square, range: number, useDiagonal?:boolean): Array<any> {
+    public getPathTo(start: Square, end: Square, range: number, useDiagonal?: boolean): Array<any> {
         let graph = this.buildNewGraph(end, useDiagonal),
             startTile = graph.grid[start.x][start.y],
             endTile = graph.grid[end.x][end.y],
@@ -545,7 +558,7 @@ export class GameMap {
     }
 
 
-    private buildNewGraph(square?:Square, useDiagonal?:boolean): any {
+    private buildNewGraph(square?: Square, useDiagonal?: boolean): any {
 
         let negativeCollisionGrid = _.range(50).map(x => _.range(50).map(y => -1));
 
@@ -558,7 +571,7 @@ export class GameMap {
             }
         )
 
-        if(square){
+        if (square) {
             negativeCollisionGrid[square.x][square.y] = 1;
         }
 
@@ -579,7 +592,7 @@ export interface Square {
     entity: Entity,
     cover: number,
     data: any,
-    mask:boolean
+    mask: boolean
 }
 interface GridNode {
     x: number
