@@ -2,8 +2,12 @@ import { Entity, EntityType } from 'app/game/entity'
 import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 import { Square } from 'app/game/map'
+import { GameMap } from 'app/game/map'
+
 
 export class _Entity implements Entity {
+
+    map: GameMap
     angle: number = 90
 
     static idcount: number = 0
@@ -19,6 +23,7 @@ export class _Entity implements Entity {
     maxAction: number
     currentAction: number
     weapons: Array<Weapon> = []
+    selectedWeaponIndex: number = 0
     armor: number
     pv: number
     maxArmor: number

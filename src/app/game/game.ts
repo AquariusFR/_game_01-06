@@ -5,6 +5,7 @@ import { GameMap } from 'app/game/map'
 import { Entity, EntityType } from 'app/game/entity'
 import { Engine } from 'app/phaser/engine'
 import { GameService } from 'app/loader/game.service'
+import { Weapon, WeaponPool, WEAPONS } from 'app/game/weapon'
 
 // a faire des zombie cadavres !!
 // compétence S-link
@@ -51,7 +52,9 @@ export class Game {
         this.zombieTeam = new Array<Zombie>();
 
         this.addPlayer(5, 3);
-        this.addPlayer(6, 3);
+        this.addPlayer(6, 3)
+            .addWeapon(WEAPONS.SHOOTGUN)
+            .selectWeapon(1);
 
         this.addZombieAt(5, 7);
         this.addZombieAt(4, 8);

@@ -95,7 +95,22 @@ class WeaponImpl implements Weapon {
         }
 
         if (this.data.spreadAngle == 0) {
-            this.shootSingleBullet(sourceEntity, targetEntity);
+            let touchedEntity = this.shootSingleBullet(sourceEntity, targetEntity);
+            var x = sourceEntity.position.x + 10;
+            var y = sourceEntity.position.y + 10;
+            let currentDistance = 0;
+
+
+            if (!touchedEntity) {
+                currentDistance = this.data.maxRange * 32;
+            } else {
+                let dx = Math.abs(x - touchedEntity.position.x);
+                let dy = Math.abs(y - touchedEntity.position.y);
+                currentDistance = (dx + dy);
+            }
+            let baseAngle = -Math.atan2(targetEntity.square.y - sourceEntity.square.y, targetEntity.square.x - sourceEntity.square.x) * (180 / Math.PI);
+            console.log('fire bullet ', baseAngle);
+            this.bulletGroup.getFirstExists(false).fire(x, y, -baseAngle, this.bulletSpeed, 0, 0, currentDistance);
         } else {
 
             this.shootMultyBullet(sourceEntity, targetEntity);
@@ -115,6 +130,7 @@ class WeaponImpl implements Weapon {
         }
         let damage = damageModifier * this.getDamage();
         targetEntity.touched(sourceEntity, damage);
+        return targetEntity;
     }
 
     private shootMultyBullet(sourceEntity: Entity, targetEntity: Entity) {

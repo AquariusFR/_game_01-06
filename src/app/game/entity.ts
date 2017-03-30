@@ -2,11 +2,14 @@ import { Entity } from 'app/game/entity'
 import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 import { Square } from 'app/game/map'
+import { GameMap } from 'app/game/map'
 
 export interface Entity {
+    map:GameMap
     maxAction: number
     currentAction:number
     weapons:Array<Weapon>
+    selectedWeaponIndex:number
     armor:number
     pv:number
     maxArmor:number
