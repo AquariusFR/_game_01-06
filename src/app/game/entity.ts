@@ -2,10 +2,10 @@ import { Entity } from 'app/game/entity'
 import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 import { Square } from 'app/game/map'
-import { GameMap } from 'app/game/map'
+import { Game } from 'app/game/game'
 
 export interface Entity {
-    map:GameMap
+    game:Game
     maxAction: number
     currentAction:number
     weapons:Array<Weapon>
@@ -33,6 +33,7 @@ export interface Entity {
     isMasked:boolean
 
     touched(sourceEntity: Entity, damage:number):Entity
+    die(sourceEntity: Entity):Entity
     attack(target: Entity):Entity
     move(targetPosition:Phaser.Point, callback:()=> void):Entity
     finishMoving():Entity

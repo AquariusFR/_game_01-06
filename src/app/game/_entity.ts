@@ -2,12 +2,14 @@ import { Entity, EntityType } from 'app/game/entity'
 import { Weapon } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 import { Square } from 'app/game/map'
-import { GameMap } from 'app/game/map'
+import { Game } from 'app/game/game'
+import * as _ from 'lodash'
 
 
 export class _Entity implements Entity {
 
-    map: GameMap
+
+    game: Game
     angle: number = 90
 
     static idcount: number = 0
@@ -16,6 +18,7 @@ export class _Entity implements Entity {
     id: number
     engine: Engine
     teamId: number
+    team: Array<Entity>
     sprite: Phaser.Sprite
     attackRange: number
     type = EntityType.human
@@ -101,9 +104,6 @@ export class _Entity implements Entity {
         return this;
     }
 
-    public touched(sourceEntity: Entity, damage: number): _Entity {
-        return this;
-    }
 
     public attack(target: Entity): _Entity {
 
@@ -119,4 +119,18 @@ export class _Entity implements Entity {
         this.engine.moveTo(this.sprite, this.position.x, this.position.y, callback);
         return this;
     }
+
+    public touched(sourceEntity: Entity, damage: number): _Entity {
+        return this;
+    }
+    public die(sourceEntity: Entity): Entity {
+
+        this.sprite.alive = false
+        this.sprite.visible = false
+        this.sprite.animations.stop()
+        let index = _(this.team).remove(['id', this.id]).value();
+        this.game.setDead(this, sourceEntity)
+        return this;
+    }
+
 }

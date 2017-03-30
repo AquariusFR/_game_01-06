@@ -86,7 +86,7 @@ export class Engine {
     private init(mapResponse: MapResponse) {
         let self = this;
 
-        this.phaserGame = new Phaser.Game(1600 * window.devicePixelRatio, (window.innerHeight - 100) * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
+        this.phaserGame = new Phaser.Game((window.innerWidth / 2) * window.devicePixelRatio, (window.innerHeight / 2) * window.devicePixelRatio, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update }, false, false);
 
         function preload() {
             self.preload(mapResponse);
@@ -297,7 +297,7 @@ export class Engine {
         let delay = this.phaserGame.rnd.integerInRange(0, 50);
 
         //zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
-        
+
         DelayedAnimation.addToAnimations(zombie.animations, delay, "down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
 
         zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], framerate, true);
@@ -310,8 +310,8 @@ export class Engine {
 
 
         zombie.play("down");
-        
-        let frameIndex = this.phaserGame.rnd.integerInRange(0,zombie.animations.currentAnim.frameTotal);
+
+        let frameIndex = this.phaserGame.rnd.integerInRange(0, zombie.animations.currentAnim.frameTotal);
 
 
 
@@ -397,7 +397,7 @@ export class Engine {
         return (camera.bounds.bottom) - (camera.height / 2)
     }
 
-    public addGroup(groupName){
+    public addGroup(groupName) {
         return this.phaserGame.add.group(this.phaserGame.world, groupName, false, true, Phaser.Physics.ARCADE);
     }
 

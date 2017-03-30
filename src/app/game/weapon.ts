@@ -1,5 +1,6 @@
 import { Entity } from 'app/game/entity'
 import { GameMap } from 'app/game/map'
+import { Game } from 'app/game/game'
 import { Engine } from 'app/phaser/engine'
 import { Square } from 'app/game/map'
 import { Bullet } from 'app/game/bullet'
@@ -64,12 +65,12 @@ class WeaponImpl implements Weapon {
     private isJammed: boolean = false;
     private bulletGroup: Phaser.Group;
 
-    constructor(public data: WeaponData, public map: GameMap, key) {
-        this.rnd = map.rnd;
-        this.bulletGroup = this.map.engine.addGroup(data.name);
+    constructor(public data: WeaponData, public game: Game, key) {
+        this.rnd = this.game.engine.phaserGame.rnd;
+        this.bulletGroup = this.game.engine.addGroup(data.name);
 
         for (var i = 0; i < 64; i++) {
-            this.bulletGroup.add(new Bullet(this.map.engine.phaserGame, 'bullet6'), true);
+            this.bulletGroup.add(new Bullet(this.game.engine.phaserGame, 'bullet6'), true);
         }
     }
 
@@ -162,8 +163,8 @@ class WeaponImpl implements Weapon {
     private processSingleBullet(sourceEntity: Entity, sourceSquare, currentAngle: number) {
         let targetX = Math.round(Math.cos(this.toRadians(currentAngle)) * this.data.maxRange) + sourceSquare.x,
             targetY = -Math.round(Math.sin(this.toRadians(currentAngle)) * this.data.maxRange) + sourceSquare.y,
-            targetSquare = this.map.getSquare(targetX, targetY),
-            lineOfSight = this.map.BresenhamLine(sourceSquare, targetSquare),
+            targetSquare = this.game.map.getSquare(targetX, targetY),
+            lineOfSight = this.game.map.BresenhamLine(sourceSquare, targetSquare),
             entitiesOnLineOfSight = _(lineOfSight)
                 .tail()
                 .filter((square) => square.entity).map(square => square.entity)
@@ -241,7 +242,7 @@ class WeaponImpl implements Weapon {
 
 export class WeaponPool {
 
-    static add(weapons: WEAPONS, map: GameMap): Weapon {
+    static add(weapons: WEAPONS, game: Game): Weapon {
         switch (weapons) {
             case WEAPONS.NINEMM:
 
@@ -261,7 +262,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.SHOOTGUN:
 
                 return new WeaponImpl({
@@ -280,7 +281,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 6,
                     isRanged: false
-                }, map, 'bullet8');
+                }, game, 'bullet8');
             case WEAPONS.PIPE:
 
                 return new WeaponImpl({
@@ -299,7 +300,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.AXE:
 
                 return new WeaponImpl({
@@ -318,7 +319,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.PUNCH:
 
                 return new WeaponImpl({
@@ -337,7 +338,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.BAT:
 
                 return new WeaponImpl({
@@ -356,7 +357,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.NAILBAT:
 
                 return new WeaponImpl({
@@ -375,7 +376,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.KNIFE:
 
                 return new WeaponImpl({
@@ -394,7 +395,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
             case WEAPONS.KATANA:
 
                 return new WeaponImpl({
@@ -413,7 +414,7 @@ export class WeaponPool {
                     damageRange: 0,
                     projectileByShot: 1,
                     isRanged: false
-                }, map, 'bullet6');
+                }, game, 'bullet6');
 
             default:
                 break;

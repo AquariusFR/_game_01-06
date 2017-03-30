@@ -12,12 +12,10 @@ export class GameMap {
     private size: MapSize;
     public squares: Map<string, Square> = new Map<string, Square>()
     public engine: Engine;
-    public rnd:Phaser.RandomDataGenerator;
     constructor(private name: string) { }
 
     setEngine(engine: Engine) {
         this.engine = engine;
-        this.rnd = engine.phaserGame.rnd;
     }
 
     public setVisibileSquares(entity: Entity, force?: boolean) {

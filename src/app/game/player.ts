@@ -2,18 +2,19 @@ import { _Entity } from 'app/game/_entity'
 import { Entity } from 'app/game/entity'
 import { Weapon, WeaponPool, WEAPONS } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
-import { GameMap } from 'app/game/map'
+import { Game } from 'app/game/game'
 
 export class Player extends _Entity {
-    constructor(engine: Engine, position: Phaser.Point, team: number, public map: GameMap) {
+    constructor(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Player>, public game: Game) {
         super(engine, position);
         this.sprite = engine.createHuman(position);
-        this.teamId = team;
+        this.teamId = teamId;
         this.maxAction = 2;
         this.mouvementRange = 10;
         this.visionRange = 4;
         this.coverDetection = 10;
         this.updateAccessibleTiles = true;
+        team.push(this);
     }
 
     public move(targetPosition: Phaser.Point, callback: () => void): Player {
@@ -21,9 +22,8 @@ export class Player extends _Entity {
         return this;
     }
 
-    static popPlayer(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Player>, map: GameMap): Player {
-        let newPlayer = new Player(engine, position, teamId, map);
-        team.push(newPlayer);
+    static popPlayer(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Player>, game: Game): Player {
+        let newPlayer = new Player(engine, position, teamId, team, game);
         newPlayer.addWeapon(WEAPONS.NINEMM);
         return newPlayer;
     }
@@ -38,7 +38,7 @@ export class Player extends _Entity {
     }
 
     public addWeapon(weaponType: WEAPONS): Player {
-        this.weapons.push(WeaponPool.add(weaponType, this.map));
+        this.weapons.push(WeaponPool.add(weaponType, this.game));
 
         return this
     }

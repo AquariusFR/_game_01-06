@@ -6,6 +6,7 @@ import { Entity, EntityType } from 'app/game/entity'
 import { Engine } from 'app/phaser/engine'
 import { GameService } from 'app/loader/game.service'
 import { Weapon, WeaponPool, WEAPONS } from 'app/game/weapon'
+import { Square } from 'app/game/map'
 
 // a faire des zombie cadavres !!
 // compétence S-link
@@ -15,8 +16,10 @@ import { Weapon, WeaponPool, WEAPONS } from 'app/game/weapon'
 // faire des packs de zombies (à agreger par rapport à la distance)
 //global revolver
 export class Game {
+    public map: GameMap;
+    public engine: Engine;
+
     private ticking: boolean;
-    private engine: Engine;
     private playerTeam: Array<Player>;
     private ennemyTeam: Array<Ennemy>;
     private zombieTeam: Array<Zombie>;
@@ -29,7 +32,6 @@ export class Game {
     private zombieTeamId: number = 0;
     private playerTeamId: number = 1;
     private ennemyTeamId: number = 2;
-    private map: GameMap;
 
     constructor(gameService: GameService) {
         this.map = new GameMap('zombie');
@@ -84,12 +86,12 @@ export class Game {
     }
 
     private addZombieAt(x, y): Zombie {
-        let zombie = Zombie.popZombie(this.engine, this.map.getPointAtSquare(x, y), this.zombieTeamId, this.zombieTeam);
+        let zombie = Zombie.popZombie(this.engine, this.map.getPointAtSquare(x, y), this.zombieTeamId, this.zombieTeam, this);
         this.map.putEntityAtPoint(zombie);
         return zombie;
     }
     private addPlayer(x, y): Player {
-        let player = Player.popPlayer(this.engine, this.map.getPointAtSquare(x, y), this.playerTeamId, this.playerTeam, this.map);
+        let player = Player.popPlayer(this.engine, this.map.getPointAtSquare(x, y), this.playerTeamId, this.playerTeam, this);
         this.map.putEntityAtPoint(player);
         return player;
     }
@@ -100,6 +102,7 @@ export class Game {
             this.nextCharacter();
         }
         console.time(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
+        this.engine.removeAllVisibleTiles();
         this.updateVisibleSquaresOfEntity(this.currentEntity);
         this.prepareAction();
     }
@@ -112,6 +115,8 @@ export class Game {
         this.currentEntity = this.currentTeam[this.currentIndex];
         this.currentEntity.currentAction = 0;
         this.engine.setGlowPosition(this.currentEntity.position);
+        this.engine.removeAllAccessibleTiles();
+        this.engine.removeAllVisibleTiles();
     }
 
 
@@ -171,8 +176,8 @@ export class Game {
 
         // clean visibletiles
         if (this.entityFocused) {
-            let points = this.entityFocused.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y)).map(tile => tile.x + ':' + tile.y);
-            this.engine.removeVisibleTiles(points);
+            //let points = this.entityFocused.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y)).map(tile => tile.x + ':' + tile.y);
+            this.engine.removeAllVisibleTiles();
         }
         this.entityFocused = null;
     }
@@ -239,8 +244,7 @@ export class Game {
 
         if (this.currentTeamId === this.zombieTeamId) {
             console.time(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
-            this.zombieTeam[this.currentIndex].play(this.map,
-                () => {
+            this.zombieTeam[this.currentIndex].play(() => {
                     console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
                     console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
                     console.time(this.currentTeamId + '/' + this.currentEntity.id + ' timeout');
@@ -278,5 +282,19 @@ export class Game {
             positions.push(this.map.getPointAtSquare(squareX, squareY));
         });
         this.engine.addAccessibleTiles(positions);
+    }
+
+    public getPathTo(start: Square, end: Square, range: number, useDiagonal?:boolean): Array<any> {
+        return this.map.getPathTo(start, end, range, useDiagonal);
+    }
+
+    
+    public getSquare(x:number, y:number): Square {
+        return this.map.getSquare(x, y);
+    }
+
+    public setDead(dead:Entity, by:Entity){
+        dead.square.entity = null;
+
     }
 }
