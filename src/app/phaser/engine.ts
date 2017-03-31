@@ -191,6 +191,20 @@ export class Engine {
         //this.gamegroup.scale.y = 2;
         this.o.next('ok');
     }
+
+    public focusOnEntity(entity:Entity):Engine{
+        this.phaserGame.camera.focusOn(entity.sprite);
+        return this;
+    }
+    public followEntity(entity:Entity):Engine{
+        this.phaserGame.camera.follow(entity.sprite, 0.1, 0.1);
+        return this;
+    }
+    public unfollowEntity():Engine{
+        this.phaserGame.camera.unfollow();
+        return this;
+    }
+
     public removeAllAccessibleTiles() {
         this.rangegroup.removeAll();
     }

@@ -133,6 +133,14 @@ export class Game {
         this.nextCharacter();
     }
 
+    private showPlayerTurnScreen() {
+
+    }
+
+    private showZombieTurnScreen() {
+
+    }
+
     // une entité a été ciblé
     public targeted(target: Entity) {
         if (this.currentEntity.id === target.id) {
@@ -222,7 +230,7 @@ export class Game {
             if (!this.map.canEntityGoToTarget(this.currentEntity, target)) {
                 return;
             }
-
+            this.engine.followEntity(this.currentEntity);
 
             this.map.moveEntityAtPoint(this.currentEntity, target,
                 () => {
@@ -231,9 +239,12 @@ export class Game {
                     this.showAccessibleTilesByPlayer();
                     this.nextAction()
                     this.ticking = false;
-                }, (error) => {
+                    this.engine.unfollowEntity();
+                },
+                (error) => {
                     console.log('sorry', error);
                     this.ticking = false;
+                    this.engine.unfollowEntity();
                 });
 
             this.ticking = true;
@@ -244,18 +255,23 @@ export class Game {
 
         if (this.currentTeamId === this.zombieTeamId) {
             console.time(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
-            this.zombieTeam[this.currentIndex].play(() => {
+            this.engine.followEntity(this.currentEntity);
+
+            this.zombieTeam[this.currentIndex].play(
+                () => {
                     console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
                     console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
                     console.time(this.currentTeamId + '/' + this.currentEntity.id + ' timeout');
                     setTimeout(
                         () => {
                             console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' timeout');
+                            this.engine.unfollowEntity();
                             this.nextAction();
                         }, 300);
                 }
             );
         } else {
+            this.engine.focusOnEntity(this.currentEntity);
             if (this.currentEntity.currentAction === 0) {
                 this.showAccessibleTilesByPlayer();
                 console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' nextAction');
@@ -284,16 +300,16 @@ export class Game {
         this.engine.addAccessibleTiles(positions);
     }
 
-    public getPathTo(start: Square, end: Square, range: number, useDiagonal?:boolean): Array<any> {
+    public getPathTo(start: Square, end: Square, range: number, useDiagonal?: boolean): Array<any> {
         return this.map.getPathTo(start, end, range, useDiagonal);
     }
 
-    
-    public getSquare(x:number, y:number): Square {
+
+    public getSquare(x: number, y: number): Square {
         return this.map.getSquare(x, y);
     }
 
-    public setDead(dead:Entity, by:Entity){
+    public setDead(dead: Entity, by: Entity) {
 
         this.engine.showText(by.position.x, by.position.y, ' has killed ' + dead.id);
 
