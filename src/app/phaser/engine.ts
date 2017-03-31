@@ -5,44 +5,31 @@ import { Pool } from 'app/phaser/pool'
 import { VisibilitySprite } from 'app/game/visibilitySprite'
 import DelayedAnimation from 'app/phaser/delayedAnimation'
 
-//http://rpgmaker.su-downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
-//https://forums.rpg-akerweb.com/index.php?threads/pop-freebies.45329/
+// http://rpgmaker.su-downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
+// https://forums.rpg-akerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
 
-
 /*
-<div class="frame ctooltip">
-  
-    <div style="background: #225378"></div>
-  
-    <div style="background: #1695A3"></div>
-  
-    <div style="background: #ACF0F2"></div>
-  
-    <div style="background: #F3FFE2"></div>
-  
-    <div style="background: #EB7F00"></div>
-  
-  
-</div>
-<div class="frame ctooltip">
-  
-    <div style="background: #DC3522"></div>
-  
-    <div style="background: #D9CB9E"></div>
-  
-    <div style="background: #374140"></div>
-  
-    <div style="background: #2A2C2B"></div>
-  
-    <div style="background: #1E1E20"></div>
-  </div>
+#225378
+#1695A3
+#ACF0F2
+#F3FFE2
+#EB7F00
+#DC3522
+#D9CB9E
+#374140
+#2A2C2B
+#1E1E20
  */
 export class Engine {
-    visibleMarkerPool: Pool;
-    rangegroup: Phaser.Group;
-    visiongroup: Phaser.Group;
-    gamegroup: Phaser.Group;
+    private visibleMarkerPool: Pool;
+    private mapVisibleTileCount: Map<string, number> = new Map();
+    private mapVisibleTile: Map<string, Phaser.Sprite> = new Map();
+    private tileGroup: Phaser.Group;
+    private ihmGroup: Phaser.Group;
+    private rangegroup: Phaser.Group;
+    private visiongroup: Phaser.Group;
+    private gamegroup: Phaser.Group;
     private soundeffect: Phaser.Sound;
     private glowTween: Phaser.Tween;
     private glowPosition: Phaser.Point;
@@ -58,7 +45,6 @@ export class Engine {
     private scroller;
     public phaserGame: Phaser.Game;
     private cursors: Phaser.CursorKeys;
-    //private player: Phaser.Sprite;
     private wasd: any;
     private speed = 300;
     public map: Phaser.Tilemap;
@@ -71,8 +57,7 @@ export class Engine {
     private click: (point: Phaser.Point) => void;
     private over: (point: Phaser.Point) => void;
     private overOff: (point: Phaser.Point) => void;
-    debug: boolean = true;
-
+    private debug: boolean = true;
 
     constructor(mapName: string, private gameService: GameService) {
         this.observable = Observable.create(o => {
@@ -136,10 +121,13 @@ export class Engine {
         let game: Phaser.Game = this.phaserGame;
         let MechDrone1 = game.add.audio('MechDrone1', 1, true);
         let soundeffect = game.add.audio('soundeffect', 0.1, true);
-        this.gamegroup = game.add.group();
+
+        // il faut ordonnancer les groups par ordre d'apparition
+        this.tileGroup = game.add.group();
         this.rangegroup = game.add.group();
         this.visiongroup = game.add.group();
-        let gamegroup = this.gamegroup;
+        this.ihmGroup = game.add.group();
+        this.gamegroup = game.add.group();
 
         MechDrone1.play();
         MechDrone1.volume = 0.5;
@@ -156,7 +144,7 @@ export class Engine {
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        let createdMap: CreatedMap = this.gameService.create(mapResponse, game, this.gamegroup);
+        let createdMap: CreatedMap = this.gameService.create(mapResponse, game, this.tileGroup);
         let collisionLayer = createdMap.layers.get('collisions');
 
         this.map = createdMap.map;
@@ -178,14 +166,14 @@ export class Engine {
 
         this.visibleMarkerPool = new Pool(game, VisibilitySprite, 200, 'visibleMarker');
         this.marker = game.add.sprite(0, 0, 'markers');
-        gamegroup.add(this.marker);
+        this.ihmGroup.add(this.marker);
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
 
 
         this.glow = game.add.sprite(-100, -100, 'markers');
-        gamegroup.add(this.glow);
+        this.ihmGroup.add(this.glow);
         this.glow.animations.add("glow", ["marker/active_entity"], 5, true);
         this.glow.play("glow");
         game.physics.enable(this.glow, Phaser.Physics.ARCADE);
@@ -199,9 +187,9 @@ export class Engine {
             this.text = this.phaserGame.add.text(-100, -100, '', null);
         }
 
-        this.o.next('ok');
         //this.gamegroup.scale.x = 2;
         //this.gamegroup.scale.y = 2;
+        this.o.next('ok');
     }
     public removeAllAccessibleTiles() {
         this.rangegroup.removeAll();
@@ -217,10 +205,6 @@ export class Engine {
         }
         );
     }
-
-
-    mapVisibleTileCount: Map<string, number> = new Map();
-    mapVisibleTile: Map<string, Phaser.Sprite> = new Map();
 
     public removeVisibleTiles(tilesKey: Array<string>) {
         tilesKey.forEach(tileKey => {
@@ -271,11 +255,8 @@ export class Engine {
             if (!oldKeysToDelete.has(tileKey)) {
                 this.mapVisibleTileCount.set(tileKey, count + 1);
             }
-        }
-        );
-        //console.timeEnd("addVisibleTiles");
+        });
     }
-
 
     public createHuman(position: Phaser.Point): Phaser.Sprite {
         let human = this.phaserGame.add.sprite(position.x, position.y - 32, 'heroes-sprites');
@@ -288,7 +269,6 @@ export class Engine {
         this.gamegroup.add(human);
         return human;
     }
-
 
     public createZombie(position: Phaser.Point, zombieType: string): Phaser.Sprite {
         let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'Male-Zombies-Gore'),
@@ -309,12 +289,9 @@ export class Engine {
         zombie.animations.add("masked-right", ["00-right-1", "00-right-2", "00-right-3"], framerate, true);
         zombie.animations.add("masked-up", ["00-up-1", "00-up-2", "00-up-3"], framerate, true);
 
-
         zombie.play("down");
 
         let frameIndex = this.phaserGame.rnd.integerInRange(0, zombie.animations.currentAnim.frameTotal);
-
-
 
         zombie.animations.currentAnim.setFrame(frameIndex);
 
@@ -324,7 +301,6 @@ export class Engine {
 
     public playSound(soundName: string) {
         this.soundeffect.volume = 0.5;
-
         this.soundeffect.play(soundName);
     }
 
@@ -360,7 +336,6 @@ export class Engine {
         this.phaserGame.tweens.removeAll();
         this.glow.x = position.x;
         this.glow.y = position.y;
-
     }
 
     public moveGlowPosition(position: Phaser.Point) {
@@ -374,7 +349,6 @@ export class Engine {
         this.glowTween.onComplete.add(() => this.glowTween.stop(), this);
     }
     public moveTo(sprite: Phaser.Sprite, x: number, y: number, callback: () => void) {
-
         let game = this.phaserGame;
 
         if (this.tween && this.tween.isRunning) {
@@ -472,7 +446,6 @@ export class Engine {
                         if (this.debug) {
                             this.text.destroy();
                             this.text = this.phaserGame.add.text(marker.x, marker.y, key, null);
-
                             this.text.font = 'Roboto';
                             this.text.fontSize = 12;
                         }
@@ -491,7 +464,6 @@ export class Engine {
                     this.overTimer.wasOver = false;
                 }
             }
-
         }
     }
 
@@ -500,7 +472,6 @@ export class Engine {
             this.xptext.destroy();
         }
         this.xptext = this.phaserGame.add.text(x, y, text, null);
-
         this.xptext.font = 'Roboto';
         this.xptext.fontSize = 12;
     }
@@ -545,8 +516,7 @@ export class Engine {
         this.setMarker();
         this.updateCamera();
         this.handlerKeyBoard();
-
-
+        this.gamegroup.sort('y', Phaser.Group.SORT_ASCENDING);
     }
 }
 
@@ -555,4 +525,4 @@ interface eventTimer {
     time: number
     tick: boolean
     wasOver: boolean
-} 
+}
