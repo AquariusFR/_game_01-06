@@ -193,19 +193,28 @@ export class Game {
     private entityFocused: Entity
 
     private overOn(target: Phaser.Point) {
-        if (this.currentTeamId !== this.playerTeamId || this.ticking) {
+        if (this.ticking) {
             return
         }
         let square = this.map.getSquareAtPoint(target);
         console.log('over', square);
 
         if (square.entity) {
-            this.entityFocused = square.entity;
-            let points: Array<Phaser.Point> = square.entity.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y));
-            console.time('addVisibleTiles');
-            this.engine.addVisibleTiles([], points);
 
-            console.timeEnd('addVisibleTiles');
+            if(this.currentTeamId === this.playerTeamId){
+
+                this.engine.drawEntityStatus(square.entity);
+
+            } else if(this.currentTeamId === this.zombieTeamId){
+
+                this.entityFocused = square.entity;
+                let points: Array<Phaser.Point> = square.entity.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y));
+                console.time('addVisibleTiles');
+                this.engine.addVisibleTiles([], points);
+
+                console.timeEnd('addVisibleTiles');
+            }
+
         }
     }
 
@@ -304,15 +313,12 @@ export class Game {
         return this.map.getPathTo(start, end, range, useDiagonal);
     }
 
-
     public getSquare(x: number, y: number): Square {
         return this.map.getSquare(x, y);
     }
 
     public setDead(dead: Entity, by: Entity) {
-
-        this.engine.showText(by.position.x, by.position.y, ' has killed ' + dead.id);
-
+        this.engine.showText(by.position.x, by.position.y, ' has killed ' + dead.name);
         this.map.setDead(dead);
     }
 }

@@ -6,6 +6,8 @@ import { Game } from 'app/game/game'
 
 export interface Entity {
     game:Game
+    id:number
+    name:string
     maxAction: number
     currentAction:number
     weapons:Array<Weapon>
@@ -23,7 +25,6 @@ export interface Entity {
     pathMap:Map<string, any[]>
     teamId:number
     engine:Engine
-    id:number
     square:Square
     targetSquare:Square
     coverDetection:number

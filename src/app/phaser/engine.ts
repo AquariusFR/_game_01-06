@@ -22,6 +22,8 @@ import DelayedAnimation from 'app/phaser/delayedAnimation'
 #1E1E20
  */
 export class Engine {
+    private statusGraphics: Phaser.Graphics;
+    private namesJson: Array<any>;
     private visibleMarkerPool: Pool;
     private mapVisibleTileCount: Map<string, number> = new Map();
     private mapVisibleTile: Map<string, Phaser.Sprite> = new Map();
@@ -115,12 +117,29 @@ export class Engine {
 
         this.phaserGame.load.image('bullet8', 'assets/sprites/bullet8.png');
         this.phaserGame.load.image('bullet6', 'assets/sprites/bullet6.png');
+
+        this.phaserGame.load.json('names', 'assets/names.json');
+    }
+
+    pickName(): string {
+        let rndIndex = this.phaserGame.rnd.integerInRange(0, this.namesJson.length - 1);
+        return this.namesJson[rndIndex].name;
+    }
+
+    drawEntityStatus(entity: Entity) {
+        this.statusGraphics = this.phaserGame.add.graphics(0, 0);
+        this.statusGraphics.beginFill(0xFFFF00, 1);
+        this.statusGraphics.lineStyle(10, 0xe91010, 1);
+        //this.statusGraphics.bounds = new PIXI.Rectangle(0, 0, 200, 200);
+        this.statusGraphics.drawRect(0, 0, 200, 200);
+
     }
 
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
         let MechDrone1 = game.add.audio('MechDrone1', 1, true);
         let soundeffect = game.add.audio('soundeffect', 0.1, true);
+        this.namesJson = this.phaserGame.cache.getJSON('names');
 
         // il faut ordonnancer les groups par ordre d'apparition
         this.tileGroup = game.add.group();
@@ -192,15 +211,15 @@ export class Engine {
         this.o.next('ok');
     }
 
-    public focusOnEntity(entity:Entity):Engine{
+    public focusOnEntity(entity: Entity): Engine {
         this.phaserGame.camera.focusOn(entity.sprite);
         return this;
     }
-    public followEntity(entity:Entity):Engine{
+    public followEntity(entity: Entity): Engine {
         this.phaserGame.camera.follow(entity.sprite, 0.1, 0.1);
         return this;
     }
-    public unfollowEntity():Engine{
+    public unfollowEntity(): Engine {
         this.phaserGame.camera.unfollow();
         return this;
     }

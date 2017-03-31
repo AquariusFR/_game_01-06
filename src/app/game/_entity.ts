@@ -7,15 +7,14 @@ import * as _ from 'lodash'
 
 
 export class _Entity implements Entity {
-
+    static idcount: number = 0
 
     game: Game
+    name: string;
+    id: number
     angle: number = 90
-
-    static idcount: number = 0
     visionRange: number
     pathMap: Map<string, any[]>
-    id: number
     engine: Engine
     teamId: number
     team: Array<Entity>
@@ -45,6 +44,7 @@ export class _Entity implements Entity {
         this.engine = engine;
         this.position = position;
         this.id = _Entity.idcount++;
+        this.name = engine.pickName();
     }
 
     public maskEntity(): _Entity {
