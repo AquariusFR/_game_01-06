@@ -294,6 +294,9 @@ export class Game {
     }
 
     public setDead(dead:Entity, by:Entity){
+
+        this.engine.showText(by.position.x, by.position.y, ' has killed ' + dead.id);
+
         this.map.setDead(dead);
     }
 }

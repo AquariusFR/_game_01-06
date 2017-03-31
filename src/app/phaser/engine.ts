@@ -48,6 +48,7 @@ export class Engine {
     private glowPosition: Phaser.Point;
     private tileMap: Map<number, any>;
     private text: Phaser.Text;
+    private xptext: Phaser.Text;
     private marker: Phaser.Sprite;
     private glow: Phaser.Sprite;
     private collisionLayer: Phaser.TilemapLayer;
@@ -124,7 +125,7 @@ export class Engine {
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
         this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
         this.phaserGame.load.audio('MechDrone1', ['assets/sounds/MechDrone1.mp3']);
-        this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect.ogg']);
+        this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect_game.ogg']);
         this.phaserGame.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
         this.phaserGame.load.image('bullet8', 'assets/sprites/bullet8.png');
@@ -148,9 +149,9 @@ export class Engine {
         game.camera.setPosition(32, 32);
 
         soundeffect.allowMultiple = true;
-        soundeffect.addMarker('shotgun', 10.15, 0.940);
-        soundeffect.addMarker('gun', 109.775, 0.550, 0.5);
-        soundeffect.addMarker('grunt', 197.618, 0.570);
+        soundeffect.addMarker('shotgun', 1.130, 0.985);
+        soundeffect.addMarker('gun', 0.575, 0.550);
+        soundeffect.addMarker('grunt', 0, 0.570);
         this.soundeffect = soundeffect;
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -492,7 +493,16 @@ export class Engine {
             }
 
         }
+    }
 
+    public showText(x: number, y: number, text: string) {
+        if (this.xptext) {
+            this.xptext.destroy();
+        }
+        this.xptext = this.phaserGame.add.text(x, y, text, null);
+
+        this.xptext.font = 'Roboto';
+        this.xptext.fontSize = 12;
     }
 
     private pointToTilePosition(): Phaser.Point {
