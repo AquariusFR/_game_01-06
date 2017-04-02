@@ -178,14 +178,10 @@ export class Game {
         console.log(this.currentEntity + ' helps ' + target);
     }
     private overOff(target: Phaser.Point) {
+        this.engine.hideEntityStatus();
+        this.engine.removeAllVisibleTiles();
         if (this.currentTeamId !== this.playerTeamId || this.ticking) {
             return
-        }
-
-        // clean visibletiles
-        if (this.entityFocused) {
-            //let points = this.entityFocused.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y)).map(tile => tile.x + ':' + tile.y);
-            this.engine.removeAllVisibleTiles();
         }
         this.entityFocused = null;
     }
@@ -201,11 +197,11 @@ export class Game {
 
         if (square.entity) {
 
-            if(this.currentTeamId === this.playerTeamId){
+            if (this.currentTeamId === this.playerTeamId) {
 
                 this.engine.drawEntityStatus(square.entity);
 
-            } else if(this.currentTeamId === this.zombieTeamId){
+            } else if (this.currentTeamId === this.zombieTeamId) {
 
                 this.entityFocused = square.entity;
                 let points: Array<Phaser.Point> = square.entity.visibleSquares.map(s => this.map.getPointAtSquare(s.x, s.y));

@@ -13,6 +13,8 @@ export class Player extends _Entity {
         this.mouvementRange = 10;
         this.visionRange = 4;
         this.coverDetection = 10;
+        this.pv = 10;
+        this.maxPv = 10;
         this.updateAccessibleTiles = true;
         team.push(this);
     }

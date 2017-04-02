@@ -78,6 +78,7 @@ class WeaponImpl implements Weapon {
 
         this.bulletSpeed = 700;
         if (this.isJammed) {
+            console.log('weapon jammed !!!!');
             return;
         }
 

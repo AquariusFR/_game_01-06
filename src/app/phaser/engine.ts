@@ -22,7 +22,7 @@ import DelayedAnimation from 'app/phaser/delayedAnimation'
 #1E1E20
  */
 export class Engine {
-    private statusGraphics: Phaser.Graphics;
+    private statushics: Phaser.Graphics;
     private namesJson: Array<any>;
     private visibleMarkerPool: Pool;
     private mapVisibleTileCount: Map<string, number> = new Map();
@@ -39,6 +39,7 @@ export class Engine {
     private text: Phaser.Text;
     private xptext: Phaser.Text;
     private marker: Phaser.Sprite;
+    private energyTank: Phaser.Sprite;
     private glow: Phaser.Sprite;
     private collisionLayer: Phaser.TilemapLayer;
     private horizontalScroll = true;
@@ -117,23 +118,11 @@ export class Engine {
 
         this.phaserGame.load.image('bullet8', 'assets/sprites/bullet8.png');
         this.phaserGame.load.image('bullet6', 'assets/sprites/bullet6.png');
+        this.phaserGame.load.atlas('energy-tank', 'assets/energy-tank_spritesheet.png', 'assets/energy-tank_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
         this.phaserGame.load.json('names', 'assets/names.json');
     }
 
-    pickName(): string {
-        let rndIndex = this.phaserGame.rnd.integerInRange(0, this.namesJson.length - 1);
-        return this.namesJson[rndIndex].name;
-    }
-
-    drawEntityStatus(entity: Entity) {
-        this.statusGraphics = this.phaserGame.add.graphics(0, 0);
-        this.statusGraphics.beginFill(0xFFFF00, 1);
-        this.statusGraphics.lineStyle(10, 0xe91010, 1);
-        //this.statusGraphics.bounds = new PIXI.Rectangle(0, 0, 200, 200);
-        this.statusGraphics.drawRect(0, 0, 200, 200);
-
-    }
 
     create(mapResponse: MapResponse) {
         let game: Phaser.Game = this.phaserGame;
@@ -145,8 +134,8 @@ export class Engine {
         this.tileGroup = game.add.group();
         this.rangegroup = game.add.group();
         this.visiongroup = game.add.group();
-        this.ihmGroup = game.add.group();
         this.gamegroup = game.add.group();
+        this.ihmGroup = game.add.group();
 
         MechDrone1.play();
         MechDrone1.volume = 0.5;
@@ -185,14 +174,12 @@ export class Engine {
 
         this.visibleMarkerPool = new Pool(game, VisibilitySprite, 200, 'visibleMarker');
         this.marker = game.add.sprite(0, 0, 'markers');
-        this.ihmGroup.add(this.marker);
         this.marker.animations.add("blink", ["marker/blink1", "marker/blink2"], 5, true);
         this.marker.play("blink");
         game.physics.enable(this.marker, Phaser.Physics.ARCADE);
 
 
         this.glow = game.add.sprite(-100, -100, 'markers');
-        this.ihmGroup.add(this.glow);
         this.glow.animations.add("glow", ["marker/active_entity"], 5, true);
         this.glow.play("glow");
         game.physics.enable(this.glow, Phaser.Physics.ARCADE);
@@ -206,11 +193,77 @@ export class Engine {
             this.text = this.phaserGame.add.text(-100, -100, '', null);
         }
 
+        this.energyTank = new Phaser.Sprite(game, -100, -100, 'energy-tank');
+
+        this.energyTank.visible = false;
+
+        this.visiongroup.add(this.glow);
+        this.ihmGroup.add(this.marker);
+        this.ihmGroup.add(this.energyTank);
         //this.gamegroup.scale.x = 2;
         //this.gamegroup.scale.y = 2;
         this.o.next('ok');
     }
 
+    pickName(): string {
+        let rndIndex = this.phaserGame.rnd.integerInRange(0, this.namesJson.length - 1);
+        return this.namesJson[rndIndex].name;
+    }
+
+    public hideEntityStatus() {
+        this.energyTank.visible = false;
+    }
+
+    public drawEntityStatus(entity: Entity, lifeStart?: number, lifeTarget?: number) {
+        /*        this.statushics = this.phaserGame.add.Graphics(0, 0);
+                this.statushics.beginFill(0xFFFF00, 1);
+                this.statushics.lineStyle(10, 0xe91010, 1);
+                //this.statushics.bounds = new PIXI.Rectangle(0, 0, 200, 200);
+                this.statushics.drawRect(0, 0, 200, 200);
+        */
+
+        this.energyTank.x = entity.position.x + 10;
+        this.energyTank.y = entity.position.y + 30;
+
+        if (lifeStart && lifeTarget) {
+
+            this.energyTank.animations.add('now');
+
+            this.energyTank.animations.add("demo", [
+                "energy0",
+                "energy1",
+                "energy2",
+                "energy3",
+                "energy4",
+                "energy5",
+                "energy6",
+                "energy7",
+                "energy8",
+                "energy9",
+                "energy10",
+                "energy11",
+                "energy12",
+                "energy13",
+                "energy14",
+                "energy15",
+                "energy16",
+                "energy17",
+                "energy18"
+            ], 5, true);
+            this.energyTank.play("demo");
+        }
+        else {
+
+            // on cherche a afficher la frame correspondant au niveau de vie
+            let maxPV = entity.maxPv,
+                currentPV = entity.pv,
+                pvPercentage = (100 * currentPV) / maxPV,
+                frame = Math.floor((this.energyTank.animations.frameTotal-1) * pvPercentage / 100);
+            this.energyTank.frame = frame;
+        }
+
+        this.energyTank.visible = true;
+    }
     public focusOnEntity(entity: Entity): Engine {
         this.phaserGame.camera.focusOn(entity.sprite);
         return this;

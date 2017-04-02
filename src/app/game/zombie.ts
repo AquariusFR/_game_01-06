@@ -26,6 +26,7 @@ export class Zombie extends _Entity {
         this.maxAction = 2;
         this.mouvementRange = 6;
         this.pv = 6;
+        this.maxPv = 6;
         this.currentStatus = status.IDDLE;
         this.visionRange = 12;
         this.coverDetection = 10;
