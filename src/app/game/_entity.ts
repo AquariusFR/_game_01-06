@@ -62,7 +62,7 @@ export class _Entity implements Entity {
         //this.targeted(this);
     }
 
-    private setAnimation() {
+    protected setAnimation() {
         let prefix = this.isMasked ? 'masked-' : '',
             angle = this.angle,
             animation = '';

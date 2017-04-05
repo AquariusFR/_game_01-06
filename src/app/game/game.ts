@@ -53,10 +53,6 @@ export class Game {
         this.ennemyTeam = new Array<Ennemy>();
         this.zombieTeam = new Array<Zombie>();
 
-        this.addPlayer(5, 3);
-        this.addPlayer(6, 3)
-            .addWeapon(WEAPONS.SHOOTGUN)
-            .selectWeapon(1);
 
         this.addZombieAt(5, 7);
         this.addZombieAt(4, 8);
@@ -72,6 +68,10 @@ export class Game {
         this.addZombieAt(37, 10);
         this.addZombieAt(38, 10);
         this.addZombieAt(21, 21);
+        this.addPlayer(5, 3);
+        this.addPlayer(6, 3)
+            .addWeapon(WEAPONS.SHOOTGUN)
+            .selectWeapon(1);
 
 
         this.currentIndex = -1;

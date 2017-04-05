@@ -1,13 +1,26 @@
 import { _Entity } from 'app/game/_entity'
 import { Entity } from 'app/game/entity'
+import { BitmapSprite } from 'app/game/bitmapSprite'
 import { Weapon, WeaponPool, WEAPONS } from 'app/game/weapon'
 import { Engine } from 'app/phaser/engine'
 import { Game } from 'app/game/game'
 
 export class Player extends _Entity {
+
+    sprite: BitmapSprite;
+
     constructor(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Player>, public game: Game) {
         super(engine, position);
-        this.sprite = engine.createHuman(position);
+        this.sprite = new BitmapSprite('heroes-sprites', position, engine.phaserGame);
+
+        this.sprite.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
+        this.sprite.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
+        this.sprite.animations.add("right", ["sprite25", "sprite26", "sprite27"], 5, true);
+        this.sprite.animations.add("up", ["sprite37", "sprite38", "sprite39"], 5, true);
+        this.sprite.animations.add("stand-down", ["sprite2"], 5, true);
+        this.sprite.play("stand-down");
+
+        engine.gamegroup.add(this.sprite);
         this.teamId = teamId;
         this.maxAction = 2;
         this.mouvementRange = 10;
@@ -44,7 +57,7 @@ export class Player extends _Entity {
 
         return this
     }
-    public selectWeapon(index:number):Player{
+    public selectWeapon(index: number): Player {
         this.selectedWeaponIndex = index;
         return this
     }

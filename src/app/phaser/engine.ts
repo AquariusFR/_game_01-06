@@ -31,7 +31,7 @@ export class Engine {
     private ihmGroup: Phaser.Group;
     private rangegroup: Phaser.Group;
     private visiongroup: Phaser.Group;
-    private gamegroup: Phaser.Group;
+    public gamegroup: Phaser.Group;
     private soundeffect: Phaser.Sound;
     private glowTween: Phaser.Tween;
     private glowPosition: Phaser.Point;
@@ -108,6 +108,9 @@ export class Engine {
         //this.phaserGame.scale.setUserScale(2, 2);
         this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        this.phaserGame.load.json('heroes-sprites-atlas', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json');
+        this.phaserGame.load.json('Male-Zombies-Gore-atlas', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json');
+
         this.phaserGame.load.atlas('Male-Zombies-Gore', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.phaserGame.load.atlas('markers', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
