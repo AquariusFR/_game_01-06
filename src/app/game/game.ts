@@ -115,6 +115,7 @@ export class Game {
         }
         this.currentIndex = this.currentIndex + 1;
         this.currentEntity = this.currentTeam[this.currentIndex];
+        this.engine.setActivePlayer(this.currentEntity);
         this.currentEntity.currentAction = 0;
         this.engine.setGlowPosition(this.currentEntity.position);
         this.engine.removeAllAccessibleTiles();

@@ -5,6 +5,8 @@ import { Pool } from 'app/phaser/pool'
 import { VisibilitySprite } from 'app/game/visibilitySprite'
 import DelayedAnimation from 'app/phaser/delayedAnimation'
 
+declare let SlickUI: any;
+
 // http://rpgmaker.su-downloads/%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F/238-pop-horror-city-character-pack-1-a
 // https://forums.rpg-akerweb.com/index.php?threads/pop-freebies.45329/
 // https://www.leshylabs.com/apps/sstool/
@@ -22,6 +24,7 @@ import DelayedAnimation from 'app/phaser/delayedAnimation'
 #1E1E20
  */
 export class Engine {
+    private currentPlayerName: any;
     private slickUI: any;
     private statushics: Phaser.Graphics;
     private namesJson: Array<any>;
@@ -122,12 +125,18 @@ export class Engine {
 
         this.phaserGame.load.image('bullet8', 'assets/sprites/bullet8.png');
         this.phaserGame.load.image('bullet6', 'assets/sprites/bullet6.png');
+        this.phaserGame.load.image('menu-button', 'assets/ui/menu.png');
+
         this.phaserGame.load.atlas('energy-tank', 'assets/energy-tank_spritesheet.png', 'assets/energy-tank_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
         this.phaserGame.load.json('names', 'assets/names.json');
 
-        //this.slickUI = this.phaserGame.plugins.add(Phaser.Plugin.SlickUI);
-        //this.slickUI.load('assets/ui/kenney/kenney.json'); // Use the path to your kenney.json. This is the file that defines your theme.
+
+        let javascriptedPlugins: any = Phaser.Plugin;
+
+        // You can use your own methods of making the plugin publicly available. Setting it as a global variable is the easiest solution.
+        this.slickUI = this.phaserGame.plugins.add(javascriptedPlugins.SlickUI);
+        this.slickUI.load('assets/ui/kenney/kenney.json'); // Use the path to your kenney.json. This is the file that defines your theme.
 
     }
 
@@ -210,7 +219,67 @@ export class Engine {
         this.ihmGroup.add(this.energyTank);
         //this.gamegroup.scale.x = 2;
         //this.gamegroup.scale.y = 2;
+        this.createMenu();
         this.o.next('ok');
+    }
+
+    setActivePlayer(entity: Entity) {
+        this.currentPlayerName.value = entity.name;
+    }
+
+    createMenu(): Engine {
+        let game = this.phaserGame,
+            slickUI = this.slickUI,
+            panelVisiblePosition = 8,
+            panelWidth = game.width - 8,
+            openButtonWidth = 50,
+            panelHiddenPosition = openButtonWidth - game.width,
+            panel = new SlickUI.Element.Panel(panelHiddenPosition, game.height - 72, panelWidth, 64),
+            closeButton = new SlickUI.Element.Button(panelWidth - openButtonWidth, 0, openButtonWidth, 80),
+            openButton = new SlickUI.Element.Button(panelWidth - openButtonWidth, 0, openButtonWidth, 80),
+            currentPlayerName = new SlickUI.Element.Text(10, 0, "BoyGeorge"),
+            button = new SlickUI.Element.Button(390, 0, 140, 80),
+            panelIsvisible = false;
+
+        slickUI.add(panel);
+        panel.add(openButton);
+        panel.add(closeButton);
+        panel.add(button);
+        panel.add(currentPlayerName).centerVertically().text.alpha = 0.5;
+
+        this.currentPlayerName = currentPlayerName;
+
+        closeButton.events.onInputUp.add(function () { console.log('Clicked button'); });
+        closeButton.add(new SlickUI.Element.Text(0, 0, "<<")).center();
+        closeButton.visible = false;
+        openButton.add(new SlickUI.Element.Text(0, 0, ">>")).center();
+
+        button.events.onInputUp.add(function () { console.log('Clicked button'); });
+        button.add(new SlickUI.Element.Text(0, 0, "My button")).center();
+
+        openButton.events.onInputDown.add(function () {
+            if (panelIsvisible) {
+                return;
+            }
+            panelIsvisible = true;
+            panel.x = panelHiddenPosition;
+            openButton.visible = false;
+            closeButton.visible = true;
+            game.add.tween(panel).to({ x: panelVisiblePosition }, 500, Phaser.Easing.Exponential.Out, true).onComplete.add(function () {
+            });
+            slickUI.container.displayGroup.bringToTop(panel.container.displayGroup);
+        }, this);
+
+        closeButton.events.onInputUp.add(function () {
+            game.add.tween(panel).to({ x: panelHiddenPosition + 20 }, 500, Phaser.Easing.Exponential.Out, true).onComplete.add(function () {
+                panelIsvisible = false;
+                panel.x = panelHiddenPosition;
+            });
+            openButton.visible = true;
+            closeButton.visible = false;
+        });
+
+        return this;
     }
 
     pickName(): string {
@@ -266,7 +335,7 @@ export class Engine {
             let maxPV = entity.maxPv,
                 currentPV = entity.pv,
                 pvPercentage = (100 * currentPV) / maxPV,
-                frame = Math.floor((this.energyTank.animations.frameTotal-1) * pvPercentage / 100);
+                frame = Math.floor((this.energyTank.animations.frameTotal - 1) * pvPercentage / 100);
             this.energyTank.frame = frame;
         }
 

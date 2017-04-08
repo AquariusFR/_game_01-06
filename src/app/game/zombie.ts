@@ -217,7 +217,6 @@ export class Zombie extends _Entity {
 
     public touched(sourceEntity: Entity, damage: number): Zombie {
         console.log('aaaargh', sourceEntity, 'hit me for', damage);
-        this.engine.playSound('grunt');
 
         this.pv = this.pv - damage;
 
@@ -234,6 +233,7 @@ export class Zombie extends _Entity {
 
         this.sprite.alive = false
         setTimeout(() => {
+            this.engine.playSound('grunt');
             //this.sprite.visible = false
             /*this.sprite.changeColor();
             this.setAnimation();*/
