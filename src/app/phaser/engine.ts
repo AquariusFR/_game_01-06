@@ -24,6 +24,7 @@ declare let SlickUI: any;
 #1E1E20
  */
 export class Engine {
+    panelIsvisible: boolean;
     private currentPlayerName: any;
     private slickUI: any;
     private statushics: Phaser.Graphics;
@@ -238,8 +239,9 @@ export class Engine {
             closeButton = new SlickUI.Element.Button(panelWidth - openButtonWidth, 0, openButtonWidth, 80),
             openButton = new SlickUI.Element.Button(panelWidth - openButtonWidth, 0, openButtonWidth, 80),
             currentPlayerName = new SlickUI.Element.Text(10, 0, "BoyGeorge"),
-            button = new SlickUI.Element.Button(390, 0, 140, 80),
-            panelIsvisible = false;
+            button = new SlickUI.Element.Button(390, 0, 140, 80);
+
+        this.panelIsvisible = false;
 
         slickUI.add(panel);
         panel.add(openButton);
@@ -249,32 +251,31 @@ export class Engine {
 
         this.currentPlayerName = currentPlayerName;
 
-        closeButton.events.onInputUp.add(function () { console.log('Clicked button'); });
         closeButton.add(new SlickUI.Element.Text(0, 0, "<<")).center();
         closeButton.visible = false;
         openButton.add(new SlickUI.Element.Text(0, 0, ">>")).center();
 
-        button.events.onInputUp.add(function () { console.log('Clicked button'); });
-        button.add(new SlickUI.Element.Text(0, 0, "My button")).center();
+        closeButton.events.onInputUp.add(() => { console.log('Clicked button'); });
+        button.events.onInputUp.add(() => { console.log('Clicked button'); });
 
-        openButton.events.onInputDown.add(function () {
-            if (panelIsvisible) {
+        button.add(new SlickUI.Element.Text(0, 0, "My button")).center();
+        openButton.events.onInputDown.add(() => {
+            if (this.panelIsvisible) {
                 return;
             }
-            panelIsvisible = true;
+            this.panelIsvisible = true;
             panel.x = panelHiddenPosition;
             openButton.visible = false;
             closeButton.visible = true;
-            game.add.tween(panel).to({ x: panelVisiblePosition }, 500, Phaser.Easing.Exponential.Out, true).onComplete.add(function () {
+            game.add.tween(panel).to({ x: panelVisiblePosition }, 500, Phaser.Easing.Exponential.Out, true).onComplete.add(() => {
             });
             slickUI.container.displayGroup.bringToTop(panel.container.displayGroup);
         }, this);
-
-        closeButton.events.onInputUp.add(function () {
-            game.add.tween(panel).to({ x: panelHiddenPosition + 20 }, 500, Phaser.Easing.Exponential.Out, true).onComplete.add(function () {
-                panelIsvisible = false;
+        closeButton.events.onInputUp.add(() => {
+            game.add.tween(panel).to({ x: panelHiddenPosition + 20 }, 500, Phaser.Easing.Exponential.Out, true).onComplete.add(() => {
                 panel.x = panelHiddenPosition;
             });
+            this.panelIsvisible = false;
             openButton.visible = true;
             closeButton.visible = false;
         });
@@ -539,6 +540,19 @@ export class Engine {
         return this.phaserGame.add.group(this.phaserGame.world, groupName, false, true, Phaser.Physics.ARCADE);
     }
 
+
+    private isOverMenu(activePointer: Phaser.Pointer): boolean {
+
+        let game = this.phaserGame;
+
+        if (this.panelIsvisible) {
+            return activePointer.y > game.height - 72;
+        }
+
+        return activePointer.y > game.height - 72 && activePointer.x < 50;
+
+    }
+
     private updateCamera() {
         let game = this.phaserGame,
             camera = game.camera,
@@ -546,6 +560,11 @@ export class Engine {
             cameraPosition = camera.position,
             livezone = 32,
             cameraStep = 16;
+
+
+        if (this.isOverMenu(activePointer)) {
+            return;
+        }
 
         if (activePointer.x <= livezone) {
             this.phaserGame.camera.setPosition(cameraPosition.x - cameraStep, cameraPosition.y);
@@ -590,6 +609,10 @@ export class Engine {
     private setMarker() {
         let marker: Phaser.Sprite = this.marker,
             tilePointBelowPointer: Phaser.Point = this.pointToTilePosition(); // get tile coordinate below activePointer
+
+        if (this.isOverMenu(this.phaserGame.input.activePointer)) {
+            return;
+        }
 
         if (this.isPositionCollidable(tilePointBelowPointer)) {
             // do something if you want
