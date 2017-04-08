@@ -22,6 +22,7 @@ import DelayedAnimation from 'app/phaser/delayedAnimation'
 #1E1E20
  */
 export class Engine {
+    private slickUI: any;
     private statushics: Phaser.Graphics;
     private namesJson: Array<any>;
     private visibleMarkerPool: Pool;
@@ -124,6 +125,10 @@ export class Engine {
         this.phaserGame.load.atlas('energy-tank', 'assets/energy-tank_spritesheet.png', 'assets/energy-tank_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
 
         this.phaserGame.load.json('names', 'assets/names.json');
+
+        //this.slickUI = this.phaserGame.plugins.add(Phaser.Plugin.SlickUI);
+        //this.slickUI.load('assets/ui/kenney/kenney.json'); // Use the path to your kenney.json. This is the file that defines your theme.
+
     }
 
 

@@ -15,6 +15,8 @@ import { Square } from 'app/game/map'
 //le vent pour l'odeur ...
 // faire des packs de zombies (à agreger par rapport à la distance)
 //global revolver
+
+
 export class Game {
     public map: GameMap;
     public engine: Engine;

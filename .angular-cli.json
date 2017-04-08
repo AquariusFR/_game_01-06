@@ -22,6 +22,8 @@
         "styles.css"
       ],
       "scripts": [
+        "../src/assets/scripts/phaser.js",
+        "../src/assets/scripts/slick-ui.min.js",
         "../node_modules/heap/lib/heap.js",
         "../node_modules/javascript-astar/astar.js"
       ],
