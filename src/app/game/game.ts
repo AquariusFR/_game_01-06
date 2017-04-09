@@ -56,8 +56,8 @@ export class Game {
         this.zombieTeam = new Array<Zombie>();
 
 
-        this.addZombieAt(5, 7);
-        this.addZombieAt(4, 8);
+        this.addZombieAt(12, 10);
+        this.addZombieAt(14, 7);
         this.addZombieAt(6, 8);
         this.addZombieAt(5, 8);
 
@@ -70,7 +70,7 @@ export class Game {
         this.addZombieAt(37, 10);
         this.addZombieAt(38, 10);
         this.addZombieAt(21, 21);
-        this.addPlayer(5, 3);
+        this.addPlayer(5, 3).maxAction = 16;
         this.addPlayer(6, 3)
             .addWeapon(WEAPONS.SHOOTGUN)
             .selectWeapon(1);

@@ -4,6 +4,9 @@ import { Observable } from 'rxjs/Observable';
 import { Pool } from 'app/phaser/pool'
 import { VisibilitySprite } from 'app/game/visibilitySprite'
 import DelayedAnimation from 'app/phaser/delayedAnimation'
+import { BitmapSprite } from 'app/game/bitmapSprite'
+import { LayerToSprites} from 'app/phaser/layerToSprites'
+import * as _ from 'lodash';
 
 declare let SlickUI: any;
 
@@ -66,6 +69,7 @@ export class Engine {
     private over: (point: Phaser.Point) => void;
     private overOff: (point: Phaser.Point) => void;
     private debug: boolean = true;
+    private layerToSprites:LayerToSprites = new LayerToSprites();
 
     constructor(mapName: string, private gameService: GameService) {
         this.observable = Observable.create(o => {
@@ -107,38 +111,38 @@ export class Engine {
     }
 
     private preload(mapResponse: MapResponse) {
-
+        let game = this.phaserGame;
         Phaser.Canvas.setImageRenderingCrisp(this.phaserGame.canvas);
         //this.phaserGame.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
         //this.phaserGame.scale.setUserScale(2, 2);
-        this.phaserGame.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.json('heroes-sprites-atlas', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json');
-        this.phaserGame.load.json('Male-Zombies-Gore-atlas', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json');
+        game.load.atlas('sprites', 'assets/sprites/spriteatlas/sprites.png', 'assets/sprites/spriteatlas/sprites.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.atlas('heroes-sprites', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.json('heroes-sprites-atlas', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Heroes.json');
+        game.load.json('Male-Zombies-Gore-atlas', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json');
+        game.load.atlas('Male-Zombies-Gore', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.atlas('markers', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.audio('boden', ['assets/sounds/essai.mp3']);
+        game.load.audio('MechDrone1', ['assets/sounds/MechDrone1.mp3']);
+        game.load.audio('soundeffect', ['assets/sounds/soundeffect_game.ogg']);
+        game.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.image('bullet8', 'assets/sprites/bullet8.png');
+        game.load.image('bullet6', 'assets/sprites/bullet6.png');
+        game.load.image('menu-button', 'assets/ui/menu.png');
+        game.load.atlas('energy-tank', 'assets/energy-tank_spritesheet.png', 'assets/energy-tank_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.json('names', 'assets/names.json');
 
-        this.phaserGame.load.atlas('Male-Zombies-Gore', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Male_Zombies_Gore.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-        this.phaserGame.load.atlas('markers', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/System/markers.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
+        game.load.json('tileset', 'assets/tiles/' + mapResponse.name + '.json');
+        //game.load.spritesheet("tilesetname", "tileset_path", tilewidth, tileheight, frameMax)
+
+
         this.gameService.LoadTileMap(mapResponse, this.phaserGame);
-        this.phaserGame.load.audio('boden', ['assets/sounds/essai.mp3']);
-        this.phaserGame.load.audio('MechDrone1', ['assets/sounds/MechDrone1.mp3']);
-        this.phaserGame.load.audio('soundeffect', ['assets/sounds/soundeffect_game.ogg']);
-        this.phaserGame.load.atlas('candle-glow', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.png', 'assets/tiles/POPHorrorCity_GFX/Graphics/Characters/Objects/Candle_Glow.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-
-        this.phaserGame.load.image('bullet8', 'assets/sprites/bullet8.png');
-        this.phaserGame.load.image('bullet6', 'assets/sprites/bullet6.png');
-        this.phaserGame.load.image('menu-button', 'assets/ui/menu.png');
-
-        this.phaserGame.load.atlas('energy-tank', 'assets/energy-tank_spritesheet.png', 'assets/energy-tank_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY);
-
-        this.phaserGame.load.json('names', 'assets/names.json');
-
-
         let javascriptedPlugins: any = Phaser.Plugin;
 
         // You can use your own methods of making the plugin publicly available. Setting it as a global variable is the easiest solution.
         this.slickUI = this.phaserGame.plugins.add(javascriptedPlugins.SlickUI);
         this.slickUI.load('assets/ui/kenney/kenney.json'); // Use the path to your kenney.json. This is the file that defines your theme.
 
+        // test
     }
 
 
@@ -170,11 +174,13 @@ export class Engine {
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        let createdMap: CreatedMap = this.gameService.create(mapResponse, game, this.tileGroup);
-        let collisionLayer = createdMap.layers.get('collisions');
 
-        this.map = createdMap.map;
-        this.tileMap = createdMap.tileMap;
+        let map: CreatedMap = this.gameService.createFromJson(game, this.tileGroup);
+
+
+        let collisionLayer = map.layers.get('collisions');
+        this.map = map.map;
+        this.tileMap = map.tileMap;
 
         this.collisionLayer = collisionLayer;
         //this.map.setCollisionByExclusion([], true, this.collisionLayer);
@@ -203,7 +209,7 @@ export class Engine {
         game.physics.enable(this.glow, Phaser.Physics.ARCADE);
 
 
-        let lastLayer = createdMap.layers.get('example sprite');
+        let lastLayer = map.layers.get('example sprite');
         lastLayer.inputEnabled = true;
         lastLayer.events.onInputDown.add(this.clickListener, this);
 
@@ -220,8 +226,196 @@ export class Engine {
         this.ihmGroup.add(this.energyTank);
         //this.gamegroup.scale.x = 2;
         //this.gamegroup.scale.y = 2;
+        this.placeMapSprite(map);
         this.createMenu();
         this.o.next('ok');
+
+        game.input.addMoveCallback(this.setMarker, this);
+    }
+
+    placeMapSprite(map: CreatedMap) {
+
+        let game = this.phaserGame,
+            layer: any = map.layers.get('sprites');
+
+        this.layerToSprites.placeMapSprite(layer, map.map, map.json, this.gamegroup, game);
+/*
+        let game = this.phaserGame,
+            layer: any = map.layers.get('sprites'),
+            spriteData: any = _(map.json.layers).find((l) => l.name == 'sprites'),
+            spritesInfo = _(spriteData.data)
+                .map((x, index) =>
+                    x > 0 ? <tileInfo>{ index: index, id: x } : null
+                )
+                .filter(x => x).value();
+
+        this.layerToSprites.placeMapSprite(layer, map.map, this.gamegroup, game);
+        let tilewidth = map.map.tileWidth,
+            tileheight = map.map.tileHeight,
+            w = layer.width,
+            h = layer.height,
+            tileSprites = new Array<Array<tileInfo>>();
+        let rightTileIsSameGroup = (tileset: Phaser.Tileset, spriteInfo: {
+            index: any;
+            id: any;
+        }) => {
+            return spriteData.data[spriteInfo.index + 1] == spriteInfo.id + 1
+        }
+        let bottomTileIsSameGroup = (tileset: Phaser.Tileset, spriteInfo: {
+            index: any;
+            id: any;
+        }) => {
+            return spriteData.data[spriteInfo.index + 100] == spriteInfo.id + tileset.columns
+        }
+
+        let processedTiles = {},
+            tileSpriteFramesData = new Map<string, {
+                'frames': Array<frameAtlas>,
+                'image': any
+            }>();
+
+        for (var index = 0; index < spriteData.data.length; index++) {
+
+            let id = spriteData.data[index];
+
+            if (id == 0 || processedTiles[index]) {
+                continue;
+            }
+            let spriteInfo = {
+                index: index,
+                id: id
+            }
+
+            // layerSprites
+            let row = Math.floor(spriteInfo.index / 100),
+                column = spriteInfo.index % 100;
+
+            let currentLayerSprite = new Array<{ index: number, id: number }>();
+
+            //currentLayerSprite.push(spriteInfo);
+
+            //checkIfTilesAround
+            let tilesRightId = spriteInfo.index,
+                tilesBottomId = spriteInfo.index;
+
+            let tileset = _(map.map.tilesets).find(t => t.containsTileIndex(spriteInfo.id));
+            let currentSpriteInfo = spriteInfo;
+
+            //currentLayerSprite.push(currentSpriteInfo);
+
+            let continueReadingRight = true,
+                continueReadingBottom = true,
+                spritewidth = 0,
+                spriteheight = 0;
+
+            while (continueReadingRight) {
+
+                spritewidth++;
+
+                let bottomSpriteInfo = {
+                    index: currentSpriteInfo.index,
+                    id: spriteData.data[currentSpriteInfo.index]
+                };
+                continueReadingBottom = bottomTileIsSameGroup(tileset, bottomSpriteInfo);
+
+                let currentspriteheight = 0
+
+                while (continueReadingBottom) {
+
+                    currentspriteheight++;
+                    currentLayerSprite.push(bottomSpriteInfo);
+
+                    processedTiles[bottomSpriteInfo.index] = true;
+
+                    continueReadingBottom = bottomTileIsSameGroup(tileset, bottomSpriteInfo);
+                    bottomSpriteInfo = {
+                        index: bottomSpriteInfo.index + 100,
+                        id: spriteData.data[bottomSpriteInfo.index + 100]
+                    }
+                }
+
+                if(currentspriteheight>spriteheight){
+                    spriteheight = currentspriteheight
+                }
+
+                continueReadingRight = rightTileIsSameGroup(tileset, currentSpriteInfo);
+
+                currentSpriteInfo = {
+                    index: currentSpriteInfo.index + 1,
+                    id: spriteData.data[currentSpriteInfo.index + 1]
+                };
+            }
+
+
+            if (currentLayerSprite.length) {
+                let tilesetRaw: any = tileset,
+                
+                    currentgid = currentLayerSprite[0].id - tileset.firstgid,
+                    tilex = tilesetRaw.drawCoords[currentgid * 2],
+                    tiley = tilesetRaw.drawCoords[1 + (currentgid * 2)],
+                    spritewidthPixel = spritewidth * tilewidth,
+                    spriteHeightPixel = spriteheight * tileheight,
+                    spriteFrameAtlas: frameAtlas = {
+
+                        filename: currentLayerSprite[0].id.toString(),
+                        frame: {
+                            x: tilex,
+                            y: tiley,
+                            w: spritewidthPixel,
+                            h: spriteHeightPixel
+                        },
+                        rotated: false,
+                        trimmed: false,
+                        spriteSourceSize: {
+                            x: tilex,
+                            y: tiley,
+                            w: spritewidthPixel,
+                            h: spriteHeightPixel
+                        },
+                        sourceSize: {
+                            w: spritewidthPixel,
+                            h: spriteHeightPixel
+                        }
+                    }
+
+                if (!tileSpriteFramesData.has(tileset.name)) {
+
+                    let newFrameAtlas = {
+                        frames: new Array<frameAtlas>(),
+                        image: tileset.image
+                    };
+
+                    tileSpriteFramesData.set(tileset.name, newFrameAtlas);
+                }
+
+
+                tileSpriteFramesData
+                    .get(tileset.name)
+                    .frames.push(spriteFrameAtlas);
+
+                tileSprites.push(currentLayerSprite);
+            }
+        }
+
+        tileSpriteFramesData.forEach((spriteFrameData, key) => {
+            game.cache.addTextureAtlas(key, '', spriteFrameData.image, spriteFrameData, Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+        });
+
+        _(tileSprites).each(tileSprite => {
+
+            let width = tilewidth,
+                height = tileheight, spriteInfo = tileSprite[0],
+                row = Math.floor(spriteInfo.index / 100),
+                column = spriteInfo.index % 100,
+                x = Math.min(column * width, 100 * width),
+                y = Math.min(row * height, 100 * height),
+                tileset = _(map.map.tilesets).find(t => t.containsTileIndex(spriteInfo.id));
+            
+            game.add.sprite(x, y, tileset.name, spriteInfo.id.toString(), this.gamegroup);
+        });
+
+        layer.renderable = false;
+        */
     }
 
     setActivePlayer(entity: Entity) {
@@ -433,7 +627,6 @@ export class Engine {
         this.gamegroup.add(human);
         return human;
     }
-
     public createZombie(position: Phaser.Point, zombieType: string): Phaser.Sprite {
         let zombie = this.phaserGame.add.sprite(position.x, position.y - 32, 'Male-Zombies-Gore'),
             framerate = 3;
@@ -444,14 +637,13 @@ export class Engine {
         //zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
 
         DelayedAnimation.addToAnimations(zombie.animations, delay, "down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
-
-        zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], framerate, true);
-        zombie.animations.add("right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], framerate, true);
-        zombie.animations.add("up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], framerate, true);
-        zombie.animations.add("masked-down", ["00-down-1", "00-down-2", "00-down-3"], framerate, true);
-        zombie.animations.add("masked-left", ["00-left-1", "00-left-2", "00-left-3"], framerate, true);
-        zombie.animations.add("masked-right", ["00-right-1", "00-right-2", "00-right-3"], framerate, true);
-        zombie.animations.add("masked-up", ["00-up-1", "00-up-2", "00-up-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "masked-down", ["00-down-1", "00-down-2", "00-down-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "masked-left", ["00-left-1", "00-left-2", "00-left-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "masked-right", ["00-right-1", "00-right-2", "00-right-3"], framerate, true);
+        DelayedAnimation.addToAnimations(zombie.animations, delay, "masked-up", ["00-up-1", "00-up-2", "00-up-3"], framerate, true);
 
         zombie.play("down");
 
@@ -699,10 +891,10 @@ export class Engine {
     }
 
     update() {
-        this.setMarker();
         this.updateCamera();
         this.handlerKeyBoard();
         this.gamegroup.sort('y', Phaser.Group.SORT_ASCENDING);
+        //this.gamegroup.children.forEach(sprite => this.phaserGame.debug.spriteBounds(sprite))
     }
 }
 
@@ -711,4 +903,29 @@ interface eventTimer {
     time: number
     tick: boolean
     wasOver: boolean
+}
+interface tileInfo {
+    index: number,
+    id: number
+}
+interface frameAtlas {
+    filename: string,
+    frame: {
+        x: number,
+        y: number,
+        w: number,
+        h: number
+    },
+    rotated: false,
+    trimmed: false,
+    spriteSourceSize: {
+        x: number,
+        y: number,
+        w: number,
+        h: number
+    },
+    sourceSize: {
+        w: number,
+        h: number
+    }
 }

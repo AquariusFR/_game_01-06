@@ -14,6 +14,22 @@ export class GameService {
         return this.http.get('assets/tiles/' + mapKey + '.json').map(response => this.buildMapResponse(mapKey, response));
     }
 
+    public getTileSet(mapKey: string, json:any){
+
+        let tileset = json,
+            tilesets: Array<any> = tileset.tilesets,
+            layers: Array<any> = tileset.layers;
+        return {
+            name: mapKey,
+            data: tileset,
+            layers: layers,
+            tilesetImages: tilesets.map(s => <Tileset>{
+                url: 'assets/tiles/' + s.image,
+                key: s.name
+            })
+        };
+    }
+
     private buildMapResponse(mapKey: string, response: Response): MapResponse {
         let json = response.json(),
             tilesets: Array<any> = json.tilesets,
@@ -36,6 +52,13 @@ export class GameService {
         mapResponse.tilesetImages.forEach(t => {
             game.load.image(t.key, t.url);
         });
+    }
+
+    public createFromJson(game: Phaser.Game, group: Phaser.Group): CreatedMap {
+        
+        let tilesetJson = game.cache.getJSON('tileset'),
+            map = this.getTileSet('zombie', tilesetJson);
+        return this.create(map, game, group);
     }
 
     public create(mapResponse: MapResponse, game: Phaser.Game, group: Phaser.Group): CreatedMap {
@@ -81,15 +104,17 @@ export class GameService {
         return {
             map: map,
             layers: layers,
-            tileMap: tilePropertyMap
+            tileMap: tilePropertyMap,
+            json:mapResponse.data
         };
     }
 }
 
 export interface CreatedMap {
     map: Phaser.Tilemap,
-    layers: Map<string, Phaser.TilemapLayer>,
+    layers: Map<string, Phaser.TilemapLayer>
     tileMap: Map<number, any>
+    json:any
 }
 
 export interface MapResponse {

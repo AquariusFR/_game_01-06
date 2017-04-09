@@ -23,7 +23,8 @@ export class Zombie extends _Entity {
 
     constructor(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Zombie>, public game: Game) {
         super(engine, position);
-        this.sprite = this.createZombie(position, zombieTypes[_.random(0, zombieTypes.length - 1)]);
+        //this.sprite = this.createZombie(position);
+        this.sprite = <BitmapSprite>engine.createZombie(position, zombieTypes[_.random(0, zombieTypes.length - 1)]);
 
         this.teamId = teamId;
         this.team = team;
@@ -42,35 +43,6 @@ export class Zombie extends _Entity {
         let newZombie = new Zombie(engine, position, teamId, team, game);
         return newZombie;
     }
-    public createZombie(position: Phaser.Point, zombieType: string) {
-        let zombie = new BitmapSprite('Male-Zombies-Gore', position, this.engine.phaserGame),
-            framerate = 3;
-        zombie.smoothed = false;
-        //zombie.scale.setTo(1, this.engine.phaserGame.rnd.realInRange(0.9, 1.2))
-        let delay = this.engine.phaserGame.rnd.integerInRange(0, 50);
-
-
-        DelayedAnimation.addToAnimations(zombie.animations, delay, "down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
-
-        zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
-        zombie.animations.add("left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], framerate, true);
-        zombie.animations.add("right", [zombieType + "-right-1", zombieType + "-right-2", zombieType + "-right-3"], framerate, true);
-        zombie.animations.add("up", [zombieType + "-up-1", zombieType + "-up-2", zombieType + "-up-3"], framerate, true);
-        zombie.animations.add("masked-down", ["00-down-1", "00-down-2", "00-down-3"], framerate, true);
-        zombie.animations.add("masked-left", ["00-left-1", "00-left-2", "00-left-3"], framerate, true);
-        zombie.animations.add("masked-right", ["00-right-1", "00-right-2", "00-right-3"], framerate, true);
-        zombie.animations.add("masked-up", ["00-up-1", "00-up-2", "00-up-3"], framerate, true);
-
-        zombie.play("down");
-
-        let frameIndex = this.engine.phaserGame.rnd.integerInRange(0, zombie.animations.currentAnim.frameTotal);
-
-        zombie.animations.currentAnim.setFrame(frameIndex);
-
-        this.engine.gamegroup.add(zombie);
-        return zombie;
-    }
-
 
     public play(callback: () => void): void {
 

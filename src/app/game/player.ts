@@ -11,7 +11,8 @@ export class Player extends _Entity {
 
     constructor(engine: Engine, position: Phaser.Point, teamId: number, team: Array<Player>, public game: Game) {
         super(engine, position);
-        this.sprite = new BitmapSprite('heroes-sprites', position, engine.phaserGame);
+        this.sprite = <BitmapSprite>engine.createHuman(position);
+        //this.sprite = new BitmapSprite('heroes-sprites', position, engine.phaserGame);
 
         this.sprite.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
         this.sprite.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
