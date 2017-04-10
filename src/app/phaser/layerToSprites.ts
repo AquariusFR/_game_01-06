@@ -1,14 +1,10 @@
 import * as _ from 'lodash';
 
-
 export class LayerToSprites {
-
 
     public placeMapSprite(layer: Phaser.TilemapLayer, map: Phaser.Tilemap, tilemapJson: any, group: Phaser.Group, game: Phaser.Game) {
 
-        let tilewidth = map.tileWidth,
-            tileheight = map.tileHeight,
-            layerJson = this.findLayerJson('sprites', tilemapJson),
+        let layerJson = this.findLayerJson('sprites', tilemapJson),
             layerData: Array<any>,
             collectedSprites: collectedSpriteFromLayer;
 
@@ -16,7 +12,7 @@ export class LayerToSprites {
             return; // no data found
         }
 
-        collectedSprites = this.collectSpriteFromLayer(layerJson.data, map, tilewidth, tileheight);
+        collectedSprites = this.collectSpriteFromLayer(layerJson.data, map);
 
         this.updateTextureAtlasCache(collectedSprites, game);
         this.addSpritesToGroup(collectedSprites, map, game, group);
@@ -46,8 +42,10 @@ export class LayerToSprites {
         });
     }
 
-    private collectSpriteFromLayer(layerData: Array<any>, map: Phaser.Tilemap, tilewidth: number, tileheight: number): collectedSpriteFromLayer {
+    private collectSpriteFromLayer(layerData: Array<any>, map: Phaser.Tilemap): collectedSpriteFromLayer {
         let processedTiles = new Map<number, boolean>(),
+            tilewidth = map.tileWidth,
+            tileheight = map.tileHeight,
             tileSprites = new Array<Array<tileInfo>>(),
             tileSpriteFramesData = new Map<string, tileAtlas>();
 
@@ -73,7 +71,7 @@ export class LayerToSprites {
 
                 collectedLayerSprite = this.collectSprite(currentSpriteInfo, layerData, tileset, processedTiles);
 
-                this.addSpriteToLayerAtlas(collectedLayerSprite, tileSpriteFramesData, tileSprites, tileset, tilewidth, tileheight);
+                this.addSpriteToLayerAtlas(collectedLayerSprite, tileSpriteFramesData, tileSprites, tileset, map);
 
             });
         return {
@@ -143,9 +141,11 @@ export class LayerToSprites {
             spritewidth: spritewidth
         };
     }
-    private addSpriteToLayerAtlas(collectedLayerSprite: collectedSprite, tileSpriteFramesData: Map<string, tileAtlas>, tileSprites: Array<Array<tileInfo>>, tileset: Phaser.Tileset, tilewidth: number, tileheight: number) {
 
-        let currentLayerSprite = collectedLayerSprite.layerSprite;
+    private addSpriteToLayerAtlas(collectedLayerSprite: collectedSprite, tileSpriteFramesData: Map<string, tileAtlas>, tileSprites: Array<Array<tileInfo>>, tileset: Phaser.Tileset, map: Phaser.Tilemap) {
+        let currentLayerSprite = collectedLayerSprite.layerSprite,
+            tilewidth = map.tileWidth,
+            tileheight = map.tileHeight;
 
         if (currentLayerSprite.length) {
             let tilesetRaw: any = tileset,
