@@ -616,13 +616,29 @@ export class Engine {
         });
     }
 
-    public createHuman(position: Phaser.Point): Phaser.Sprite {
-        let human = this.phaserGame.add.sprite(position.x, position.y - 32, 'heroes-sprites');
-        human.animations.add("down", ["sprite1", "sprite2", "sprite3"], 5, true);
-        human.animations.add("left", ["sprite13", "sprite14", "sprite15"], 5, true);
-        human.animations.add("right", ["sprite25", "sprite26", "sprite27"], 5, true);
-        human.animations.add("up", ["sprite37", "sprite38", "sprite39"], 5, true);
-        human.animations.add("stand-down", ["sprite2"], 5, true);
+    public createHuman(position: Phaser.Point, humanType: string): Phaser.Sprite {
+        let human = this.phaserGame.add.sprite(position.x, position.y - 32, 'heroes-sprites'),
+            framerate = 5,
+            delay = this.phaserGame.rnd.integerInRange(0, 50);
+        human.smoothed = false;
+
+        DelayedAnimation.addToAnimations(human.animations, delay, "down", [humanType + "-down-1", humanType + "-down-2", humanType + "-down-3", humanType + "-down-2"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "left", [humanType + "-left-1", humanType + "-left-2", humanType + "-left-3"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "right", [humanType + "-right-1", humanType + "-right-2", humanType + "-right-3"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "up", [humanType + "-up-1", humanType + "-up-2", humanType + "-up-3"], framerate, true);
+
+
+
+        DelayedAnimation.addToAnimations(human.animations, delay, "stand-down", [humanType + "-down-2"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "stand-left", [humanType + "-left-2"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "stand-right", [humanType + "-right-2"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "stand-up", [humanType + "-up-2"], framerate, true);
+
+        DelayedAnimation.addToAnimations(human.animations, delay, "masked-down", ["h-down-1", "h-down-2", "h-down-3"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "masked-left", ["h-left-1", "h-left-2", "h-left-3"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "masked-right", ["h-right-1", "h-right-2", "h-right-3"], framerate, true);
+        DelayedAnimation.addToAnimations(human.animations, delay, "masked-up", ["h-up-1", "h-up-2", "h-up-3"], framerate, true);
+
         human.play("stand-down");
         this.gamegroup.add(human);
         return human;
@@ -633,8 +649,6 @@ export class Engine {
         zombie.smoothed = false;
         zombie.scale.setTo(1, this.phaserGame.rnd.realInRange(0.9, 1.2))
         let delay = this.phaserGame.rnd.integerInRange(0, 50);
-
-        //zombie.animations.add("down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
 
         DelayedAnimation.addToAnimations(zombie.animations, delay, "down", [zombieType + "-down-1", zombieType + "-down-2", zombieType + "-down-3", zombieType + "-down-2"], framerate, true);
         DelayedAnimation.addToAnimations(zombie.animations, delay, "left", [zombieType + "-left-1", zombieType + "-left-2", zombieType + "-left-3"], framerate, true);

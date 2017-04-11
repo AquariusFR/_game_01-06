@@ -238,7 +238,7 @@ export class Game {
             if (!this.map.canEntityGoToTarget(this.currentEntity, target)) {
                 return;
             }
-            this.engine.followEntity(this.currentEntity);
+            //this.engine.followEntity(this.currentEntity);
 
             this.map.moveEntityAtPoint(this.currentEntity, target,
                 () => {
@@ -247,12 +247,12 @@ export class Game {
                     this.showAccessibleTilesByPlayer();
                     this.nextAction()
                     this.ticking = false;
-                    this.engine.unfollowEntity();
+                    //this.engine.unfollowEntity();
                 },
                 (error) => {
                     console.log('sorry', error);
                     this.ticking = false;
-                    this.engine.unfollowEntity();
+                    //this.engine.unfollowEntity();
                 });
 
             this.ticking = true;
