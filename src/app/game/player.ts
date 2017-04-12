@@ -37,8 +37,6 @@ export class Player extends _Entity {
     }
     public attack(target: Entity): Player {
         super.attack(target);
-        this.engine.playSound('gun');
-        this.engine.shake();
 
         this.weapons[this.selectedWeaponIndex].fire(this, target);
         console.log('zombie attacks ' + target.id + target.teamId);

@@ -182,7 +182,7 @@ export class Zombie extends _Entity {
     public attack(target: Entity): Zombie {
         super.attack(target);
         this.engine.playSound('grunt');
-        this.engine.shake();
+        this.engine.shake(0.5, 200);
         console.log('zombie attacks ' + target.id + target.teamId);
         return this;
     }

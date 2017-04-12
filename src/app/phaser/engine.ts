@@ -104,9 +104,9 @@ export class Engine {
         this.over = over;
         this.overOff = overOff;
     }
-    public shake() {
+    public shake(intensity, duration) {
         this.phaserGame.camera.resetFX();
-        this.phaserGame.camera.shake(0.004, 100, true, Phaser.Camera.SHAKE_BOTH, true);
+        this.phaserGame.camera.shake(intensity, duration, true, Phaser.Camera.SHAKE_BOTH, true);
         //this.phaserGame.camera.flash(0xffffff, 50, false, 0.7);
     }
 

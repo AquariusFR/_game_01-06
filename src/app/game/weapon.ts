@@ -30,6 +30,7 @@ export interface fireReturn {
 
 export interface WeaponData {
     name: string
+    sound: string
     minRange: number
     maxRange: number
     minDamage: number
@@ -45,10 +46,14 @@ export interface WeaponData {
     // si supérieur à 0, on calcul un arbre de dispersion et on applique la précision sur chaqune des cibles.
     spreadAngle: number
     projectileByShot: number
+    fireRate: number
     // pour les armes à explosion
     damageRange: number
     damageRangeReduction?: number
     isRanged: boolean
+    // shake
+    intensity: number,
+    duration: number
 }
 
 export interface Weapon {
@@ -79,6 +84,7 @@ class WeaponImpl implements Weapon {
         this.bulletSpeed = 700;
         if (this.isJammed) {
             console.log('weapon jammed !!!!');
+            this.isJammed = false;
         }
 
         if (this.data.isRanged) {
@@ -96,26 +102,43 @@ class WeaponImpl implements Weapon {
         }
 
         if (this.data.spreadAngle == 0) {
-            let touchedEntity = this.shootSingleBullet(sourceEntity, targetEntity);
-            var x = sourceEntity.position.x + 10;
-            var y = sourceEntity.position.y + 10;
-            let currentDistance = 0;
-
-
-            if (!touchedEntity) {
-                currentDistance = this.data.maxRange * 32;
-            } else {
-                let dx = Math.abs(x - touchedEntity.position.x);
-                let dy = Math.abs(y - touchedEntity.position.y);
-                currentDistance = (dx + dy);
-            }
-            let baseAngle = -Math.atan2(targetEntity.square.y - sourceEntity.square.y, targetEntity.square.x - sourceEntity.square.x) * (180 / Math.PI);
-            console.log('fire bullet ', baseAngle);
-            this.bulletGroup.getFirstExists(false).fire(x, y, -baseAngle, this.bulletSpeed, 0, 0, currentDistance);
+            this.shootStraight(sourceEntity, targetEntity)
         } else {
-
-            this.shootMultyBullet(sourceEntity, targetEntity);
+            this.shootSpread(sourceEntity, targetEntity);
         }
+    }
+
+
+    private shootStraight(sourceEntity: Entity, targetEntity: Entity) {
+
+        let projectilShot = 0,
+            shot = () => {
+                projectilShot++;
+                let touchedEntity = this.shootSingleBullet(sourceEntity, targetEntity);
+                var x = sourceEntity.position.x + 10;
+                var y = sourceEntity.position.y + 10;
+                let currentDistance = 0;
+
+                this.game.engine.playSound(this.data.sound);
+                this.game.engine.shake(this.data.intensity, this.data.duration);
+
+                if (!touchedEntity) {
+                    currentDistance = this.data.maxRange * 32;
+                } else {
+                    let dx = Math.abs(x - touchedEntity.position.x);
+                    let dy = Math.abs(y - touchedEntity.position.y);
+                    currentDistance = (dx + dy);
+                }
+                let baseAngle = -Math.atan2(targetEntity.square.y - sourceEntity.square.y, targetEntity.square.x - sourceEntity.square.x) * (180 / Math.PI);
+                console.log('fire bullet ', baseAngle);
+                this.bulletGroup.getFirstExists(false).fire(x, y, -baseAngle, this.bulletSpeed, 0, 0, currentDistance);
+
+                if (projectilShot < this.data.projectileByShot) {
+                    setTimeout(shot, this.data.fireRate);
+                }
+            };
+
+        shot();
 
 
     }
@@ -134,7 +157,7 @@ class WeaponImpl implements Weapon {
         return targetEntity;
     }
 
-    private shootMultyBullet(sourceEntity: Entity, targetEntity: Entity) {
+    private shootSpread(sourceEntity: Entity, targetEntity: Entity) {
 
         // check les trajectoires des balles
         // angle par rapport à la cible
@@ -145,6 +168,8 @@ class WeaponImpl implements Weapon {
             baseAngle = -Math.atan2(targetEntity.square.y - sourceSquare.y, targetEntity.square.x - sourceSquare.x) * (180 / Math.PI),
             startAngle = baseAngle + (this.data.spreadAngle / 2),
             angleStep = this.data.spreadAngle / this.data.projectileByShot;
+        this.game.engine.playSound(this.data.sound);
+        this.game.engine.shake(this.data.intensity, this.data.duration);
 
 
         _.times(this.data.projectileByShot, index => {
@@ -248,6 +273,7 @@ export class WeaponPool {
 
                 return new WeaponImpl({
                     name: 'NINEMM',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 9,
                     minDamage: 1,
@@ -260,13 +286,17 @@ export class WeaponPool {
                     currentAmmo: 6,
                     spreadAngle: 0,
                     damageRange: 0,
-                    projectileByShot: 1,
-                    isRanged: false
+                    projectileByShot: 3,
+                    fireRate: 150,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 80
                 }, game, 'bullet6');
             case WEAPONS.SHOOTGUN:
 
                 return new WeaponImpl({
-                    name: 'SHOOTGUN',
+                    name: 'SHOTGUN',
+                    sound: 'shotgun',
                     minRange: 0,
                     maxRange: 5,
                     minDamage: 1,
@@ -280,12 +310,16 @@ export class WeaponPool {
                     spreadAngle: 30,
                     damageRange: 0,
                     projectileByShot: 6,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.020,
+                    duration: 120
                 }, game, 'bullet8');
             case WEAPONS.PIPE:
 
                 return new WeaponImpl({
                     name: 'PIPE',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -299,12 +333,16 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
             case WEAPONS.AXE:
 
                 return new WeaponImpl({
                     name: 'AXE',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -318,12 +356,16 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
             case WEAPONS.PUNCH:
 
                 return new WeaponImpl({
                     name: 'PUNCH',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -337,12 +379,16 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
             case WEAPONS.BAT:
 
                 return new WeaponImpl({
                     name: 'BAT',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -356,12 +402,16 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
             case WEAPONS.NAILBAT:
 
                 return new WeaponImpl({
                     name: 'NAILBAT',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -375,12 +425,16 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
             case WEAPONS.KNIFE:
 
                 return new WeaponImpl({
                     name: 'KNIFE',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -394,12 +448,16 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
             case WEAPONS.KATANA:
 
                 return new WeaponImpl({
                     name: 'KATANA',
+                    sound: 'gun',
                     minRange: 0,
                     maxRange: 0,
                     minDamage: 0,
@@ -413,7 +471,10 @@ export class WeaponPool {
                     spreadAngle: 0,
                     damageRange: 0,
                     projectileByShot: 1,
-                    isRanged: false
+                    fireRate: 0,
+                    isRanged: false,
+                    intensity: 0.004,
+                    duration: 100
                 }, game, 'bullet6');
 
             default:
