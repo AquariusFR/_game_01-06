@@ -73,6 +73,7 @@ export class GameService {
         mapResponse.layers.forEach(l => {
             let layer: Phaser.TilemapLayer = map.createLayer(l.name);
             layer.visible = l.opacity === 1;
+            layer.renderable = l.opacity === 1;
             layers.set(l.name, layer);
             group.add(layer);
         })

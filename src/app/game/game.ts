@@ -263,7 +263,8 @@ export class Game {
 
         if (this.currentTeamId === this.zombieTeamId) {
             console.time(this.currentTeamId + '/' + this.currentEntity.id + ' zombie play');
-            this.engine.followEntity(this.currentEntity);
+            this.engine.focusOnEntity(this.currentEntity);
+            //this.engine.followEntity(this.currentEntity);
 
             this.zombieTeam[this.currentIndex].play(
                 () => {
@@ -273,7 +274,7 @@ export class Game {
                     setTimeout(
                         () => {
                             console.timeEnd(this.currentTeamId + '/' + this.currentEntity.id + ' timeout');
-                            this.engine.unfollowEntity();
+                            //this.engine.unfollowEntity();
                             this.nextAction();
                         }, 300);
                 }
