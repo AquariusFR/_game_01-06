@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
 import 'rxjs/add/operator/map';
 import { Observable } from 'rxjs/Observable';
+import { TilemapUtilities} from 'app/phaser/tilemapUtilities'
 
 @Injectable()
 export class GameService {
@@ -77,6 +78,13 @@ export class GameService {
             layers.set(l.name, layer);
             group.add(layer);
         })
+
+        let mapUtilities = new TilemapUtilities();
+
+        mapUtilities.mergeLayers(layers.get('subground'), layers.get('ground'));
+        mapUtilities.mergeLayers(layers.get('surground'), layers.get('ground'));
+        mapUtilities.mergeLayers(layers.get('buildings-1'), layers.get('ground'));
+
 
         let tilesets: Array<any> = mapResponse.data.tilesets;
         tilesets.map(t => {
